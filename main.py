@@ -1,11 +1,11 @@
-from game import Game
-from gui.gui import Gui
+import game
+import gui
 
 
 def main():
-    game = Game()
-    gui = Gui(game)
-    gui.mainloop()
+    _game = game.main.Game()
+    _gui = gui.main.Gui(_game)
+    _gui.mainloop()
 
 
 if __name__ == "__main__":

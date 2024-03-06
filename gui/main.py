@@ -1,16 +1,19 @@
-import pygame as pg
 import time
+
+import pygame as pg
+
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS
+from game.main import Game
 
 class Gui:
-    def __init__(self, game):
+    def __init__(self, game: Game):
         self.__game = game
         self.__clock = pg.time.Clock()
         self.frame_start = time.time()
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
-        self.__sprites = Sprites(game.BOARDWIDTH)
+        self.__sprites = Sprites(game.board_width)
 
     def mainloop(self):
         while True:
