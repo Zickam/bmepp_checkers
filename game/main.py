@@ -17,6 +17,8 @@ class Game:
     def __init__(self):
         self.board_width = constants.BOARD_WIDTH
         self.board = self.initBoard()
+        self.is_player_turn = True
+        self.is_player_first = True
 
     def initBoard(self) -> list[list[Figure, ...], ...]:
         board = []
@@ -27,13 +29,13 @@ class Game:
                 board[i].append(Figure(False, False))
         for i in range(3):
             for j in range(self.board_width):
-                if i % 2 == 0 and j % 2 == 0:
+                if i % 2 == 1 and j % 2 == 0:
                     board[i][j] = Figure(True, False)
-                elif i % 2 == 1 and j % 2 == 1:
+                elif i % 2 == 0 and j % 2 == 1:
                     board[i][j] = Figure(True, False)
-                if (self.board_width - i - 1) % 2 == 0 and (self.board_width - j - 1) % 2 == 0:
+                if (self.board_width - i - 1) % 2 == 1 and (self.board_width - j - 1) % 2 == 0:
                     board[self.board_width - i - 1][self.board_width - j - 1] = Figure(True, True)
-                elif (self.board_width - i - 1) % 2 == 1 and (self.board_width - j - 1) % 2 == 1:
+                elif (self.board_width - i - 1) % 2 == 0 and (self.board_width - j - 1) % 2 == 1:
                     board[self.board_width - i - 1][self.board_width - j - 1] = Figure(True, True)
 
         return board
@@ -46,7 +48,7 @@ class Game:
     def handleMove(self, move: Move):
         ...
 
-    def getPossibleMoves(self, point: Point) -> list[Move, ...]:
+    """def getPossibleMoves(self, point: Point) -> list[Move, ...]:
         possible_moves = []
         # так как Point это у нас коорды, надо тут переделать
         if any(x not in [0, self.board_width - 1] for x in point):  # проверка на граничный случай
@@ -62,8 +64,11 @@ class Game:
                                         Move(Point(point.x, point.y), Point(point.x + i + i, point.y + j + j)))
                     else:
                         possible_moves.append(Move(Point(point.x, point.y), Point(point.x + i, point.y + j)))
-        else:  # какой-то
-            ...
+        else:  # какой-то"""
+
+
+    def getPossibleMoves(self, point: Point) -> list[Move, ...]:
+        return [Move(point, Point(0, 0))]
 
 if __name__ == "__main__":
     game = Game()
