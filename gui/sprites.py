@@ -1,6 +1,6 @@
 import pygame as pg
 import string
-from gui.constants import WIN_SIZE, BCC, WCC, BBC
+from gui.constants import WIN_SIZE, BCC, WCC, BBC, FONT_PATH
 pg.init()
 
 
@@ -17,7 +17,7 @@ class Sprites:
         offset_size = height // 20
         font_size = offset_size // 2
         cell_size = (height - 2 * offset_size) // self.CELLS_NUMBER
-        font = pg.font.Font('gui/font.ttf', font_size)
+        font = pg.font.Font(FONT_PATH, font_size)
         image = pg.Surface((height, height))
         image.fill(WCC)
 
