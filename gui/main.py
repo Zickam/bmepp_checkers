@@ -37,4 +37,5 @@ class Gui:
                     pass
 
     def close(self):
+        raise Exception("Implement an exiting for all the child processes and threads!")
         exit()
