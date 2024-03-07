@@ -48,7 +48,8 @@ class Gui:
 
         for move in self.possible_moves:
             coordinate = self.__sprites.get_coordinates(move.end_point.x, move.end_point.y)
-            print(move.end_point.x, move.end_point.y)
+            # я хз почему здесь был принт, поэтому просто зкомментил его
+            # print(move.end_point.x, move.end_point.y)
             coordinate = coordinate.move(board_sprite_x, 0)
             self.__screen.blit(self.__sprites.hint, coordinate)
 
