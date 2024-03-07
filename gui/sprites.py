@@ -14,12 +14,15 @@ class Sprites:
         self.cell_size = (self.height - 2 * self.offset_size) // self.CELLS_NUMBER
 
         self.board = self.make_board()
+        self.rotated_board = pg.transform.rotate(self.board, 180)
         self.white_checker = self.make_checker(True, False)
         self.queen_white_checker = self.make_checker(True, True)
         self.black_checker = self.make_checker(False, False)
         self.queen_black_checker = self.make_checker(False, True)
         self.hint = self.make_hint()
 
+        self.cords_board = self.make_coordinates_matrix(True)
+        self.rotated_cords_board = self.make_coordinates_matrix(False)
 
     def make_board(self) -> pg.Surface:
         Alph = string.ascii_lowercase
@@ -45,6 +48,7 @@ class Sprites:
         text_offset = self.offset_size // 2
         text_offset2 = text_offset + self.CELLS_NUMBER * self.cell_size + self.offset_size
         for i in range(self.CELLS_NUMBER):
+            # draw chars
             char = font.render(Alph[i], True, BBC)
             x = (i + .5) * self.cell_size + self.offset_size
             x -= char.get_width() // 2
@@ -53,7 +57,7 @@ class Sprites:
             image.blit(char, (x, uy))
             char = pg.transform.rotate(char, 180)
             image.blit(char, (x, by))
-
+            # draw numbers
             num = font.render(Nums[self.CELLS_NUMBER-i-1], True, BBC)
             lx = text_offset - char.get_height() // 2
             rx = text_offset2 - char.get_height() // 2
@@ -82,20 +86,47 @@ class Sprites:
             pg.draw.circle(image, small_circle_color, center, self.cell_size // self.checker_scale // 2, 3)
         return image
 
-    def make_hint(self):
+    def make_hint(self) -> pg.Surface:
         image = pg.Surface((self.cell_size, self.cell_size), pg.SRCALPHA)
         center = (self.cell_size // 2, self.cell_size // 2)
         pg.draw.circle(image, HRC, center, self.cell_size // (self.checker_scale * 2))
         return image
 
-    def get_coordinates(self, row: int, column: int, is_player_first = True) -> (int, int):
+    def calculate_coordinates(self, row: int, column: int, is_player_first) -> pg.Rect:
         if is_player_first:
             x = column * self.cell_size + self.offset_size
             y = row * self.cell_size + self.offset_size
         else:
-            x = (self.CELLS_NUMBER - column - 1) * self.cell_size + self.offset_size
-            y = (self.CELLS_NUMBER - row - 1) * self.cell_size + self.offset_size
+            x = self.height - ((column + 1) * self.cell_size + self.offset_size)
+            y = self.height - ((row + 1) * self.cell_size + self.offset_size)
         rect = pg.Rect(x, y, self.cell_size, self.cell_size)
         return rect
 
+    def make_coordinates_matrix(self, is_player_first) -> list[list[pg.Rect, ...], ...]:
+        coordinate_matrix = []
+        for i in range(self.CELLS_NUMBER):
+            row = []
+            for j in range(self.CELLS_NUMBER):
+                cell = self.calculate_coordinates(i, j, is_player_first)
+                row.append(cell)
+            coordinate_matrix.append(row)
+        return coordinate_matrix
+
+    def get_coordinates(self, i, j, is_player_first) -> pg.Rect:
+        if is_player_first:
+            matrix = self.cords_board
+        else:
+            matrix = self.rotated_cords_board
+        return matrix[i][j]
+
+    def get_cell(self, x, y, is_player_first) -> (int, int):
+        """:return: cell indexes if find else (-1, -1)"""
+        matrix = self.cords_board if is_player_first else self.rotated_cords_board
+        indexes = (-1, -1)
+        for i in range(self.CELLS_NUMBER):
+            for j in range(self.CELLS_NUMBER):
+                rect = matrix[i][j]
+                if rect.collidepoint(x, y):
+                    indexes = (i, j)
+        return indexes
 

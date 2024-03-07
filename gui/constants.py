@@ -1,8 +1,8 @@
-WIN_SIZE = (1050, 1000)
+WIN_SIZE = (820, 800)
 FPS = 144
 HRC = (243, 97, 97)
 CBC = (20, 21, 20)  # checker's black color
-CWC = (250, 250, 250)  #checker's white color
+CWC = (250, 250, 250)  # checker's white color
 BCC = (55, 140, 15)  # black cells color
 WCC = (230, 230, 230)  # white cells color
 BBC = (20, 20, 20)  # board border color

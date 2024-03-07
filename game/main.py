@@ -46,7 +46,7 @@ class Game:
 
 
     def handleMove(self, move: Move):
-        ...
+        return self.getPossibleMoves(move.end_point)
 
     """def getPossibleMoves(self, point: Point) -> list[Move, ...]:
         possible_moves = []
@@ -68,7 +68,8 @@ class Game:
 
 
     def getPossibleMoves(self, point: Point) -> list[Move, ...]:
-        return [Move(point, Point(0, 0))]
+        point = point + Point(1, 1)
+        return [Move(point, point)]
 
 if __name__ == "__main__":
     game = Game()
