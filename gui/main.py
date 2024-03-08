@@ -54,10 +54,17 @@ class Gui:
                         self.__screen.blit(self.__sprites.black_checker, coordinate)
 
         for move in self.possible_moves:
+<<<<<<< HEAD
             move_x = move.end_point.x
             move_y = move.end_point.y
             coordinate = self.__sprites.get_coordinates(move_x, move_y, self.__game.is_player_first)
             coordinate = coordinate.move(self.left_offset, 0)
+=======
+            coordinate = self.__sprites.get_coordinates(move.end_point.x, move.end_point.y)
+            # я хз почему здесь был принт, поэтому просто зкомментил его
+            # print(move.end_point.x, move.end_point.y)
+            coordinate = coordinate.move(board_sprite_x, 0)
+>>>>>>> game_logic
             self.__screen.blit(self.__sprites.hint, coordinate)
 
         pg.display.update()
