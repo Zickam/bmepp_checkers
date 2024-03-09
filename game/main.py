@@ -1,3 +1,5 @@
+import copy
+
 from game.classes import *
 from game import constants
 
@@ -17,6 +19,11 @@ class Game:
     def __init__(self):
         self.board_width = constants.BOARD_WIDTH
         self.board = self._initBoard()
+
+        self.board[4][5].is_checker = True
+        self.board[5][6].is_checker = True
+        self.board[5][6].is_white = True
+
         self.is_player_turn = True
         self.is_player_first = True
 
@@ -40,14 +47,27 @@ class Game:
 
         return board
 
-
     def getBoard(self) -> list[list[Figure, ...], ...]:
         return self.board
 
-
     def handleMove(self, move: Move):
-        return self.getPossibleMoves(move.end_point)
+        print(move)
+        if not self.board[move.start_point.x][move.start_point.y].is_queen:
+            if abs(move.start_point.x - move.end_point.x): # overcome one cell (kill)
 
+                killed_checker_point = move.end_point - move.start_point
+                killed_checker_point.x //= 2
+                killed_checker_point.y //= 2
+                killed_checker_point += move.start_point
+
+                self.board[killed_checker_point.x][killed_checker_point.y].is_checker = False
+                self.board[move.start_point.x][move.start_point.y].is_checker = False
+                self.board[move.end_point.x][move.end_point.y].is_checker = True
+
+        else:
+            raise Exception("Queen")
+
+        return self.getPossibleMoves(move.end_point)
 
     def __isMoveWithinBoundaries(self, move: Move) -> bool:
         if 0 <= move.end_point.x < self.board_width \
@@ -93,14 +113,23 @@ class Game:
 
         return False, None
 
+    queen_directions = [
+        Point(1, 1),
+        Point(-1, -1),
+        Point(1, -1),
+        Point(-1, 1)
+    ]
 
     def getPossibleMoves(self, start_point: Point) -> list[Move, ...]:
         possible_moves = []
 
         if self.board[start_point.x][start_point.y].is_queen:
-            for i in range(-7, 7 + 1):
-                for j in range(-7, 7 + 1):
-                    is_possible, move = self.__isQueenMovePossible(start_point, Point(i, j))
+            for direction in self.queen_directions:
+                for i in range(self.board_width):
+
+                    direction *= i
+
+                    is_possible, move = self.__isQueenMovePossible(start_point, direction)
                     if is_possible:
                         possible_moves.append(move)
 

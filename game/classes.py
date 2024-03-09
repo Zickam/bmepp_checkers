@@ -12,6 +12,14 @@ class Point:
     def __add__(self, point: Point) -> Point:
         return Point(self.x + point.x, self.y + point.y)
 
+    def __mul__(self, num: int) -> Point:
+        return Point(self.x * num, self.y * num)
+
+    # def __truediv__(self, divisor: int) -> Point:
+    #     if self.x % divisor != 0 or self.y % divisor != 0:
+    #         raise Exception(f"Incorrect divisor passed(divisor): ")
+    #     return Point(self.x / other, self.y // divisor)
+
     def __str__(self) -> str:
         return f"Point: ({self.x}, {self.y})"
 
