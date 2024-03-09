@@ -21,8 +21,10 @@ class Game:
         self.board = self._initBoard()
 
         self.board[4][5].is_checker = True
+        self.board[1][2].is_checker = False
         self.board[5][6].is_checker = True
         self.board[5][6].is_white = True
+        self.board[2][5].is_checker = False
 
         self.is_player_turn = True
         self.is_player_first = True
@@ -50,19 +52,32 @@ class Game:
     def getBoard(self) -> list[list[Figure, ...], ...]:
         return self.board
 
+    def handleKillMove(self, move: Move):
+        killed_checker_point = move.end_point - move.start_point
+        killed_checker_point.x //= 2
+        killed_checker_point.y //= 2
+        killed_checker_point += move.start_point
+
+        self.board[killed_checker_point.x][killed_checker_point.y].is_checker = False
+        self.board[move.start_point.x][move.start_point.y].is_checker = False
+        self.board[move.end_point.x][move.end_point.y].is_checker = True
+        self.board[move.end_point.x][move.end_point.y].is_white = self.board[move.start_point.x][move.start_point.y].is_white
+
+    def handleSingleMove(self, move: Move):
+        self.board[move.end_point.x][move.end_point.y].is_checker = self.board[move.start_point.x][move.start_point.y].is_checker
+        self.board[move.end_point.x][move.end_point.y].is_white = self.board[move.start_point.x][move.start_point.y].is_white
+        self.board[move.start_point.x][move.start_point.y].is_checker = False
+
+
+
     def handleMove(self, move: Move):
         print(move)
         if not self.board[move.start_point.x][move.start_point.y].is_queen:
-            if abs(move.start_point.x - move.end_point.x): # overcome one cell (kill)
+            if abs(move.start_point.x - move.end_point.x) == 1:
+                self.handleSingleMove(move)
 
-                killed_checker_point = move.end_point - move.start_point
-                killed_checker_point.x //= 2
-                killed_checker_point.y //= 2
-                killed_checker_point += move.start_point
-
-                self.board[killed_checker_point.x][killed_checker_point.y].is_checker = False
-                self.board[move.start_point.x][move.start_point.y].is_checker = False
-                self.board[move.end_point.x][move.end_point.y].is_checker = True
+            elif abs(move.start_point.x - move.end_point.x) > 1: # overcome one cell (kill)
+                self.handleKillMove(move)
 
         else:
             raise Exception("Queen")
@@ -125,13 +140,13 @@ class Game:
 
         if self.board[start_point.x][start_point.y].is_queen:
             for direction in self.queen_directions:
-                for i in range(self.board_width):
-
-                    direction *= i
-
-                    is_possible, move = self.__isQueenMovePossible(start_point, direction)
+                for i in range(1, self.board_width):
+                    direction_new = direction * i
+                    is_possible, move = self.__isQueenMovePossible(start_point, direction_new)
                     if is_possible:
                         possible_moves.append(move)
+                    else:
+                        break
 
         else:
             for i in [-1, 1]:
@@ -141,7 +156,6 @@ class Game:
                         possible_moves.append(move)
 
         return possible_moves
-
 
 if __name__ == "__main__":
     game = Game()
