@@ -7,14 +7,10 @@ class Point:
         self.y: int = y
 
     def __sub__(self, point: Point) -> Point:
-        self.x -= point.x
-        self.y -= point.y
-        return Point(self.x, self.y)
+        return Point(self.x - point.x, self.y - point.y)
 
     def __add__(self, point: Point) -> Point:
-        self.x += point.x
-        self.y += point.y
-        return Point(self.x, self.y)
+        return Point(self.x + point.x, self.y + point.y)
 
     def __str__(self) -> str:
         return f"Point: ({self.x}, {self.y})"
@@ -26,14 +22,10 @@ class Vec2:
         self.y: float = y
 
     def __sub__(self, vec: Vec2) -> Vec2:
-        self.x -= vec.x
-        self.y -= vec.y
-        return Vec2(self.x, self.y)
+        return Vec2(self.x - vec.x, self.y - vec.y)
 
     def __add__(self, vec: Vec2) -> Vec2:
-        self.x += vec.x
-        self.y += vec.y
-        return Vec2(self.x, self.y)
+        return Vec2(self.x + vec.x, self.y + vec.y)
 
     def __str__(self) -> str:
         return f"Vec2: ({self.x}, {self.y})"
@@ -44,7 +36,10 @@ class Move:
         self.start_point: Point = start_point
         self.end_point: Point = end_point
 
+    def __str__(self) -> str:
+        return f"Move: ({self.start_point}, {self.end_point})"
+
 
 if __name__ == "__main__":
-    vec = Vec2(10.2, 10.3)
-    print(vec + Vec2(100, 200))
+    vec = Point(10.2, 10.3)
+    print(vec + Point(-1, -1))
