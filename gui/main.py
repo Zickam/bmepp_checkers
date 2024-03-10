@@ -29,7 +29,7 @@ class Gui:
 
     def render(self):
 
-        if self.__game.is_player_first:
+        if self.__game.is_player_white:
             board_sprite = self.__sprites.board
         else:
             board_sprite = self.__sprites.rotated_board
@@ -40,7 +40,7 @@ class Gui:
             for j, figure in enumerate(row):
                 if not figure.is_checker:
                     continue
-                coordinate = self.__sprites.get_coordinates(i, j, self.__game.is_player_first)
+                coordinate = self.__sprites.get_coordinates(i, j, self.__game.is_player_white)
                 coordinate = coordinate.move(self.left_offset, 0)
                 if figure.is_white:
                     if figure.is_queen:
@@ -56,7 +56,7 @@ class Gui:
         for move in self.possible_moves:
             move_x = move.end_point.x
             move_y = move.end_point.y
-            coordinate = self.__sprites.get_coordinates(move_x, move_y, self.__game.is_player_first)
+            coordinate = self.__sprites.get_coordinates(move_x, move_y, self.__game.is_player_white)
             coordinate = coordinate.move(self.left_offset, 0)
             self.__screen.blit(self.__sprites.hint, coordinate)
 
@@ -70,7 +70,7 @@ class Gui:
             if event.type == pg.MOUSEBUTTONUP:
                 if event.button in (1, 3):  # RMB, LMB
                     x, y = event.pos
-                    i, j = self.__sprites.get_cell(x-self.left_offset, y, self.__game.is_player_first)
+                    i, j = self.__sprites.get_cell(x-self.left_offset, y, self.__game.is_player_white)
                     if (i, j) == (-1, -1):
                         continue
                     board = self.__game.getBoard()

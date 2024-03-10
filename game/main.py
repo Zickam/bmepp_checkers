@@ -4,7 +4,6 @@ from game.classes import *
 from game import constants
 
 
-
 class Figure:
     def __init__(self, is_checker: bool, is_white: bool):
         self.is_checker: bool = is_checker
@@ -19,11 +18,10 @@ class Game:
     def __init__(self):
         self.board_width = constants.BOARD_WIDTH
         self.board = self._initBoard()
-
+        self._possible_moves: dict[Point, list] = self._getPossibleMoves()
         # self.is_player_turn = True
-        self.is_player_first = True
+        self.is_player_white = True
         self.is_white_turn = True
-
 
     def _initBoard(self) -> list[list[Figure, ...], ...]:
         board = []
@@ -60,18 +58,21 @@ class Game:
         self.board[move.killed_point.x][move.killed_point.y].is_checker = False
         self.board[move.start_point.x][move.start_point.y].is_checker = False
         self.board[move.end_point.x][move.end_point.y].is_checker = True
-        self.board[move.end_point.x][move.end_point.y].is_white = self.board[move.start_point.x][move.start_point.y].is_white
+        self.board[move.end_point.x][move.end_point.y].is_white = self.board[move.start_point.x][
+            move.start_point.y].is_white
 
     def handleSingleMove(self, move: Move):
-        self.board[move.end_point.x][move.end_point.y].is_checker = self.board[move.start_point.x][move.start_point.y].is_checker
-        self.board[move.end_point.x][move.end_point.y].is_white = self.board[move.start_point.x][move.start_point.y].is_white
+        self.board[move.end_point.x][move.end_point.y].is_checker = self.board[move.start_point.x][
+            move.start_point.y].is_checker
+        self.board[move.end_point.x][move.end_point.y].is_white = self.board[move.start_point.x][
+            move.start_point.y].is_white
         self.board[move.start_point.x][move.start_point.y].is_checker = False
 
     def handleMove(self, move: Move):
-        print(move)
         if not self.board[move.start_point.x][move.start_point.y].is_queen:
             if move.is_kill:
                 self.handleKillMove(move)
+
                 possible_moves = self.getPossibleMoves(move.end_point)
                 necessary_moves = []
                 for possible_move in possible_moves:
@@ -80,17 +81,14 @@ class Game:
                 if len(necessary_moves) == 0:
                     self.is_white_turn = not self.is_white_turn
 
-
-
-            else: # overcome one cell (kill)
+            else:  # overcome one cell (kill)
                 self.handleSingleMove(move)
 
                 self.is_white_turn = not self.is_white_turn
-
         else:
             raise Exception("Queen")
 
-
+        self._possible_moves = self._getPossibleMoves()
 
     def __isMoveWithinBoundaries(self, move: Move) -> bool:
         if 0 <= move.end_point.x < self.board_width \
@@ -99,7 +97,7 @@ class Game:
 
         return False
 
-    def __isCheckerMovePossible(self, start_point: Point, direction: Point) -> tuple[bool, Move | None]:
+    def _isCheckerMovePossible(self, start_point: Point, direction: Point) -> tuple[bool, Move | None]:
         move = Move(start_point, start_point + direction)
         if self.__isMoveWithinBoundaries(move):
             if self.board[move.end_point.x][move.end_point.y].is_checker:
@@ -123,7 +121,7 @@ class Game:
 
         return False, None
 
-    def __isQueenMovePossible(self, start_point: Point, direction: Point) -> tuple[bool, Move | None]:
+    def _isQueenMovePossible(self, start_point: Point, direction: Point) -> tuple[bool, Move | None]:
         move = Move(start_point, start_point + direction)
         if self.__isMoveWithinBoundaries(move):
             if self.board[move.end_point.x][move.end_point.y].is_checker:
@@ -145,34 +143,61 @@ class Game:
         Point(-1, 1)
     ]
 
-    def getPossibleMoves(self, start_point: Point) -> list[Move]:
+    def _getQueenPossibleMoves(self, start_point: Point) -> list[Move]:
+        for direction in self.queen_directions:
+            for i in range(1, self.board_width):
+                direction_new = direction * i
+                is_possible, move = self._isQueenMovePossible(start_point, direction_new)
+                if is_possible:
+                    possible_moves.append(move)
+                else:
+                    break
+
+        return
+
+    def _getCheckerPossibleMoves(self, start_point: Point) -> list[Move]:
         unnecessary_moves = []
-        necessary_moves = [] # killing moves
+        necessary_moves = []  # killing moves
 
-        if self.board[start_point.x][start_point.y].is_queen:
-            for direction in self.queen_directions:
-                for i in range(1, self.board_width):
-                    direction_new = direction * i
-                    is_possible, move = self.__isQueenMovePossible(start_point, direction_new)
-                    if is_possible:
-                        possible_moves.append(move)
-                    else:
-                        break
-
-        else:
-            for i in [-1, 1]:
-                for j in [-1, 1]:
-                    is_possible, move = self.__isCheckerMovePossible(start_point, Point(i, j))
-                    if is_possible:
-                        if move.is_kill:
+        for i in [-1, 1]:
+            for j in [-1, 1]:
+                is_possible, move = self._isCheckerMovePossible(start_point, Point(i, j))
+                if is_possible:
+                    match move.is_kill:
+                        case True:
                             necessary_moves.append(move)
-                        else:
+                        case False:
                             unnecessary_moves.append(move)
 
-        if len(necessary_moves) != 0:
-            return necessary_moves
-        else:
+        if len(necessary_moves) == 0:
             return unnecessary_moves
+        else:
+            return necessary_moves
+
+
+    def _getPossibleMovesForPoint(self, start_point: Point) -> list[Move]:
+        if self.board[start_point.x][start_point.y].is_queen:
+            return self._getQueenPossibleMoves(start_point)
+        else:
+            return self._getCheckerPossibleMoves(start_point)
+
+    def _getPossibleMoves(self) -> dict[Point, list]:
+        possible_moves = {}
+        for i in range(self.board_width):
+            for j in range(self.board_width):
+                if self.is_player_white == self.board[i][j].is_white and self.board[i][j].is_checker:
+                    for possible_move in self._getPossibleMovesForPoint(Point(i, j)):
+                        if possible_move.start_point in possible_moves:
+                            possible_moves[possible_move.start_point].append(possible_move)
+                        else:
+                            possible_moves[possible_move.start_point] = []
+
+        return possible_moves
+
+    def getPossibleMoves(self, start_point: Point) -> list[Move]:
+        if start_point in self._possible_moves:
+            return self._possible_moves[start_point]
+        return []
 
 
 if __name__ == "__main__":
