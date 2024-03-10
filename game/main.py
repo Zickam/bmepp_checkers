@@ -45,7 +45,7 @@ class Game:
 
         return board
 
-    def isWhiteTurn(self) -> bool:
+    def getIsWhiteTurn(self) -> bool:
         return self.is_white_turn
 
     def getBoard(self) -> list[list[Figure, ...], ...]:
@@ -72,9 +72,19 @@ class Game:
         if not self.board[move.start_point.x][move.start_point.y].is_queen:
             if move.is_kill:
                 self.handleKillMove(move)
+                possible_moves = self.getPossibleMoves(move.end_point)
+                necessary_moves = []
+                for possible_move in possible_moves:
+                    if possible_move.is_kill:
+                        necessary_moves.append(possible_move)
+                if len(necessary_moves) == 0:
+                    self.is_white_turn = not self.is_white_turn
+
+
 
             else: # overcome one cell (kill)
                 self.handleSingleMove(move)
+
                 self.is_white_turn = not self.is_white_turn
 
         else:
@@ -135,7 +145,7 @@ class Game:
         Point(-1, 1)
     ]
 
-    def getPossibleMoves(self, start_point: Point) -> list[Move, ...]:
+    def getPossibleMoves(self, start_point: Point) -> list[Move]:
         unnecessary_moves = []
         necessary_moves = [] # killing moves
 

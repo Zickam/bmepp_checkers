@@ -76,7 +76,7 @@ class Gui:
                     board = self.__game.getBoard()
 
                     # click on checker
-                    if board[i][j].is_checker and board[i][j].is_white == self.__game.isWhiteTurn():
+                    if board[i][j].is_checker and board[i][j].is_white == self.__game.getIsWhiteTurn():
                         self.possible_moves = self.__game.getPossibleMoves(Point(i, j))
                         continue
 
