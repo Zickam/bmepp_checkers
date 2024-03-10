@@ -20,14 +20,10 @@ class Game:
         self.board_width = constants.BOARD_WIDTH
         self.board = self._initBoard()
 
-        self.board[4][5].is_checker = True
-        self.board[1][2].is_checker = False
-        self.board[5][6].is_checker = True
-        self.board[5][6].is_white = True
-        self.board[2][5].is_checker = False
-
-        self.is_player_turn = True
+        # self.is_player_turn = True
         self.is_player_first = True
+        self.is_white_turn = True
+
 
     def _initBoard(self) -> list[list[Figure, ...], ...]:
         board = []
@@ -49,16 +45,19 @@ class Game:
 
         return board
 
+    def isWhiteTurn(self) -> bool:
+        return self.is_white_turn
+
     def getBoard(self) -> list[list[Figure, ...], ...]:
         return self.board
 
     def handleKillMove(self, move: Move):
-        killed_checker_point = move.end_point - move.start_point
-        killed_checker_point.x //= 2
-        killed_checker_point.y //= 2
-        killed_checker_point += move.start_point
+        # killed_checker_point = move.end_point - move.start_point
+        # killed_checker_point.x //= 2
+        # killed_checker_point.y //= 2
+        # killed_checker_point += move.start_point
 
-        self.board[killed_checker_point.x][killed_checker_point.y].is_checker = False
+        self.board[move.killed_point.x][move.killed_point.y].is_checker = False
         self.board[move.start_point.x][move.start_point.y].is_checker = False
         self.board[move.end_point.x][move.end_point.y].is_checker = True
         self.board[move.end_point.x][move.end_point.y].is_white = self.board[move.start_point.x][move.start_point.y].is_white
@@ -68,21 +67,20 @@ class Game:
         self.board[move.end_point.x][move.end_point.y].is_white = self.board[move.start_point.x][move.start_point.y].is_white
         self.board[move.start_point.x][move.start_point.y].is_checker = False
 
-
-
     def handleMove(self, move: Move):
         print(move)
         if not self.board[move.start_point.x][move.start_point.y].is_queen:
-            if abs(move.start_point.x - move.end_point.x) == 1:
-                self.handleSingleMove(move)
-
-            elif abs(move.start_point.x - move.end_point.x) > 1: # overcome one cell (kill)
+            if move.is_kill:
                 self.handleKillMove(move)
+
+            else: # overcome one cell (kill)
+                self.handleSingleMove(move)
+                self.is_white_turn = not self.is_white_turn
 
         else:
             raise Exception("Queen")
 
-        return self.getPossibleMoves(move.end_point)
+
 
     def __isMoveWithinBoundaries(self, move: Move) -> bool:
         if 0 <= move.end_point.x < self.board_width \
@@ -100,6 +98,8 @@ class Game:
                     move = Move(move.start_point, move.end_point + direction)
                     if self.__isMoveWithinBoundaries(move):
                         if not self.board[move.end_point.x][move.end_point.y].is_checker:
+                            move.is_kill = True
+                            move.killed_point = move.start_point + direction
                             return True, move
             else:
                 if self.board[move.start_point.x][move.start_point.y].is_white:
@@ -136,7 +136,8 @@ class Game:
     ]
 
     def getPossibleMoves(self, start_point: Point) -> list[Move, ...]:
-        possible_moves = []
+        unnecessary_moves = []
+        necessary_moves = [] # killing moves
 
         if self.board[start_point.x][start_point.y].is_queen:
             for direction in self.queen_directions:
@@ -153,9 +154,16 @@ class Game:
                 for j in [-1, 1]:
                     is_possible, move = self.__isCheckerMovePossible(start_point, Point(i, j))
                     if is_possible:
-                        possible_moves.append(move)
+                        if move.is_kill:
+                            necessary_moves.append(move)
+                        else:
+                            unnecessary_moves.append(move)
 
-        return possible_moves
+        if len(necessary_moves) != 0:
+            return necessary_moves
+        else:
+            return unnecessary_moves
+
 
 if __name__ == "__main__":
     game = Game()

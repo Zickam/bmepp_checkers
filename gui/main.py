@@ -76,7 +76,7 @@ class Gui:
                     board = self.__game.getBoard()
 
                     # click on checker
-                    if board[i][j].is_checker:
+                    if board[i][j].is_checker and board[i][j].is_white == self.__game.isWhiteTurn():
                         self.possible_moves = self.__game.getPossibleMoves(Point(i, j))
                         continue
 
@@ -84,7 +84,8 @@ class Gui:
                     for move in self.possible_moves:
                         move_end = move.end_point
                         if move_end.x == i and move_end.y == j:
-                            self.possible_moves = self.__game.handleMove(move)
+                            self.__game.handleMove(move)
+                            self.possible_moves.clear()
 
     def close(self):
         raise Exception("Implement an exiting for all the child processes and threads!")

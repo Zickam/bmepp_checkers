@@ -40,10 +40,10 @@ class Vec2:
 
 
 class Move:
-    def __init__(self, start_point: Point, end_point: Point, is_kill_move: bool = False, killed_point: Point | None = None):
+    def __init__(self, start_point: Point, end_point: Point, is_kill: bool = False, killed_point: Point | None = None):
         self.start_point: Point = start_point
         self.end_point: Point = end_point
-        self.is_kill_move = is_kill_move
+        self.is_kill = is_kill
         self.killed_point = killed_point
 
     def __str__(self) -> str:
