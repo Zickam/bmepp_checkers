@@ -20,6 +20,12 @@ class Point:
     #         raise Exception(f"Incorrect divisor passed(divisor): ")
     #     return Point(self.x / other, self.y // divisor)
 
+    def __eq__(self, point: Point) -> bool:
+        return True if self.x == point.x and self.y == point.y else False
+
+    def __repr__(self) -> tuple[int, int]:
+        return self.x, self.y
+
     def __str__(self) -> str:
         return f"Point: ({self.x}, {self.y})"
 
@@ -49,7 +55,11 @@ class Move:
     def __str__(self) -> str:
         return f"Move: ({self.start_point}, {self.end_point})"
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 if __name__ == "__main__":
-    vec = Point(10.2, 10.3)
-    print(vec + Point(-1, -1))
+    point = Point(1, 2)
+    print(point.__repr__(), type(point.__repr__()))
+    print(point.__str__(), type(point.__str__()))

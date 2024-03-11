@@ -17,11 +17,12 @@ class Game:
 
     def __init__(self):
         self.board_width = constants.BOARD_WIDTH
-        self.board = self._initBoard()
-        self._possible_moves: dict[Point, list] = self._getPossibleMoves()
-        # self.is_player_turn = True
         self.is_player_white = True
         self.is_white_turn = True
+
+        self.board = self._initBoard()
+        self._possible_moves: dict[Point.__repr__, list] = self._getPossibleMoves()
+        # self.is_player_turn = True
 
     def _initBoard(self) -> list[list[Figure, ...], ...]:
         board = []
@@ -73,18 +74,24 @@ class Game:
             if move.is_kill:
                 self.handleKillMove(move)
 
-                possible_moves = self.getPossibleMoves(move.end_point)
-                necessary_moves = []
-                for possible_move in possible_moves:
-                    if possible_move.is_kill:
-                        necessary_moves.append(possible_move)
-                if len(necessary_moves) == 0:
-                    self.is_white_turn = not self.is_white_turn
+                self._possible_moves = self._getPossibleMoves()
 
-            else:  # overcome one cell (kill)
+                if move.end_point.__repr__() in self._possible_moves:
+
+                    necessary_moves = []
+                    for possible_move in self._possible_moves[move.end_point.__repr__()]:
+                        if possible_move.is_kill:
+                            necessary_moves.append(possible_move)
+                    print(necessary_moves)
+                    if len(necessary_moves) == 0:
+                        self.is_white_turn = not self.is_white_turn
+
+            else:
                 self.handleSingleMove(move)
-
                 self.is_white_turn = not self.is_white_turn
+
+                self._possible_moves = self._getPossibleMoves()
+
         else:
             raise Exception("Queen")
 
@@ -181,22 +188,32 @@ class Game:
         else:
             return self._getCheckerPossibleMoves(start_point)
 
-    def _getPossibleMoves(self) -> dict[Point, list]:
-        possible_moves = {}
+    def _getPossibleMoves(self) -> dict[Point.__repr__, list]: # str is the __repr__ of Point
+        unnecessary_moves = {}
+        necessary_moves = {}
         for i in range(self.board_width):
             for j in range(self.board_width):
-                if self.is_player_white == self.board[i][j].is_white and self.board[i][j].is_checker:
+                if self.is_white_turn == self.board[i][j].is_white and self.board[i][j].is_checker:
                     for possible_move in self._getPossibleMovesForPoint(Point(i, j)):
-                        if possible_move.start_point in possible_moves:
-                            possible_moves[possible_move.start_point].append(possible_move)
+                        if possible_move.is_kill:
+                            if possible_move.start_point.__repr__() in necessary_moves:
+                                necessary_moves[possible_move.start_point.__repr__()].append(possible_move)
+                            else:
+                                necessary_moves[possible_move.start_point.__repr__()] = [possible_move]
                         else:
-                            possible_moves[possible_move.start_point] = []
+                            if possible_move.start_point.__repr__() in unnecessary_moves:
+                                unnecessary_moves[possible_move.start_point.__repr__()].append(possible_move)
+                            else:
+                                unnecessary_moves[possible_move.start_point.__repr__()] = [possible_move]
 
-        return possible_moves
+        if len(necessary_moves) == 0:
+            return unnecessary_moves
+        else:
+            return necessary_moves
 
     def getPossibleMoves(self, start_point: Point) -> list[Move]:
-        if start_point in self._possible_moves:
-            return self._possible_moves[start_point]
+        if start_point.__repr__() in self._possible_moves:
+            return self._possible_moves[start_point.__repr__()]
         return []
 
 
