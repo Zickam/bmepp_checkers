@@ -1,6 +1,6 @@
 import pygame as pg
 import string
-from gui.constants import WIN_SIZE, BCC, WCC, BBC, FONT_PATH, CBC, CWC, HRC
+from gui.constants import WIN_SIZE, BCC, WCC, BBC, BOARD_FONT_PATH, CBC, CWC, HRC, IGC
 pg.init()
 
 
@@ -20,6 +20,7 @@ class Sprites:
         self.black_checker = self.make_checker(False, False)
         self.queen_black_checker = self.make_checker(False, True)
         self.hint = self.make_hint()
+        self.indicator = self.make_checker_indicator()
 
         self.cords_board = self.make_coordinates_matrix(True)
         self.rotated_cords_board = self.make_coordinates_matrix(False)
@@ -28,7 +29,7 @@ class Sprites:
         Alph = string.ascii_lowercase
         Nums = [str(x) for x in range(1, 27)]
 
-        font = pg.font.Font(FONT_PATH, self.font_size)
+        font = pg.font.Font(BOARD_FONT_PATH, self.font_size)
         image = pg.Surface((self.height, self.height))
         image.fill(WCC)
 
@@ -91,6 +92,14 @@ class Sprites:
         center = (self.cell_size // 2, self.cell_size // 2)
         pg.draw.circle(image, HRC, center, self.cell_size // (self.checker_scale * 2))
         return image
+
+    def make_checker_indicator(self):
+        image = pg.Surface((self.cell_size, self.cell_size))
+        image.fill(IGC)
+        return image
+
+
+
 
     def calculate_coordinates(self, row: int, column: int, is_player_first) -> pg.Rect:
         if is_player_first:
