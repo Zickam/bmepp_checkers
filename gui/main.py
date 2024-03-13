@@ -6,7 +6,7 @@ from game.classes import Point
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS
 from game.main import Game
-from gui.buttons import Button, Text, caption_text, play_white_button, play_black_button, difficulty_text, minus_button, plus_button
+from gui.buttons import Button, Text, caption_text, play_white_button, play_black_button, difficulty_text, minus_button, plus_button, restart_button
 
 
 class Gui:
@@ -71,6 +71,7 @@ class Gui:
                 coordinate = self.__sprites.get_coordinates(move_x, move_y, self.__game.is_player_white)
                 coordinate = coordinate.move(self.left_offset, 0)
                 self.__screen.blit(self.__sprites.hint, coordinate)
+            restart_button.render(self.__screen)
         else:
             self.__screen.fill((108, 152, 76))
             caption_text.render(self.__screen)
@@ -116,12 +117,13 @@ class Gui:
 
                     if self.is_game_started:
                         # click on checker
+                        if restart_button.collide_point((x, y)):
+                            print(1)
+
                         if board[i][j].is_checker and board[i][j].is_white == self.__game.getIsWhiteTurn():
                             self.selected_checker = Point(i, j)
                             self.possible_moves = self.__game.getPossibleMoves(Point(i, j))
                             continue
-
-
 
                         # click on hint
                         for move in self.possible_moves:
@@ -135,6 +137,7 @@ class Gui:
                                 else:
                                     self.selected_checker = move_end
                                     self.possible_moves = self.__game.getPossibleMoves(move_end)
+
 
     def close(self):
         raise Exception("Implement an exiting for all the child processes and threads!")
