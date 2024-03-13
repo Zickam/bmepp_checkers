@@ -1,6 +1,7 @@
 import pygame as pg
 import string
 from gui.constants import WIN_SIZE, BCC, WCC, BBC, BOARD_FONT_PATH, CBC, CWC, HRC, IGC
+
 pg.init()
 
 
@@ -59,7 +60,7 @@ class Sprites:
             char = pg.transform.rotate(char, 180)
             image.blit(char, (x, by))
             # draw numbers
-            num = font.render(Nums[self.CELLS_NUMBER-i-1], True, BBC)
+            num = font.render(Nums[self.CELLS_NUMBER - i - 1], True, BBC)
             lx = text_offset - char.get_height() // 2
             rx = text_offset2 - char.get_height() // 2
             y = (i + .5) * self.cell_size + self.offset_size
@@ -98,9 +99,6 @@ class Sprites:
         image.fill(IGC)
         return image
 
-
-
-
     def calculate_coordinates(self, row: int, column: int, is_player_first) -> pg.Rect:
         if is_player_first:
             x = column * self.cell_size + self.offset_size
@@ -138,4 +136,3 @@ class Sprites:
                 if rect.collidepoint(x, y):
                     indexes = (i, j)
         return indexes
-

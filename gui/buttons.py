@@ -1,7 +1,8 @@
 import pygame as pg
 from gui.constants import BUTTONS_FONT_PATH, GC, BC, WC, WIN_SIZE
+
 pg.init()
-button_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 15)
+button_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 17)
 caption_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 5)
 
 
@@ -25,9 +26,10 @@ class Text:
 
 
 class Button(Text):
-    def __init__(self, coordinates: (int, int), text: str, size: (int, int), is_black: bool):
+    def __init__(self, coordinates: (int, int), text: str, size: (int, int), is_black: bool, stroke=True):
         self.size = size
         self.is_black = is_black
+        self.stroke = stroke
         super().__init__(coordinates, text)
 
     def make_image(self) -> pg.Surface:
@@ -39,8 +41,11 @@ class Button(Text):
         else:
             bg_color = WC
             text_color = BC
-        image.fill(text_color)
-        pg.draw.rect(image,bg_color, (2, 2, self.size[0] - 4, self.size[1] - 4))
+        if self.stroke:
+            image.fill(text_color)
+        else:
+            image.fill(bg_color)
+        pg.draw.rect(image, bg_color, (2, 2, self.size[0] - 4, self.size[1] - 4))
         text = button_font.render(self.text, 1, text_color)
         text_rect = text.get_rect(center=center_for_text)
         image.blit(text, text_rect)
@@ -48,3 +53,11 @@ class Button(Text):
 
     def collide_point(self, coordinates: (int, int)) -> bool:
         return self.rect.collidepoint(coordinates)
+
+
+caption_text = Text((400, 100), 'Checkers', True)
+play_white_button = Button((200, 300), 'PLAY WHITE', (280, 70), False)
+play_black_button = Button((600, 300), 'PLAY BLACK', (280, 70), True)
+difficulty_text = Text((400, 500), 'Difficulty')
+minus_button = Button((295, 550), '-', (50, 50), True, False)
+plus_button = Button((495, 550), '+', (50, 50), False, False)
