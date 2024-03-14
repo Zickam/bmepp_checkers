@@ -54,7 +54,7 @@ class Button(Text):
     def collide_point(self, coordinates: (int, int)) -> bool:
         return self.rect.collidepoint(coordinates)
 
-
+# ВСЁ МАГИЧЕСКОЕ!
 caption_text = Text((400, 100), 'Checkers', True)
 play_white_button = Button((200, 300), 'PLAY WHITE', (280, 70), False)
 play_black_button = Button((600, 300), 'PLAY BLACK', (280, 70), True)
@@ -62,3 +62,7 @@ difficulty_text = Text((400, 500), 'Difficulty')
 minus_button = Button((295, 550), '-', (50, 50), True, False)
 plus_button = Button((495, 550), '+', (50, 50), False, False)
 restart_button = Button((20,20), 'R', (40,40), True, False)
+
+
+def get_difficulty_num(difficulty):
+    return Text((400, 550), f'{difficulty}')

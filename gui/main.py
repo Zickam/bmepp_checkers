@@ -6,7 +6,8 @@ from game.classes import Point
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS
 from game.main import Game
-from gui.buttons import Button, Text, caption_text, play_white_button, play_black_button, difficulty_text, minus_button, plus_button, restart_button
+from gui.buttons import Button, Text, caption_text, play_white_button, play_black_button, difficulty_text, \
+    minus_button, plus_button, restart_button, get_difficulty_num
 
 
 class Gui:
@@ -18,7 +19,6 @@ class Gui:
         self.selected_checker = None
         self.is_game_started = False
         self.difficulty = 3
-        self.difficulty_num = Text((400, 550), f'{self.difficulty}')
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
         pg.display.set_caption('Checkers')
@@ -73,15 +73,14 @@ class Gui:
                 self.__screen.blit(self.__sprites.hint, coordinate)
             restart_button.render(self.__screen)
         else:
-            self.__screen.fill((108, 152, 76))
+            self.__screen.fill((108, 152, 76))  # Сделать константой
             caption_text.render(self.__screen)
             play_white_button.render(self.__screen)
             play_black_button.render(self.__screen)
             difficulty_text.render(self.__screen)
             minus_button.render(self.__screen)
             plus_button.render(self.__screen)
-            self.difficulty_num.render(self.__screen)
-
+            get_difficulty_num(self.difficulty).render(self.__screen)
         pg.display.update()
 
     def handle_events(self):
@@ -93,8 +92,7 @@ class Gui:
                 if event.button in (1, 3):  # RMB, LMB
                     x, y = event.pos
                     i, j = self.__sprites.get_cell(x - self.left_offset, y, self.__game.is_player_white)
-                    if (i, j) == (-1, -1):
-                        continue
+
                     board = self.__game.getBoard()
                     if self.is_game_started is False:
                         if play_white_button.collide_point((x, y)):
@@ -108,12 +106,10 @@ class Gui:
                         if plus_button.collide_point((x, y)):
                             self.difficulty += 1
                             print(self.difficulty)
-                            pg.display.update(self.difficulty_num)
 
                         if minus_button.collide_point((x, y)):
                             self.difficulty -= 1
                             print(self.difficulty)
-                            pg.display.update(self.difficulty_num)
 
                     if self.is_game_started:
                         # click on checker
