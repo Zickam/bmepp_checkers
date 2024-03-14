@@ -105,11 +105,9 @@ class Gui:
 
                         if plus_button.collide_point((x, y)):
                             self.difficulty += 1
-                            print(self.difficulty)
 
                         if minus_button.collide_point((x, y)):
                             self.difficulty -= 1
-                            print(self.difficulty)
 
                     if self.is_game_started:
                         # click on checker
