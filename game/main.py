@@ -82,9 +82,11 @@ class Game:
                     for possible_move in self._possible_moves[move.end_point.__repr__()]:
                         if possible_move.is_kill:
                             necessary_moves.append(possible_move)
-                    print(necessary_moves)
+
                     if len(necessary_moves) == 0:
                         self.is_white_turn = not self.is_white_turn
+                else:
+                    self.is_white_turn = not self.is_white_turn
 
             else:
                 self.handleSingleMove(move)
