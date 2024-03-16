@@ -58,7 +58,7 @@ class Move:
         return f"Move: ({self.start_point}, {self.end_point})"
 
 class Figure:
-    def __init__(self, is_checker: bool, is_white: bool):
+    def __init__(self, is_checker: bool, is_white: bool = True):
         self.is_checker: bool = is_checker
         self.is_white: bool = is_white
         self.is_queen: bool = False
