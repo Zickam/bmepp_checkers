@@ -10,12 +10,10 @@ class Game:
 
     def __init__(self):
         self.board_width = constants.BOARD_WIDTH
-        self.is_player_white = True
-        self.is_white_turn = True
+        self.__is_player_white = True
+        self.__is_white_turn = True
 
         self.board: list[list[Figure]] = self._initBoard()
-
-        self.board[5][2].is_queen = True
 
         self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
 
@@ -39,8 +37,11 @@ class Game:
 
         return board
 
-    def getIsWhiteTurn(self) -> bool:
-        return self.is_white_turn
+    def isWhiteTurn(self) -> bool:
+        return self.__is_white_turn
+
+    def isPlayerWhite(self) -> bool:
+        return self.__is_player_white
 
     def getBoard(self) -> list[list[Figure]]:
         return self.board
@@ -62,9 +63,19 @@ class Game:
                 if possible_move.is_kill:
                     necessary_moves.append(possible_move)
             if len(necessary_moves) == 0:
-                self.is_white_turn = not self.is_white_turn
+                self.__is_white_turn = not self.__is_white_turn
         else:
-            self.is_white_turn = not self.is_white_turn
+            self.__is_white_turn = not self.__is_white_turn
+
+
+    def handleChecker2Queen(self, move: Move):
+        if self.__is_player_white:
+            if move.end_point.x == 0:
+                self.board[move.end_point.x][move.end_point.y].is_queen = True
+
+        else:
+            if move.end_point.x == self.board_width - 1:
+                self.board[move.end_point.x][move.end_point.y].is_queen = True
 
     def handleQueenMove(self, move: Move):
         if move.is_kill:
@@ -73,18 +84,21 @@ class Game:
 
         else:
             self.handleRelocation(move)
-            self.is_white_turn = not self.is_white_turn
+            self.__is_white_turn = not self.__is_white_turn
 
 
     def handleCheckerMove(self, move: Move):
         if move.is_kill:
             self.handleKillMove(move)
+            self.handleChecker2Queen(move)
 
             self.handleContinuousMove(move)
 
         else:
             self.handleRelocation(move)
-            self.is_white_turn = not self.is_white_turn
+            self.handleChecker2Queen(move)
+
+            self.__is_white_turn = not self.__is_white_turn
 
             self._available_moves = self._getAvailableMoves()
 
@@ -205,7 +219,7 @@ class Game:
 
         for i in range(self.board_width):
             for j in range(self.board_width):
-                if self.is_white_turn == self.board[i][j].is_white and self.board[i][j].is_checker:
+                if self.__is_white_turn == self.board[i][j].is_white and self.board[i][j].is_checker:
                     possible_moves = self._getPossibleMovesForPoint(Point(i, j))
 
                     if possible_moves.necessary_moves:
@@ -231,6 +245,8 @@ class Game:
         if start_point.__hash__() in self._available_moves:
             return self._available_moves[start_point.__hash__()]
         return []
+
+
 
 
 if __name__ == "__main__":
