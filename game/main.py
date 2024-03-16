@@ -68,14 +68,18 @@ class Game:
             self.is_white_turn = not self.is_white_turn
 
 
-    def handleChecker2Queen(self, move: Move):
+    def handleChecker2Queen(self, move: Move) -> bool:
         if self.board[move.end_point.x][move.end_point.y].is_white:
             if move.end_point.x == 0:
                 self.board[move.end_point.x][move.end_point.y].is_queen = True
+                return True
 
         else:
             if move.end_point.x == self.board_width - 1:
                 self.board[move.end_point.x][move.end_point.y].is_queen = True
+                return True
+
+        return False
 
     def handleQueenMove(self, move: Move):
         if move.is_kill:
@@ -96,9 +100,9 @@ class Game:
 
         else:
             self.handleRelocation(move)
-            self.handleChecker2Queen(move)
-
-            self.is_white_turn = not self.is_white_turn
+            has_transformed = self.handleChecker2Queen(move)
+            if not has_transformed:
+                self.is_white_turn = not self.is_white_turn
 
             self._available_moves = self._getAvailableMoves()
 
