@@ -15,6 +15,17 @@ class Game:
 
         self.board: list[list[Figure]] = self._initBoard()
 
+        self.board = [[Figure() for i in range(8)] for j in range(8)]
+        self.board[6][1].is_queen = True
+        self.board[6][1].is_checker = True
+        self.board[6][1].is_white = True
+
+        self.board[4][3].is_checker = True
+        self.board[4][3].is_white = False
+
+        self.board[5][6].is_checker = True
+        self.board[5][6].is_white = False
+
         self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
 
     def _initBoard(self) -> list[list[Figure]]:
@@ -69,7 +80,7 @@ class Game:
 
 
     def handleChecker2Queen(self, move: Move):
-        if self.__is_player_white:
+        if self.board[move.end_point.x][move.end_point.y].is_white:
             if move.end_point.x == 0:
                 self.board[move.end_point.x][move.end_point.y].is_queen = True
 
