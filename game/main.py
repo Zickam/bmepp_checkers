@@ -15,23 +15,6 @@ class Game:
 
         self.board: list[list[Figure]] = self._initBoard()
 
-        # self.board = [[Figure() for i in range(8)] for j in range(8)]
-        # self.board[6][1].is_queen = True
-        # self.board[6][1].is_checker = True
-        # self.board[6][1].is_white = True
-        #
-        # self.board[4][3].is_checker = True
-        # self.board[4][3].is_white = False
-        #
-        # self.board[5][6].is_checker = True
-        # self.board[5][6].is_white = False
-        #
-        # self.board[2][5].is_checker = True
-        # self.board[2][5].is_white = False
-        #
-        # self.board[3][4].is_checker = True
-        # self.board[3][4].is_white = False
-
         self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
 
     def _initBoard(self) -> list[list[Figure]]:
@@ -127,17 +110,21 @@ class Game:
 
         self._available_moves = self._getAvailableMoves()
 
-        for i in self.getBoard():
-            for j in i:
-                if j.is_checker:
-                    if j.is_white:
-                        print("W", end="\t")
-                    else:
-                        print("B", end="\t")
-                else:
-                    print("[]", end="\t")
+        self.handleWin()
 
-            print()
+    def handleWin(self):
+        current_side_has_moves = False
+        for _, moves in self._available_moves.items():
+            for move in moves:
+                if self.is_white_turn and self.board[move.start_point.x][move.start_point.y].is_white:
+                    current_side_has_moves = True
+                elif not self.is_white_turn and not self.board[move.start_point.x][move.start_point.y].is_white:
+                    current_side_has_moves = True
+
+        if not current_side_has_moves:
+            print(self.is_white_turn, " has lost")
+        else:
+            print("Game is ongoing")
 
     def __isMoveWithinBoundaries(self, move: Move) -> bool:
         if 0 <= move.end_point.x < self.board_width \

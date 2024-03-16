@@ -63,6 +63,9 @@ class Figure:
         self.is_white: bool = is_white
         self.is_queen: bool = False
 
+    def __str__(self) -> str:
+        return f"{self.__dict__}"
+
 class Moves:
     def __init__(self, necessary_moves: list[Move], unnecessary_moves: list[Move] = list):
         self.necessary_moves = necessary_moves
