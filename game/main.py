@@ -26,6 +26,9 @@ class Game:
         self.board[5][6].is_checker = True
         self.board[5][6].is_white = False
 
+        self.board[2][5].is_checker = True
+        self.board[2][5].is_white = False
+
         self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
 
     def _initBoard(self) -> list[list[Figure]]:
@@ -162,13 +165,12 @@ class Game:
                         != self.board[move.end_point.x][move.end_point.y].is_white:
                     # след пустая?
                     # перебираем до след шашки(хоть наша, хоть нет, иначе до конца) и возвращаем все возможные ходы.
+
                     for i in range(1, 7):
                         _move = Move(move.start_point, move.end_point + raw_direction * i, True, move.end_point)
+
                         if self.__isMoveWithinBoundaries(_move) and self.board[_move.end_point.x][_move.end_point.y].is_checker == False:
                             moves.append(_move)
-
-                        else:
-                            break
 
                     return moves
             else:
@@ -196,6 +198,8 @@ class Game:
                             moves.necessary_moves.append(move)
                         else:
                             moves.unnecessary_moves.append(move)
+
+                    print(possible_moves)
                 else:
                     break
         return moves
