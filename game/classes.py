@@ -23,11 +23,13 @@ class Point:
     def __eq__(self, point: Point) -> bool:
         return True if self.x == point.x and self.y == point.y else False
 
-    def __repr__(self) -> tuple[int, int]:
-        return self.x, self.y
-
     def __str__(self) -> str:
         return f"Point: ({self.x}, {self.y})"
+
+
+    def __hash__(self) -> int:
+        return hash((self.x, self.y))
+
 
 
 class Vec2:
@@ -55,11 +57,18 @@ class Move:
     def __str__(self) -> str:
         return f"Move: ({self.start_point}, {self.end_point})"
 
-    def __repr__(self) -> str:
-        return self.__str__()
+class Figure:
+    def __init__(self, is_checker: bool, is_white: bool):
+        self.is_checker: bool = is_checker
+        self.is_white: bool = is_white
+        self.is_queen: bool = False
+
+class Moves:
+    def __init__(self, necessary_moves: list[Move], unnecessary_moves: list[Move] = list):
+        self.necessary_moves = necessary_moves
+        self.unnecessary_moves = unnecessary_moves
 
 
 if __name__ == "__main__":
     point = Point(1, 2)
-    print(point.__repr__(), type(point.__repr__()))
-    print(point.__str__(), type(point.__str__()))
+    print(point.__hash__())
