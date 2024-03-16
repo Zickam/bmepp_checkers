@@ -29,6 +29,9 @@ class Game:
         self.board[2][5].is_checker = True
         self.board[2][5].is_white = False
 
+        self.board[3][4].is_checker = True
+        self.board[3][4].is_white = False
+
         self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
 
     def _initBoard(self) -> list[list[Figure]]:
@@ -171,7 +174,10 @@ class Game:
 
                         if self.__isMoveWithinBoundaries(_move) and self.board[_move.end_point.x][_move.end_point.y].is_checker == False:
                             moves.append(_move)
+                        elif self.__isMoveWithinBoundaries(_move) and self.board[_move.end_point.x][_move.end_point.y].is_checker == True:
+                            break
 
+                    print(*moves)
                     return moves
             else:
                 return [move]
@@ -187,19 +193,23 @@ class Game:
 
     def _getQueenPossibleMoves(self, start_point: Point) -> Moves:
         moves = Moves([], [])
+        directions_for_necessary_moves = set()
 
         for direction in self.queen_directions:
             for i in range(1, self.board_width):
+                if direction.__hash__() in directions_for_necessary_moves:
+                    continue
+
                 direction_new = direction * i
                 possible_moves = self._isQueenMovePossible(start_point, direction_new, direction)
                 if len(possible_moves) != 0:
                     for move in possible_moves:
                         if move.is_kill:
                             moves.necessary_moves.append(move)
+                            directions_for_necessary_moves.add(direction.__hash__())
                         else:
                             moves.unnecessary_moves.append(move)
 
-                    print(possible_moves)
                 else:
                     break
         return moves
