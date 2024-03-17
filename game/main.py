@@ -123,7 +123,7 @@ class Game:
 
         self.handleWin()
 
-    def handleWin(self):
+    def handleWin(self) -> GameState:
         current_side_has_moves = False
         for _, moves in self._available_moves.items():
             for move in moves:
@@ -195,7 +195,6 @@ class Game:
                         elif self.__isMoveWithinBoundaries(_move) and self.board[_move.end_point.x][_move.end_point.y].is_checker == True:
                             break
 
-                    print(*moves)
                     return moves
             else:
                 return [move]
