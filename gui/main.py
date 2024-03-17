@@ -1,3 +1,4 @@
+import random
 import time
 
 import pygame as pg
@@ -25,10 +26,17 @@ class Gui:
         self.__sprites = Sprites(game.board_width)
         self.left_offset = WIN_SIZE[0] - self.__sprites.board.get_width()
 
+        self.do_random_moves = True
+        self.do_random_move_interval = 1
+        self.next_time_do_random_move = time.time() + self.do_random_move_interval
+
     def mainloop(self):
         while True:
             self.render()
             self.handle_events()
+
+            if self.do_random_moves and time.time() >= self.next_time_do_random_move:
+                self.doRandomMove()
 
             self.__clock.tick(FPS)
 
@@ -131,6 +139,22 @@ class Gui:
                                 else:
                                     self.selected_checker = move_end
                                     self.possible_moves = self.__game.getPossibleMoves(move_end)
+
+    def doRandomMove(self):
+        all_possible_moves = []
+        for i in range(self.__game.board_width):
+            for j in range(self.__game.board_width):
+                if self.__game.getBoard()[i][j].is_checker:
+                    possible_moves = self.__game.getPossibleMoves(Point(i, j))
+                    for move in possible_moves:
+                        all_possible_moves.append(move)
+        self.possible_moves = all_possible_moves
+        if self.possible_moves:
+            self.__game.handleMove(random.choice(self.possible_moves))
+            self.next_time_do_random_move = time.time() + self.do_random_move_interval
+        else:
+            print("gamestate:", self.__game.handleWin())
+            self.do_random_moves = False
 
 
     def close(self):

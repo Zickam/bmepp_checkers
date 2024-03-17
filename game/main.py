@@ -1,8 +1,14 @@
 import copy
+from enum import Enum
 
 from game.classes import *
 from game import constants
 
+class GameState(Enum):
+    ongoing = "Ongoing"
+    b_win = "Black won"
+    w_win = "White won"
+    draw = "Draw"
 
 class Game:
     if constants.BOARD_WIDTH < constants.MIN_BOARD_WIDTH:
@@ -12,6 +18,7 @@ class Game:
         self.board_width = constants.BOARD_WIDTH
         self.is_player_white = True
         self.is_white_turn = True
+        self.__game_state = GameState.ongoing
 
         self.board: list[list[Figure]] = self._initBoard()
 
@@ -126,9 +133,17 @@ class Game:
                     current_side_has_moves = True
 
         if not current_side_has_moves:
-            print(self.is_white_turn, " has lost")
+            if self.is_white_turn:
+                self.__game_state = GameState.b_win
+            else:
+                self.__game_state = GameState.w_win
         else:
-            print("Game is ongoing")
+            self.__game_state = GameState.ongoing
+
+        return self.__game_state
+
+    def getGameState(self) -> GameState:
+        return self.__game_state
 
     def __isMoveWithinBoundaries(self, move: Move) -> bool:
         if 0 <= move.end_point.x < self.board_width \
