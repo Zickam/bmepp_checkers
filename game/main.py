@@ -4,11 +4,13 @@ from enum import Enum
 from game.classes import *
 from game import constants
 
+
 class GameState(Enum):
     ongoing = "Ongoing"
     b_win = "Black won"
     w_win = "White won"
     draw = "Draw"
+
 
 class Game:
     if constants.BOARD_WIDTH < constants.MIN_BOARD_WIDTH:
@@ -16,11 +18,11 @@ class Game:
 
     def __init__(self):
         self.board_width = constants.BOARD_WIDTH
-        self.is_player_white = True
-        self.is_white_turn = True
-        self.__game_state = GameState.ongoing
+        self._is_player_white = True
+        self._is_white_turn = True
+        self._game_state = GameState.ongoing
 
-        self.board: list[list[Figure]] = self._initBoard()
+        self._board: list[list[Figure]] = self._initBoard()
 
         self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
 
@@ -45,23 +47,26 @@ class Game:
         return board
 
     def isWhiteTurn(self) -> bool:
-        return self.is_white_turn
+        return self._is_white_turn
 
     def isPlayerWhite(self) -> bool:
-        return self.is_player_white
+        return self._is_player_white
+
+    def setIsPlayerWhite(self, new_state: bool):
+        self._is_player_white = new_state
 
     def getBoard(self) -> list[list[Figure]]:
-        return self.board
+        return self._board
 
-    def handleKillMove(self, move: Move):
-        self.board[move.killed_point.x][move.killed_point.y] = Figure(False)
-        self.handleRelocation(move)
+    def _handleKillMove(self, move: Move):
+        self._board[move.killed_point.x][move.killed_point.y] = Figure(False)
+        self._handleRelocation(move)
 
-    def handleRelocation(self, move: Move):
-        self.board[move.end_point.x][move.end_point.y] = self.board[move.start_point.x][move.start_point.y]
-        self.board[move.start_point.x][move.start_point.y] = Figure(False)
+    def _handleRelocation(self, move: Move):
+        self._board[move.end_point.x][move.end_point.y] = self._board[move.start_point.x][move.start_point.y]
+        self._board[move.start_point.x][move.start_point.y] = Figure(False)
 
-    def handleContinuousMove(self, move):
+    def _handleContinuousMove(self, move):
         self._available_moves = self._getAvailableMoves()
 
         if move.end_point.__hash__() in self._available_moves:
@@ -70,82 +75,80 @@ class Game:
                 if possible_move.is_kill:
                     necessary_moves.append(possible_move)
             if len(necessary_moves) == 0:
-                self.is_white_turn = not self.is_white_turn
+                self._is_white_turn = not self._is_white_turn
         else:
-            self.is_white_turn = not self.is_white_turn
+            self._is_white_turn = not self._is_white_turn
 
-
-    def handleChecker2Queen(self, move: Move) -> bool:
-        if self.board[move.end_point.x][move.end_point.y].is_white:
+    def _handleChecker2Queen(self, move: Move) -> bool:
+        if self._board[move.end_point.x][move.end_point.y].is_white:
             if move.end_point.x == 0:
-                self.board[move.end_point.x][move.end_point.y].is_queen = True
+                self._board[move.end_point.x][move.end_point.y].is_queen = True
                 return True
 
         else:
             if move.end_point.x == self.board_width - 1:
-                self.board[move.end_point.x][move.end_point.y].is_queen = True
+                self._board[move.end_point.x][move.end_point.y].is_queen = True
                 return True
 
         return False
 
-    def handleQueenMove(self, move: Move):
+    def _handleQueenMove(self, move: Move):
         if move.is_kill:
-            self.handleKillMove(move)
-            self.handleContinuousMove(move)
+            self._handleKillMove(move)
+            self._handleContinuousMove(move)
 
         else:
-            self.handleRelocation(move)
-            self.is_white_turn = not self.is_white_turn
+            self._handleRelocation(move)
+            self._is_white_turn = not self._is_white_turn
 
-
-    def handleCheckerMove(self, move: Move):
+    def _handleCheckerMove(self, move: Move):
         if move.is_kill:
-            self.handleKillMove(move)
-            self.handleChecker2Queen(move)
+            self._handleKillMove(move)
+            self._handleChecker2Queen(move)
 
-            self.handleContinuousMove(move)
+            self._handleContinuousMove(move)
 
         else:
-            self.handleRelocation(move)
-            has_transformed = self.handleChecker2Queen(move)
+            self._handleRelocation(move)
+            has_transformed = self._handleChecker2Queen(move)
             if not has_transformed:
-                self.is_white_turn = not self.is_white_turn
+                self._is_white_turn = not self._is_white_turn
 
             self._available_moves = self._getAvailableMoves()
 
     def handleMove(self, move: Move):
-        if not self.board[move.start_point.x][move.start_point.y].is_queen:
-            self.handleCheckerMove(move)
+        if not self._board[move.start_point.x][move.start_point.y].is_queen:
+            self._handleCheckerMove(move)
         else:
-            self.handleQueenMove(move)
+            self._handleQueenMove(move)
 
         self._available_moves = self._getAvailableMoves()
 
-        self.handleWin()
+        print("Current state:", self.handleWin())
 
     def handleWin(self) -> GameState:
         current_side_has_moves = False
         for _, moves in self._available_moves.items():
             for move in moves:
-                if self.is_white_turn and self.board[move.start_point.x][move.start_point.y].is_white:
+                if self._is_white_turn and self._board[move.start_point.x][move.start_point.y].is_white:
                     current_side_has_moves = True
-                elif not self.is_white_turn and not self.board[move.start_point.x][move.start_point.y].is_white:
+                elif not self._is_white_turn and not self._board[move.start_point.x][move.start_point.y].is_white:
                     current_side_has_moves = True
 
         if not current_side_has_moves:
-            if self.is_white_turn:
-                self.__game_state = GameState.b_win
+            if self._is_white_turn:
+                self._game_state = GameState.b_win
             else:
-                self.__game_state = GameState.w_win
+                self._game_state = GameState.w_win
         else:
-            self.__game_state = GameState.ongoing
+            self._game_state = GameState.ongoing
 
-        return self.__game_state
+        return self._game_state
 
     def getGameState(self) -> GameState:
-        return self.__game_state
+        return self._game_state
 
-    def __isMoveWithinBoundaries(self, move: Move) -> bool:
+    def _isMoveWithinBoundaries(self, move: Move) -> bool:
         if 0 <= move.end_point.x < self.board_width \
                 and 0 <= move.end_point.y < self.board_width:
             return True
@@ -154,18 +157,18 @@ class Game:
 
     def _isCheckerMovePossible(self, start_point: Point, direction: Point) -> tuple[bool, Move | None]:
         move = Move(start_point, start_point + direction)
-        if self.__isMoveWithinBoundaries(move):
-            if self.board[move.end_point.x][move.end_point.y].is_checker:
-                if self.board[move.start_point.x][move.start_point.y].is_white \
-                        != self.board[move.end_point.x][move.end_point.y].is_white:
+        if self._isMoveWithinBoundaries(move):
+            if self._board[move.end_point.x][move.end_point.y].is_checker:
+                if self._board[move.start_point.x][move.start_point.y].is_white \
+                        != self._board[move.end_point.x][move.end_point.y].is_white:
                     move = Move(move.start_point, move.end_point + direction)
-                    if self.__isMoveWithinBoundaries(move):
-                        if not self.board[move.end_point.x][move.end_point.y].is_checker:
+                    if self._isMoveWithinBoundaries(move):
+                        if not self._board[move.end_point.x][move.end_point.y].is_checker:
                             move.is_kill = True
                             move.killed_point = move.start_point + direction
                             return True, move
             else:
-                if self.board[move.start_point.x][move.start_point.y].is_white:
+                if self._board[move.start_point.x][move.start_point.y].is_white:
                     if direction.x < 0:
                         return True, move
                 else:
@@ -180,19 +183,21 @@ class Game:
         moves = []
         # 1. не на границе, за ней есть кто-то(впритык)
         move = Move(start_point, start_point + direction)
-        if self.__isMoveWithinBoundaries(move):
-            if self.board[move.end_point.x][move.end_point.y].is_checker:
-                if self.board[move.start_point.x][move.start_point.y].is_white \
-                        != self.board[move.end_point.x][move.end_point.y].is_white:
+        if self._isMoveWithinBoundaries(move):
+            if self._board[move.end_point.x][move.end_point.y].is_checker:
+                if self._board[move.start_point.x][move.start_point.y].is_white \
+                        != self._board[move.end_point.x][move.end_point.y].is_white:
                     # след пустая?
                     # перебираем до след шашки(хоть наша, хоть нет, иначе до конца) и возвращаем все возможные ходы.
 
                     for i in range(1, 7):
                         _move = Move(move.start_point, move.end_point + raw_direction * i, True, move.end_point)
 
-                        if self.__isMoveWithinBoundaries(_move) and self.board[_move.end_point.x][_move.end_point.y].is_checker == False:
+                        if self._isMoveWithinBoundaries(_move) and self._board[_move.end_point.x][
+                            _move.end_point.y].is_checker == False:
                             moves.append(_move)
-                        elif self.__isMoveWithinBoundaries(_move) and self.board[_move.end_point.x][_move.end_point.y].is_checker == True:
+                        elif self._isMoveWithinBoundaries(_move) and self._board[_move.end_point.x][
+                            _move.end_point.y].is_checker == True:
                             break
 
                     return moves
@@ -201,7 +206,7 @@ class Game:
 
         return []
 
-    queen_directions = [
+    _queen_directions = [
         Point(1, 1),
         Point(-1, -1),
         Point(1, -1),
@@ -212,7 +217,7 @@ class Game:
         moves = Moves([], [])
         directions_for_necessary_moves = set()
 
-        for direction in self.queen_directions:
+        for direction in self._queen_directions:
             for i in range(1, self.board_width):
                 if direction.__hash__() in directions_for_necessary_moves:
                     continue
@@ -248,7 +253,7 @@ class Game:
         return Moves(necessary_moves, unnecessary_moves)
 
     def _getPossibleMovesForPoint(self, start_point: Point) -> Moves:
-        if self.board[start_point.x][start_point.y].is_queen:
+        if self._board[start_point.x][start_point.y].is_queen:
             possible_moves = self._getQueenPossibleMoves(start_point)
         else:
             possible_moves = self._getCheckerPossibleMoves(start_point)
@@ -261,7 +266,7 @@ class Game:
 
         for i in range(self.board_width):
             for j in range(self.board_width):
-                if self.is_white_turn == self.board[i][j].is_white and self.board[i][j].is_checker:
+                if self._is_white_turn == self._board[i][j].is_white and self._board[i][j].is_checker:
                     possible_moves = self._getPossibleMovesForPoint(Point(i, j))
 
                     if possible_moves.necessary_moves:

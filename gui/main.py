@@ -9,7 +9,7 @@ from gui.constants import WIN_SIZE, FPS, DO_RANDOM_MOVE_INTERVAL, DO_RANDOM_MOVE
 from game.main import Game
 from gui.buttons import Button, Text, caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num
-
+from gui import constants
 
 class Gui:
     def __init__(self, game: Game):
@@ -42,7 +42,7 @@ class Gui:
 
     def render(self):
         if self.is_game_started:
-            if self.__game.is_player_white:
+            if self.__game.isPlayerWhite():
                 board_sprite = self.__sprites.board
             else:
                 board_sprite = self.__sprites.rotated_board
@@ -51,7 +51,7 @@ class Gui:
             if self.selected_checker is not None:
                 x_cord = self.selected_checker.x
                 y_cord = self.selected_checker.y
-                coordinate = self.__sprites.get_coordinates(x_cord, y_cord, self.__game.is_player_white)
+                coordinate = self.__sprites.get_coordinates(x_cord, y_cord, self.__game.isPlayerWhite())
                 coordinate = coordinate.move(self.left_offset, 0)
                 self.__screen.blit(self.__sprites.indicator, coordinate)
 
@@ -60,7 +60,7 @@ class Gui:
                 for j, figure in enumerate(row):
                     if not figure.is_checker:
                         continue
-                    coordinate = self.__sprites.get_coordinates(i, j, self.__game.is_player_white)
+                    coordinate = self.__sprites.get_coordinates(i, j, self.__game.isPlayerWhite())
                     coordinate = coordinate.move(self.left_offset, 0)
                     if figure.is_white:
                         if figure.is_queen:
@@ -76,7 +76,7 @@ class Gui:
             for move in self.possible_moves:
                 move_x = move.end_point.x
                 move_y = move.end_point.y
-                coordinate = self.__sprites.get_coordinates(move_x, move_y, self.__game.is_player_white)
+                coordinate = self.__sprites.get_coordinates(move_x, move_y, self.__game.isPlayerWhite())
                 coordinate = coordinate.move(self.left_offset, 0)
                 self.__screen.blit(self.__sprites.hint, coordinate)
             restart_button.render(self.__screen)
@@ -99,22 +99,22 @@ class Gui:
             if event.type == pg.MOUSEBUTTONUP:
                 if event.button in (1, 3):  # RMB, LMB
                     x, y = event.pos
-                    i, j = self.__sprites.get_cell(x - self.left_offset, y, self.__game.is_player_white)
+                    i, j = self.__sprites.get_cell(x - self.left_offset, y, self.__game.isPlayerWhite())
 
                     board = self.__game.getBoard()
                     if self.is_game_started is False:
                         if play_white_button.collide_point((x, y)):
                             self.is_game_started = True
-                            self.__game.is_player_white = True
+                            self.__game.setIsPlayerWhite(True)
 
                         if play_black_button.collide_point((x, y)):
                             self.is_game_started = True
-                            self.__game.is_player_white = False
+                            self.__game.setIsPlayerWhite(False)
 
-                        if plus_button.collide_point((x, y)):
+                        if plus_button.collide_point((x, y)) and self.difficulty < constants.MAX_DIFFICULTY:
                             self.difficulty += 1
 
-                        if minus_button.collide_point((x, y)):
+                        if minus_button.collide_point((x, y)) and self.difficulty > constants.MIN_DIFFICULTY:
                             self.difficulty -= 1
 
                     if self.is_game_started:
@@ -122,7 +122,7 @@ class Gui:
                         if restart_button.collide_point((x, y)):
                             print(1)
 
-                        if board[i][j].is_checker and board[i][j].is_white == self.__game.is_white_turn:
+                        if board[i][j].is_checker and board[i][j].is_white == self.__game.isWhiteTurn():
                             self.selected_checker = Point(i, j)
                             self.possible_moves = self.__game.getPossibleMoves(Point(i, j))
                             continue
@@ -131,10 +131,10 @@ class Gui:
                         for move in self.possible_moves:
                             move_end = move.end_point
                             if move_end.x == i and move_end.y == j:
-                                is_white_flag = self.__game.is_white_turn
+                                is_white_flag = self.__game.isWhiteTurn()
                                 self.__game.handleMove(move)
                                 self.possible_moves.clear()
-                                if is_white_flag != self.__game.is_white_turn:
+                                if is_white_flag != self.__game.isWhiteTurn():
                                     self.selected_checker = None
                                 else:
                                     self.selected_checker = move_end
@@ -154,7 +154,6 @@ class Gui:
             self.__game.handleMove(random.choice(self.possible_moves))
             self.next_time_do_random_move = time.time() + self.do_random_move_interval
         else:
-            print("gamestate:", self.__game.handleWin())
             self.do_random_moves = False
 
 
