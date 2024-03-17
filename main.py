@@ -3,8 +3,7 @@ import gui
 
 
 def main():
-    _game = game.main.Game()
-    _gui = gui.main.Gui(_game)
+    _gui = gui.main.Gui()
     _gui.mainloop()
 
 
