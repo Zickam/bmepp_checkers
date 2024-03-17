@@ -200,8 +200,6 @@ class Gui:
         if self.possible_moves:
             self.__game.handleMove(random.choice(self.possible_moves))
             self.next_time_do_random_move = time.time() + self.do_random_move_interval
-        else:
-            self.do_random_moves = False
 
 
     def close(self):

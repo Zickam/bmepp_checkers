@@ -27,6 +27,8 @@ class Game:
         self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
 
     def restart(self):
+        raise Exception("Do we actually need this?")
+        return Game()
         pass  # вызывается при нажатии на кнопку рестарта
 
     def _initBoard(self) -> list[list[Figure]]:
