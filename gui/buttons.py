@@ -1,3 +1,5 @@
+from game.main import GameState
+
 import pygame as pg
 from gui.constants import BUTTONS_FONT_PATH, GC, BC, WC, WIN_SIZE
 
@@ -69,9 +71,9 @@ def get_difficulty_num(difficulty):
 
 
 def get_win_text(gamestate):
-    if gamestate.b_win:
+    if gamestate == GameState.b_win:
         return Text((400, 400), 'BLACK WIN!')
-    elif gamestate.w_win:
+    elif gamestate == GameState.w_win:
         return Text((400, 400), 'WHITE WIN!')
     else:
         return Text((400, 400), 'DRAW! HAHA')

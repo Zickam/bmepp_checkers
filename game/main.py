@@ -1,5 +1,6 @@
 import copy
 from enum import Enum
+import queue
 
 from game.classes import *
 from game import constants
@@ -12,9 +13,32 @@ class GameState(Enum):
     draw = "Draw"
 
 
+MAX_GAME_BOARD_DEPTH = 5
+INITIAL_AMOUNT_OF_CHECKERS = 24
+
+
+# def hashGameBoard(board: list[list[Figure]]) -> str:
+#   board_s = ""
+#   for row in board:
+#     for fig in row:
+#       if fig.is_checker:
+#         if fig.is_white:
+#           fig_s = "w"
+#         else:
+#           fig_s = "b"
+#       else:
+#         fig_s = "."
+
+#       board_s += fig_s
+#   hashed_board_s = hashlib.md5(board_s.encode()).digest()
+#   return hashed_board_s.hex()
+
+
 class Game:
     if constants.BOARD_WIDTH < constants.MIN_BOARD_WIDTH:
-        raise Exception(f"Its not possible to make a board which side is less than {constants.MIN_BOARD_WIDTH}")
+        raise Exception(
+            f"Its not possible to make a board which side is less than {constants.MIN_BOARD_WIDTH}"
+        )
 
     def __init__(self):
         self.board_width = constants.BOARD_WIDTH
@@ -23,8 +47,11 @@ class Game:
         self._game_state = GameState.ongoing
 
         self._board: list[list[Figure]] = self._initBoard()
+        self._count_moves_without_change = 0
+        self._count_figure = 24
 
-        self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
+        self._available_moves: dict[Point.__hash__,
+        list[Move]] = self._getAvailableMoves()
 
     def restart(self):
         raise Exception("Do we actually need this?")
@@ -44,10 +71,14 @@ class Game:
                     board[i][j] = Figure(True, False)
                 elif i % 2 == 0 and j % 2 == 1:
                     board[i][j] = Figure(True, False)
-                if (self.board_width - i - 1) % 2 == 1 and (self.board_width - j - 1) % 2 == 0:
-                    board[self.board_width - i - 1][self.board_width - j - 1] = Figure(True, True)
-                elif (self.board_width - i - 1) % 2 == 0 and (self.board_width - j - 1) % 2 == 1:
-                    board[self.board_width - i - 1][self.board_width - j - 1] = Figure(True, True)
+                if (self.board_width - i - 1) % 2 == 1 and (self.board_width - j -
+                                                            1) % 2 == 0:
+                    board[self.board_width - i - 1][self.board_width - j - 1] = Figure(
+                        True, True)
+                elif (self.board_width - i - 1) % 2 == 0 and (self.board_width - j -
+                                                              1) % 2 == 1:
+                    board[self.board_width - i - 1][self.board_width - j - 1] = Figure(
+                        True, True)
 
         return board
 
@@ -66,6 +97,9 @@ class Game:
     def _handleKillMove(self, move: Move):
         self._board[move.killed_point.x][move.killed_point.y] = Figure(False)
         self._handleRelocation(move)
+
+        self._count_figure -= 1
+        self._count_moves_without_change = 0
 
     def _handleRelocation(self, move: Move):
         self._board[move.end_point.x][move.end_point.y] = self._board[move.start_point.x][move.start_point.y]
@@ -121,6 +155,11 @@ class Game:
 
             self._available_moves = self._getAvailableMoves()
 
+    def handleDraw(self):
+        self._count_moves_without_change += 1
+        if self._count_moves_without_change >= MAX_GAME_BOARD_DEPTH:
+            self._game_state = GameState.draw
+
     def handleMove(self, move: Move):
         if not self._board[move.start_point.x][move.start_point.y].is_queen:
             self._handleCheckerMove(move)
@@ -129,15 +168,31 @@ class Game:
 
         self._available_moves = self._getAvailableMoves()
 
-        print("Current state:", self.handleWin())
+        self.handleWin()
+        self.handleDraw()
 
-    def handleWin(self) -> GameState:
+            # return
+
+        print("Current state:", self.getGameState())
+
+    def _getFiguresAmount(self) -> int:
+        figures_amount = 0
+        for row in self._board:
+            for fig in row:
+                if fig.is_checker:
+                    figures_amount += 1
+
+        return figures_amount
+
+    def handleWin(self):
         current_side_has_moves = False
         for _, moves in self._available_moves.items():
             for move in moves:
-                if self._is_white_turn and self._board[move.start_point.x][move.start_point.y].is_white:
+                if self._is_white_turn and self._board[move.start_point.x][
+                    move.start_point.y].is_white:
                     current_side_has_moves = True
-                elif not self._is_white_turn and not self._board[move.start_point.x][move.start_point.y].is_white:
+                elif not self._is_white_turn and not self._board[move.start_point.x][
+                    move.start_point.y].is_white:
                     current_side_has_moves = True
 
         if not current_side_has_moves:
@@ -147,8 +202,6 @@ class Game:
                 self._game_state = GameState.w_win
         else:
             self._game_state = GameState.ongoing
-
-        return self._game_state
 
     def getGameState(self) -> GameState:
         return self._game_state
@@ -160,7 +213,8 @@ class Game:
 
         return False
 
-    def _isCheckerMovePossible(self, start_point: Point, direction: Point) -> tuple[bool, Move | None]:
+    def _isCheckerMovePossible(self, start_point: Point,
+                               direction: Point) -> tuple[bool, Move | None]:
         move = Move(start_point, start_point + direction)
         if self._isMoveWithinBoundaries(move):
             if self._board[move.end_point.x][move.end_point.y].is_checker:
@@ -184,7 +238,8 @@ class Game:
 
         return False, None
 
-    def _isQueenMovePossible(self, start_point: Point, direction: Point, raw_direction: Point) -> list[Move | None]:
+    def _isQueenMovePossible(self, start_point: Point, direction: Point,
+                             raw_direction: Point) -> list[Move | None]:
         moves = []
         # 1. не на границе, за ней есть кто-то(впритык)
         move = Move(start_point, start_point + direction)
@@ -196,13 +251,14 @@ class Game:
                     # перебираем до след шашки(хоть наша, хоть нет, иначе до конца) и возвращаем все возможные ходы.
 
                     for i in range(1, 7):
-                        _move = Move(move.start_point, move.end_point + raw_direction * i, True, move.end_point)
+                        _move = Move(move.start_point, move.end_point + raw_direction * i,
+                                     True, move.end_point)
 
-                        if self._isMoveWithinBoundaries(_move) and self._board[_move.end_point.x][
-                            _move.end_point.y].is_checker == False:
+                        if self._isMoveWithinBoundaries(_move) and self._board[
+                            _move.end_point.x][_move.end_point.y].is_checker == False:
                             moves.append(_move)
-                        elif self._isMoveWithinBoundaries(_move) and self._board[_move.end_point.x][
-                            _move.end_point.y].is_checker == True:
+                        elif self._isMoveWithinBoundaries(_move) and self._board[
+                            _move.end_point.x][_move.end_point.y].is_checker == True:
                             break
 
                     return moves
@@ -211,12 +267,7 @@ class Game:
 
         return []
 
-    _queen_directions = [
-        Point(1, 1),
-        Point(-1, -1),
-        Point(1, -1),
-        Point(-1, 1)
-    ]
+    _queen_directions = [Point(1, 1), Point(-1, -1), Point(1, -1), Point(-1, 1)]
 
     def _getQueenPossibleMoves(self, start_point: Point) -> Moves:
         moves = Moves([], [])
@@ -228,7 +279,8 @@ class Game:
                     continue
 
                 direction_new = direction * i
-                possible_moves = self._isQueenMovePossible(start_point, direction_new, direction)
+                possible_moves = self._isQueenMovePossible(start_point, direction_new,
+                                                           direction)
                 if len(possible_moves) != 0:
                     for move in possible_moves:
                         if move.is_kill:
@@ -247,7 +299,8 @@ class Game:
 
         for i in [-1, 1]:
             for j in [-1, 1]:
-                is_possible, move = self._isCheckerMovePossible(start_point, Point(i, j))
+                is_possible, move = self._isCheckerMovePossible(
+                    start_point, Point(i, j))
                 if is_possible:
                     match move.is_kill:
                         case True:
@@ -271,22 +324,29 @@ class Game:
 
         for i in range(self.board_width):
             for j in range(self.board_width):
-                if self._is_white_turn == self._board[i][j].is_white and self._board[i][j].is_checker:
+                if self._is_white_turn == self._board[i][j].is_white and self._board[
+                    i][j].is_checker:
                     possible_moves = self._getPossibleMovesForPoint(Point(i, j))
 
                     if possible_moves.necessary_moves:
                         for necessary_move in possible_moves.necessary_moves:
                             if necessary_move.start_point.__hash__() in necessary_moves:
-                                necessary_moves[necessary_move.start_point.__hash__()].append(necessary_move)
+                                necessary_moves[necessary_move.start_point.__hash__()].append(
+                                    necessary_move)
                             else:
-                                necessary_moves[necessary_move.start_point.__hash__()] = [necessary_move]
+                                necessary_moves[necessary_move.start_point.__hash__()] = [
+                                    necessary_move
+                                ]
 
                     elif not necessary_moves:
                         for unnecessary_move in possible_moves.unnecessary_moves:
                             if unnecessary_move.start_point.__hash__() in unnecessary_moves:
-                                unnecessary_moves[unnecessary_move.start_point.__hash__()].append(unnecessary_move)
+                                unnecessary_moves[unnecessary_move.start_point.__hash__(
+                                )].append(unnecessary_move)
                             else:
-                                unnecessary_moves[unnecessary_move.start_point.__hash__()] = [unnecessary_move]
+                                unnecessary_moves[unnecessary_move.start_point.__hash__()] = [
+                                    unnecessary_move
+                                ]
 
         if necessary_moves:
             return necessary_moves
