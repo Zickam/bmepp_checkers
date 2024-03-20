@@ -13,25 +13,7 @@ class GameState(Enum):
     draw = "Draw"
 
 
-MAX_GAME_BOARD_DEPTH = 5
-INITIAL_AMOUNT_OF_CHECKERS = 24
-
-
-# def hashGameBoard(board: list[list[Figure]]) -> str:
-#   board_s = ""
-#   for row in board:
-#     for fig in row:
-#       if fig.is_checker:
-#         if fig.is_white:
-#           fig_s = "w"
-#         else:
-#           fig_s = "b"
-#       else:
-#         fig_s = "."
-
-#       board_s += fig_s
-#   hashed_board_s = hashlib.md5(board_s.encode()).digest()
-#   return hashed_board_s.hex()
+MAX_GAME_BOARD_DEPTH = 60
 
 
 class Game:
@@ -41,17 +23,32 @@ class Game:
         )
 
     def __init__(self):
-        self.board_width = constants.BOARD_WIDTH
+        self._board_width = constants.BOARD_WIDTH
         self._is_player_white = True
         self._is_white_turn = True
         self._game_state = GameState.ongoing
 
         self._board: list[list[Figure]] = self._initBoard()
-        self._count_moves_without_change = 0
-        self._count_figure = 24
 
-        self._available_moves: dict[Point.__hash__,
-        list[Move]] = self._getAvailableMoves()
+        self._count_moves_without_change = 0
+        self._count_figure = self._getFiguresAmount()
+
+        self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
+
+    def getBoard(self) -> list[list[Figure]]:
+        return self._board
+
+    def getGameState(self) -> GameState:
+        return self._game_state
+
+    def getBoardWidth(self) -> int:
+        return self._board_width
+
+    def isWhiteTurn(self) -> bool:
+        return self._is_white_turn
+
+    def isPlayerWhite(self) -> bool:
+        return self._is_player_white
 
     def restart(self):
         raise Exception("Do we actually need this?")
@@ -61,38 +58,26 @@ class Game:
     def _initBoard(self) -> list[list[Figure]]:
         board = []
 
-        for i in range(self.board_width):
+        for i in range(self.getBoardWidth()):
             board.append([])
-            for j in range(self.board_width):
+            for j in range(self.getBoardWidth()):
                 board[i].append(Figure(False, False))
         for i in range(3):
-            for j in range(self.board_width):
-                if i % 2 == 1 and j % 2 == 0:
-                    board[i][j] = Figure(True, False)
-                elif i % 2 == 0 and j % 2 == 1:
-                    board[i][j] = Figure(True, False)
-                if (self.board_width - i - 1) % 2 == 1 and (self.board_width - j -
-                                                            1) % 2 == 0:
-                    board[self.board_width - i - 1][self.board_width - j - 1] = Figure(
-                        True, True)
-                elif (self.board_width - i - 1) % 2 == 0 and (self.board_width - j -
-                                                              1) % 2 == 1:
-                    board[self.board_width - i - 1][self.board_width - j - 1] = Figure(
-                        True, True)
+            for j in range(self.getBoardWidth()):
+                is_on_white_1 = i % 2 == 1 and j % 2 == 0
+                is_on_white_2 = i % 2 == 0 and j % 2 == 1
 
+                if is_on_white_1 or is_on_white_2:
+                    board[i][j] = Figure(True, False)
+
+                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (self.getBoardWidth() - j - 1) % 2 == 0
+                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (self.getBoardWidth() - j - 1) % 2 == 1
+                if is_on_black_1 or is_on_black_2:
+                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j - 1] = Figure(True, True)
         return board
-
-    def isWhiteTurn(self) -> bool:
-        return self._is_white_turn
-
-    def isPlayerWhite(self) -> bool:
-        return self._is_player_white
 
     def setIsPlayerWhite(self, new_state: bool):
         self._is_player_white = new_state
-
-    def getBoard(self) -> list[list[Figure]]:
-        return self._board
 
     def _handleKillMove(self, move: Move):
         self._board[move.killed_point.x][move.killed_point.y] = Figure(False)
@@ -125,7 +110,7 @@ class Game:
                 return True
 
         else:
-            if move.end_point.x == self.board_width - 1:
+            if move.end_point.x == self.getBoardWidth() - 1:
                 self._board[move.end_point.x][move.end_point.y].is_queen = True
                 return True
 
@@ -171,8 +156,6 @@ class Game:
         self.handleWin()
         self.handleDraw()
 
-            # return
-
         print("Current state:", self.getGameState())
 
     def _getFiguresAmount(self) -> int:
@@ -186,7 +169,7 @@ class Game:
 
     def handleWin(self):
         current_side_has_moves = False
-        for _, moves in self._available_moves.items():
+        for moves in self._available_moves.values():
             for move in moves:
                 if self._is_white_turn and self._board[move.start_point.x][
                     move.start_point.y].is_white:
@@ -203,12 +186,9 @@ class Game:
         else:
             self._game_state = GameState.ongoing
 
-    def getGameState(self) -> GameState:
-        return self._game_state
-
     def _isMoveWithinBoundaries(self, move: Move) -> bool:
-        if 0 <= move.end_point.x < self.board_width \
-                and 0 <= move.end_point.y < self.board_width:
+        if 0 <= move.end_point.x < self.getBoardWidth() \
+                and 0 <= move.end_point.y < self.getBoardWidth():
             return True
 
         return False
@@ -274,7 +254,7 @@ class Game:
         directions_for_necessary_moves = set()
 
         for direction in self._queen_directions:
-            for i in range(1, self.board_width):
+            for i in range(1, self.getBoardWidth()):
                 if direction.__hash__() in directions_for_necessary_moves:
                     continue
 
@@ -319,34 +299,29 @@ class Game:
         return possible_moves
 
     def _getAvailableMoves(self) -> dict[Point.__hash__, list[Move]]:  # str is the __repr__ of Point
+        def iteration_board():
+            for i in range(self.getBoardWidth()):
+                for j in range(self.getBoardWidth()):
+                    yield i, j
+
         necessary_moves = {}
         unnecessary_moves = {}
 
-        for i in range(self.board_width):
-            for j in range(self.board_width):
-                if self._is_white_turn == self._board[i][j].is_white and self._board[
-                    i][j].is_checker:
-                    possible_moves = self._getPossibleMovesForPoint(Point(i, j))
-
-                    if possible_moves.necessary_moves:
-                        for necessary_move in possible_moves.necessary_moves:
-                            if necessary_move.start_point.__hash__() in necessary_moves:
-                                necessary_moves[necessary_move.start_point.__hash__()].append(
-                                    necessary_move)
-                            else:
-                                necessary_moves[necessary_move.start_point.__hash__()] = [
-                                    necessary_move
-                                ]
-
-                    elif not necessary_moves:
-                        for unnecessary_move in possible_moves.unnecessary_moves:
-                            if unnecessary_move.start_point.__hash__() in unnecessary_moves:
-                                unnecessary_moves[unnecessary_move.start_point.__hash__(
-                                )].append(unnecessary_move)
-                            else:
-                                unnecessary_moves[unnecessary_move.start_point.__hash__()] = [
-                                    unnecessary_move
-                                ]
+        for i, j in iteration_board():
+            if self._board[i][j].is_checker and self._is_white_turn == self._board[i][j].is_white:
+                possible_moves = self._getPossibleMovesForPoint(Point(i, j))
+                if possible_moves.necessary_moves:
+                    for necessary_move in possible_moves.necessary_moves:
+                        if necessary_move.start_point.__hash__() in necessary_moves:
+                            necessary_moves[necessary_move.start_point.__hash__()].append(necessary_move)
+                        else:
+                            necessary_moves[necessary_move.start_point.__hash__()] = [necessary_move]
+                elif not necessary_moves:
+                    for unnecessary_move in possible_moves.unnecessary_moves:
+                        if unnecessary_move.start_point.__hash__() in unnecessary_moves:
+                            unnecessary_moves[unnecessary_move.start_point.__hash__()].append(unnecessary_move)
+                        else:
+                            unnecessary_moves[unnecessary_move.start_point.__hash__()] = [unnecessary_move]
 
         if necessary_moves:
             return necessary_moves
@@ -373,3 +348,14 @@ if __name__ == "__main__":
                 print("[]", end="\t")
 
         print()
+
+    # self._board = [[Figure() for i in range(8)] for j in range(8)]
+    #
+    # self._board[1][2].is_checker = True
+    # self._board[1][2].is_white = False
+    #
+    # self._board[3][4].is_checker = True
+    # self._board[3][4].is_white = False
+    #
+    # self._board[4][5].is_checker = True
+    # self._board[4][5].is_white = True

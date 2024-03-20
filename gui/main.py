@@ -31,7 +31,7 @@ class Gui:
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
         pg.display.set_caption('Checkers')
-        self.__sprites = Sprites(self.__game.board_width)
+        self.__sprites = Sprites(self.__game.getBoardWidth())
         self.left_offset = WIN_SIZE[0] - self.__sprites.board.get_width()
 
         self.do_random_moves = DO_RANDOM_MOVES
@@ -189,8 +189,8 @@ class Gui:
 
     def doRandomMove(self):
         all_possible_moves = []
-        for i in range(self.__game.board_width):
-            for j in range(self.__game.board_width):
+        for i in range(self.__game.getBoardWidth()):
+            for j in range(self.__game.getBoardWidth()):
                 if self.__game.getBoard()[i][j].is_checker:
                     possible_moves = self.__game.getPossibleMoves(Point(i, j))
                     for move in possible_moves:
