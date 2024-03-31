@@ -176,6 +176,7 @@ class Gui:
                 is_white_flag = self.__game.isWhiteTurn()
                 self.__game.handleMove(move)
                 self.possible_moves.clear()
+
                 if is_white_flag != self.__game.isWhiteTurn():
                     self.selected_checker = None
                 else:

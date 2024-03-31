@@ -167,6 +167,19 @@ class Game:
 
         return figures_amount
 
+    def getWFiguresDifference(self) -> int:
+        w, b = 0, 0
+        for row in self.getBoard():
+            for cell in row:
+                if cell.is_checker:
+                    match cell.is_white:
+                        case True:
+                            w += 1
+                        case False:
+                            b += 1
+
+        return w - b
+
     def handleWin(self):
         current_side_has_moves = False
         for moves in self._available_moves.values():

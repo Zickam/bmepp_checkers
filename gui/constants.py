@@ -15,7 +15,7 @@ BBC = (20, 20, 20)  # board border color
 BOARD_FONT_PATH = 'gui/data/board_font.ttf'
 BUTTONS_FONT_PATH = 'gui/data/buttons_font.ttf'
 
-DO_RANDOM_MOVES = True
+DO_RANDOM_MOVES = False
 DO_RANDOM_MOVE_INTERVAL = 0.1
 
 MAX_DIFFICULTY = 10
