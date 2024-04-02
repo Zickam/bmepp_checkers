@@ -28,7 +28,7 @@ class Gui:
         self.possible_moves = []
         self.selected_checker = None
         self.state = SceneState.menu
-        self.difficulty = 3
+        self.difficulty = 1
         self.__bot = Bot()
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
@@ -159,10 +159,12 @@ class Gui:
 
     def menu(self, x: int, y: int):
         if play_white_button.collide_point((x, y)):
+            self.__game.setDifficulty(self.difficulty)
             self.state = SceneState.checkers
             self.__game.setIsPlayerWhite(True)
 
         if play_black_button.collide_point((x, y)):
+            self.__game.setDifficulty(self.difficulty)
             self.state = SceneState.checkers
             self.__game.setIsPlayerWhite(False)
             self.__bot.start_best_move_calculation(self.__game)

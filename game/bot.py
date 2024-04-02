@@ -18,10 +18,17 @@ class Process:
             time.sleep(0.000001)
             if not self.process_request_queue.empty():
                 game = self.process_request_queue.get()
-                moves = list(game._available_moves.values())
-                random_arr = random.choice(moves)
-                random_move = random.choice(random_arr)
-                self.process_response_queue.put(random_move)
+                if game.getDifficulty() == 0:
+                    moves = game.getAllMoves()
+                    if len(moves) == 0:
+                        return
+                    random_move = random.choice(moves)
+                    self.process_response_queue.put(random_move)
+                else:
+                    finding_max = game.isPlayerWhite()
+                    _, moves = minmax(game, 1, finding_max)
+                    print('stack:', *['\n'+str(x) for x in moves])
+                    self.process_response_queue.put(moves[0])
 
 
 class Bot:

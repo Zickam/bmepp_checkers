@@ -27,6 +27,7 @@ class Game:
         self._is_player_white = True
         self._is_white_turn = True
         self._game_state = GameState.ongoing
+        self._difficulty = None
 
         self._board: list[list[Figure]] = self._initBoard()
 
@@ -49,6 +50,15 @@ class Game:
 
     def isPlayerWhite(self) -> bool:
         return self._is_player_white
+
+    def setIsPlayerWhite(self, new_state: bool):
+        self._is_player_white = new_state
+
+    def setDifficulty(self, difficulty: int):
+        self._difficulty = difficulty
+
+    def getDifficulty(self):
+        return self._difficulty
 
     def restart(self):
         raise Exception("Do we actually need this?")
@@ -75,9 +85,6 @@ class Game:
                 if is_on_black_1 or is_on_black_2:
                     board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j - 1] = Figure(True, True)
         return board
-
-    def setIsPlayerWhite(self, new_state: bool):
-        self._is_player_white = new_state
 
     def _handleKillMove(self, move: Move):
         self._board[move.killed_point.x][move.killed_point.y] = Figure(False)
@@ -156,7 +163,7 @@ class Game:
         self.handleWin()
         self.handleDraw()
 
-        print("Current state:", self.getGameState())
+        #print("Current state:", self.getGameState())
 
     def _getFiguresAmount(self) -> int:
         figures_amount = 0
@@ -179,6 +186,13 @@ class Game:
                             b += 1
 
         return w - b
+
+    def getAllMoves(self):
+        moves_arrays = list(self._available_moves.values())
+        moves = []
+        for arr in moves_arrays:
+            moves += arr
+        return moves
 
     def handleWin(self):
         current_side_has_moves = False
@@ -347,6 +361,10 @@ class Game:
         return []
 
 
+def copy_game(game: Game) -> Game:
+    return copy.deepcopy(game)
+
+
 if __name__ == "__main__":
     game = Game()
 
@@ -372,3 +390,4 @@ if __name__ == "__main__":
     #
     # self._board[4][5].is_checker = True
     # self._board[4][5].is_white = True
+
