@@ -7,7 +7,26 @@ def next_positions(game: game.main.Game) -> list[game.main.Game]:
 
 
 def heuristic_function(game: game.main.Game) -> float | int:
-    return game.getWFiguresDifference()
+    fig_dif = game.getWFiguresDifference()
+    center_dif = 0
+    board = game.getBoard()
+    for i in [3, 4]:
+        for j in range(2, 6):
+            figure = board[i][j]
+            if figure.is_checker:
+                if figure.is_white:
+                    center_dif += 1
+                else:
+                    center_dif -= 1
+    queens_dif = 0
+    for row in board:
+        for figure in row:
+            if figure.is_checker and figure.is_queen:
+                if figure.is_white:
+                    queens_dif += 1
+                else:
+                    queens_dif -= 1
+    return queens_dif*10 + fig_dif*2 + center_dif
 
 
 def minmax(current_game: game.main.Game, depth: int, finding_max: bool, moves_stack=()) -> [int, [game.classes.Move]]:

@@ -175,13 +175,6 @@ class Gui:
             if board[i][j].is_checker and board[i][j].is_white == self.__game.isWhiteTurn():
                 self.selected_checker = Point(i, j)
                 self.possible_moves = self.__game.getPossibleMoves(Point(i, j))
-        # else:
-        #     if self.__bot.is_best_move_ready():
-        #         flag = self.__game.isWhiteTurn()
-        #         move = self.__bot.get_calculated_move()
-        #         self.__game.handleMove(move)
-        #         if flag == self.__game.isWhiteTurn():
-        #             self.__bot.start_best_move_calculation(self.__game)
 
         # click on hint
         for move in self.possible_moves:

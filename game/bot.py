@@ -4,7 +4,7 @@ import random
 import time
 import game.classes
 
-from game.minmax import minmax
+from game.minmax import minmax, heuristic_function
 
 
 class Process:
@@ -30,7 +30,13 @@ class Process:
                     if len(moves) == 0:
                         print('moves -= none')
                         continue
-                    print('stack:', *['\n'+str(x) for x in moves_to_notation(moves)])
+                    stack = ['\n'+str(x) for x in moves_to_notation(moves)]
+                    simulated_game = copy.deepcopy(game)
+                    for i, move in enumerate(moves):
+                        simulated_game.handleMove(move)
+                        score = heuristic_function(simulated_game)
+                        stack[i] += f' score:{score}'
+                    print('stack:', *stack)
                     self.process_response_queue.put(moves[0])
 
 
@@ -38,7 +44,9 @@ class Bot:
     def __init__(self):
         self.process_request_queue = mp.Queue()
         self.process_response_queue = mp.Queue()
-        self.process = mp.Process(target=Process, args=(self.process_request_queue, self.process_response_queue), daemon=True)
+        self.process = mp.Process(target=Process,
+                                  args=(self.process_request_queue, self.process_response_queue),
+                                  daemon=True)
         self.process.start()
 
     def start_best_move_calculation(self, game):
