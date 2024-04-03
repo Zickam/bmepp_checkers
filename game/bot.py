@@ -36,7 +36,7 @@ class Process:
                         simulated_game.handleMove(move)
                         score = heuristic_function(simulated_game)
                         stack[i] += f' score:{score}'
-                    print('stack:', *stack)
+                    print('\nstack:', *stack)
                     self.process_response_queue.put(moves[0])
 
 
