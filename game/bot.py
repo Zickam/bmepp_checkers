@@ -2,9 +2,7 @@ import multiprocessing as mp
 import random
 import time
 
-from game.classes import Figure, Move
 from game.minmax import minmax
-from game.main import Game
 
 
 class Process:

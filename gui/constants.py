@@ -7,16 +7,13 @@ CBC = (20, 21, 20)  # checker's black color
 CWC = (250, 250, 250)  # checker's white color
 BC = (15, 15, 15)  # black color
 WC = (240, 240, 240)  # white color
-GC = (127, 127, 127)  #grey color
+GC = (127, 127, 127)  # gray color
 BCC = (108, 152, 76)  # black cells color
 WCC = (245, 245, 226)  # white cells color
 BBC = (20, 20, 20)  # board border color
 
 BOARD_FONT_PATH = 'gui/data/board_font.ttf'
 BUTTONS_FONT_PATH = 'gui/data/buttons_font.ttf'
-
-DO_RANDOM_MOVES = False
-DO_RANDOM_MOVE_INTERVAL = 0.1
 
 MAX_DIFFICULTY = 2
 MIN_DIFFICULTY = 0

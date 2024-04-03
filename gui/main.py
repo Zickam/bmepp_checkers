@@ -6,9 +6,9 @@ import pygame as pg
 
 from game.classes import Point
 from gui.sprites import Sprites
-from gui.constants import WIN_SIZE, FPS, DO_RANDOM_MOVE_INTERVAL, DO_RANDOM_MOVES, GC
+from gui.constants import WIN_SIZE, FPS, GC
 from game.main import Game, GameState
-from gui.buttons import Button, Text, caption_text, play_white_button, play_black_button, difficulty_text, \
+from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
 from gui import constants
 from game.bot import Bot
@@ -36,17 +36,10 @@ class Gui:
         self.__sprites = Sprites(self.__game.getBoardWidth())
         self.left_offset = WIN_SIZE[0] - self.__sprites.board.get_width()
 
-        self.do_random_moves = DO_RANDOM_MOVES
-        self.do_random_move_interval = DO_RANDOM_MOVE_INTERVAL
-        self.next_time_do_random_move = time.time() + self.do_random_move_interval
-
     def mainloop(self):
         while True:
             self.render()
             self.handle_events()
-
-            if self.do_random_moves and time.time() >= self.next_time_do_random_move:
-                self.doRandomMove()
 
             self.__clock.tick(FPS)
 
@@ -214,21 +207,6 @@ class Gui:
         if restart_button.collide_point((x, y)):
             self.__game = Game()
             self.state = SceneState.menu
-
-    def doRandomMove(self):
-        all_possible_moves = []
-        for i in range(self.__game.getBoardWidth()):
-            for j in range(self.__game.getBoardWidth()):
-                if self.__game.getBoard()[i][j].is_checker:
-                    possible_moves = self.__game.getPossibleMoves(Point(i, j))
-                    for move in possible_moves:
-                        all_possible_moves.append(move)
-        self.possible_moves = all_possible_moves
-
-        if self.possible_moves:
-            self.__game.handleMove(random.choice(self.possible_moves))
-            self.next_time_do_random_move = time.time() + self.do_random_move_interval
-
 
     def close(self):
         raise Exception("Implement an exiting for all the child processes and threads!")
