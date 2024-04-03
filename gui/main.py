@@ -1,4 +1,3 @@
-import random
 import time
 from enum import Enum
 
@@ -6,11 +5,10 @@ import pygame as pg
 
 from game.classes import Point
 from gui.sprites import Sprites
-from gui.constants import WIN_SIZE, FPS, GC
+from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
 from game.main import Game, GameState
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
-from gui import constants
 from game.bot import Bot
 
 
@@ -128,13 +126,13 @@ class Gui:
                 if event.button in (1, 3):  # RMB, LMB
                     x, y = event.pos
                     if self.state == SceneState.checkers:
-                        self.gameplay(x, y)
+                        self.handle_gameplay_click(x, y)
                         if self.__game.getGameState() != GameState.ongoing:
                             self.state = SceneState.result
                     elif self.state == SceneState.menu:
-                        self.menu(x, y)
+                        self.handle_menu_click(x, y)
                     elif self.state == SceneState.result:
-                        self.result(x, y)
+                        self.handle_result_click(x, y)
 
         if self.__bot.is_best_move_ready():
             flag = self.__game.isWhiteTurn()
@@ -143,14 +141,11 @@ class Gui:
             if flag == self.__game.isWhiteTurn():
                 self.__bot.start_best_move_calculation(self.__game)
 
-    def get_turn_number(self):
-        return self.__turn_number
-
     @property
     def is_bot_move(self):
         return self.__game.isPlayerWhite() != self.__game.isWhiteTurn()
 
-    def menu(self, x: int, y: int):
+    def handle_menu_click(self, x: int, y: int):
         if play_white_button.collide_point((x, y)):
             self.__game.setDifficulty(self.difficulty)
             self.state = SceneState.checkers
@@ -162,13 +157,13 @@ class Gui:
             self.__game.setIsPlayerWhite(False)
             self.__bot.start_best_move_calculation(self.__game)
 
-        if plus_button.collide_point((x, y)) and self.difficulty < constants.MAX_DIFFICULTY:
+        if plus_button.collide_point((x, y)) and self.difficulty < MAX_DIFFICULTY:
             self.difficulty += 1
 
-        if minus_button.collide_point((x, y)) and self.difficulty > constants.MIN_DIFFICULTY:
+        if minus_button.collide_point((x, y)) and self.difficulty > MIN_DIFFICULTY:
             self.difficulty -= 1
 
-    def gameplay(self, x: int, y: int):
+    def handle_gameplay_click(self, x: int, y: int):
         if restart_button.collide_point((x, y)):
             self.__game = Game()
             self.state = SceneState.menu
@@ -203,7 +198,7 @@ class Gui:
                     self.selected_checker = move_end
                     self.possible_moves = self.__game.getPossibleMoves(move_end)
 
-    def result(self, x, y):
+    def handle_result_click(self, x, y):
         if restart_button.collide_point((x, y)):
             self.__game = Game()
             self.state = SceneState.menu
