@@ -16,7 +16,7 @@ def minmax(current_game: game.main.Game, depth: int, finding_max: bool, moves_st
 
     if finding_max:
         _max = float('-inf')
-        best_moves = None
+        best_moves = moves_stack[:]
         for move in current_game.getAllMoves():
             #print([str(x) for x in moves_stack], '|', move)
             child = game.main.copy_game(current_game)
@@ -29,7 +29,7 @@ def minmax(current_game: game.main.Game, depth: int, finding_max: bool, moves_st
 
     else:
         _min = float('+inf')
-        best_moves = None
+        best_moves = moves_stack[:]
         for move in current_game.getAllMoves():
             #print([str(x) for x in moves_stack], '|', move)
             child = game.main.copy_game(current_game)

@@ -1,6 +1,8 @@
+import copy
 import multiprocessing as mp
 import random
 import time
+import game.classes
 
 from game.minmax import minmax
 
@@ -13,19 +15,22 @@ class Process:
 
     def mainloop(self):
         while True:
-            time.sleep(0.000001)
+            time.sleep(0.3)
             if not self.process_request_queue.empty():
                 game = self.process_request_queue.get()
                 if game.getDifficulty() == 0:
                     moves = game.getAllMoves()
                     if len(moves) == 0:
-                        return
+                        continue
                     random_move = random.choice(moves)
                     self.process_response_queue.put(random_move)
                 else:
-                    finding_max = game.isPlayerWhite()
-                    _, moves = minmax(game, 1, finding_max)
-                    print('stack:', *['\n'+str(x) for x in moves])
+                    finding_max = not game.isPlayerWhite()
+                    _, moves = minmax(game, 5, finding_max)
+                    if len(moves) == 0:
+                        print('moves -= none')
+                        continue
+                    print('stack:', *['\n'+str(x) for x in moves_to_notation(moves)])
                     self.process_response_queue.put(moves[0])
 
 
@@ -37,10 +42,23 @@ class Bot:
         self.process.start()
 
     def start_best_move_calculation(self, game):
-        self.process_request_queue.put(game)
+        game1 = copy.deepcopy(game)
+        self.process_request_queue.put(game1)
 
     def is_best_move_ready(self) -> bool:
         return not self.process_response_queue.empty()
 
     def get_calculated_move(self):
         return self.process_response_queue.get()
+
+def moves_to_notation(lst: list[game.classes.Moves]) -> list[str]:
+    notations = []
+    alph = 'abcdefgh'
+    for move in lst:
+        x1, y1, x2, y2 = move.start_point.x, move.start_point.y, move.end_point.x, move.end_point.y
+        y1 = alph[y1]
+        y2 = alph[y2]
+        x1 = 8 - x1
+        x2 = 8 - x2
+        notations.append(f"{y1}{x1}-{y2}{x2}")
+    return notations
