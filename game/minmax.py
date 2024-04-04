@@ -29,21 +29,26 @@ def heuristic_function(game: game.main.Game) -> float | int:
     return queens_dif*10 + fig_dif*2 + center_dif
 
 
-def minmax(current_game: game.main.Game, depth: int, finding_max: bool, moves_stack=(), branches_stack: tuple[tuple[int, int]] = ()) -> [int, [game.classes.Move]]:
-    if depth == 3:
+def minmax(current_game: game.main.Game,
+           depth: int,
+           finding_max: bool,
+           alpha: float = float('-inf'),
+           beta: float = float('+inf'),
+           moves_stack=(),
+           branches_stack: tuple[tuple[int, int]] = ()) -> [int, [game.classes.Move]]:
+    if depth == 0:
         print('\r', end='')
         for branch_num, branch_count in branches_stack:
             print(f'{branch_num+1}/{branch_count} ', end='')
     if depth == 0:
         return heuristic_function(current_game), moves_stack
 
-    def finding(_max: bool):
+    def finding(_max: bool, alpha: float, beta: float):
         record = float('-inf') if _max else float('+inf')
         best_moves = moves_stack[:]
         all_moves = current_game.getAllMoves()
         for i in range(len(all_moves)):
             move = all_moves[i]
-            #print([str(x) for x in moves_stack], '|', move)
             child = game.main.copy_game(current_game)
             color_before_move = child.isWhiteTurn()
             child.handleMove(move)
@@ -52,13 +57,19 @@ def minmax(current_game: game.main.Game, depth: int, finding_max: bool, moves_st
             else:
                 new_finding_max = _max
             new_b_stack = branches_stack + ((i, len(all_moves)),)
-            value, moves = minmax(child, depth-1, new_finding_max, tuple(list(moves_stack)+[move]), new_b_stack)
+            value, moves = minmax(child, depth-1, new_finding_max, 0, 0,  tuple(list(moves_stack)+[move]), new_b_stack)
             if (_max and value > record) or (not _max and value < record):
                 record = value
                 best_moves = moves
+            if _max:
+                alpha = max(alpha, record)
+            else:
+                beta = min(beta, record)
+            if beta <= alpha:
+                break
         return record, best_moves
 
     if finding_max:
-        return finding(True)
+        return finding(True, alpha, beta)
     else:
-        return finding(False)
+        return finding(False, alpha, beta)

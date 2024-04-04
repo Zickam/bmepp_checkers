@@ -15,7 +15,7 @@ class Process:
 
     def mainloop(self):
         while True:
-            time.sleep(0.3)
+            time.sleep(0.1)
             if not self.process_request_queue.empty():
                 game = self.process_request_queue.get()
                 if game.getDifficulty() == 0:
@@ -26,7 +26,7 @@ class Process:
                     self.process_response_queue.put(random_move)
                 else:
                     finding_max = not game.isPlayerWhite()
-                    _, moves = minmax(game, 5, finding_max)
+                    _, moves = minmax(game, 20, finding_max)
                     if len(moves) == 0:
                         print('moves -= none')
                         continue
