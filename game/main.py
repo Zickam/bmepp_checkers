@@ -5,6 +5,7 @@ import queue
 from game.classes import *
 from game import constants
 
+import numpy
 
 class GameState(Enum):
     ongoing = "Ongoing"
@@ -14,6 +15,12 @@ class GameState(Enum):
 
 
 MAX_GAME_BOARD_DEPTH = 60
+
+class BoardManager:
+    @staticmethod
+    def getAvailableMoves(board: numpy.array, is_white_turn: bool) -> numpy.array:
+        return []
+
 
 
 class Game:
@@ -30,6 +37,12 @@ class Game:
         self._difficulty = None
 
         self._board: list[list[Figure]] = self._initBoard()
+        # simple version of border is 8x8 matrix where each cell represents one cell on the real board
+        # 1st element of cell indicates whether this cell is checker or not
+        # 2nd element of cell indicates if the checker is white or black
+        # 3rd element of cell indicates queen
+        self._board_simple: numpy.array[numpy.array[numpy.array[bool, bool, bool]]] = self._initBoardSimple()
+        print(self._board_simple)
 
         self._count_moves_without_change = 0
         self._count_figure = self._getFiguresAmount()
@@ -84,6 +97,32 @@ class Game:
                 is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (self.getBoardWidth() - j - 1) % 2 == 1
                 if is_on_black_1 or is_on_black_2:
                     board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j - 1] = Figure(True, True)
+        return board
+
+    def _initBoardSimple(self) -> numpy.array:
+        board = numpy.array(
+            [
+                [
+                    numpy.array(
+                        [False, False, False]
+                    ) for i in range(self.getBoardWidth())
+                ] for j in range(self.getBoardWidth())
+            ]
+        )
+
+        for i in range(self.getBoardWidth()):
+            for j in range(self.getBoardWidth()):
+                is_on_white_1 = i % 2 == 1 and j % 2 == 0
+                is_on_white_2 = i % 2 == 0 and j % 2 == 1
+
+                if is_on_white_1 or is_on_white_2:
+                    board[i][j] = numpy.array([1, 1, 0])
+
+                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (self.getBoardWidth() - j - 1) % 2 == 0
+                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (self.getBoardWidth() - j - 1) % 2 == 1
+                if is_on_black_1 or is_on_black_2:
+                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j - 1] = numpy.array([1, 0, 0])
+
         return board
 
     def _handleKillMove(self, move: Move):
@@ -188,10 +227,11 @@ class Game:
         return w - b
 
     def getAllMoves(self):
-        moves_arrays = list(self._available_moves.values())
+        moves_arrays = self._available_moves.values()
         moves = []
         for arr in moves_arrays:
-            moves += arr
+            for elem in arr:
+                moves.append(elem)
         return moves
 
     def handleWin(self):
