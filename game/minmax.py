@@ -1,5 +1,8 @@
+import copy
+
 import game.main
 import game.classes
+from game.main import GameState
 
 
 def next_positions(game: game.main.Game) -> list[game.main.Game]:
@@ -26,6 +29,12 @@ def heuristic_function(game: game.main.Game) -> float | int:
                     queens_dif += 1
                 else:
                     queens_dif -= 1
+    if game.getGameState() == GameState.b_win:
+        return float('-inf')
+    elif game.getGameState() == GameState.w_win:
+        return float('+inf')
+    elif game.getGameState() == GameState.draw:
+        return 0
     return queens_dif*10 + fig_dif*2 + center_dif
 
 
@@ -45,8 +54,14 @@ def minmax(current_game: game.main.Game,
 
     def finding(_max: bool, alpha: float, beta: float):
         record = float('-inf') if _max else float('+inf')
-        best_moves = moves_stack[:]
+        best_moves = copy.deepcopy(moves_stack)
+        start_len_best_moves = len(best_moves)
         all_moves = current_game.getAllMoves()
+        if len(all_moves) == 0:
+            if _max:
+                return float('-inf'), best_moves
+            else:
+                return float('+inf'), best_moves
         for i in range(len(all_moves)):
             move = all_moves[i]
             child = game.main.copy_game(current_game)
@@ -57,7 +72,7 @@ def minmax(current_game: game.main.Game,
             else:
                 new_finding_max = _max
             new_b_stack = branches_stack + ((i, len(all_moves)),)
-            value, moves = minmax(child, depth-1, new_finding_max, 0, 0,  tuple(list(moves_stack)+[move]), new_b_stack)
+            value, moves = minmax(child, depth-1, new_finding_max, alpha, beta,  tuple(list(moves_stack)+[move]), new_b_stack)
             if (_max and value > record) or (not _max and value < record):
                 record = value
                 best_moves = moves
@@ -67,6 +82,8 @@ def minmax(current_game: game.main.Game,
                 beta = min(beta, record)
             if beta <= alpha:
                 break
+        if start_len_best_moves == len(best_moves):
+            tuple(list(moves_stack) + [move])
         return record, best_moves
 
     if finding_max:

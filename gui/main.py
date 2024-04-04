@@ -167,6 +167,9 @@ class Gui:
         if restart_button.collide_point((x, y)):
             self.__game = Game()
             self.state = SceneState.menu
+            self.selected_checker = None
+            self.possible_moves.clear()
+            self.__bot.end_bot_thinking()
 
         i, j = self.__sprites.get_cell(x - self.left_offset, y, self.__game.isPlayerWhite())
         board = self.__game.getBoard()

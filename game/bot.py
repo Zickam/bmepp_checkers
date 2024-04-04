@@ -26,7 +26,7 @@ class Process:
                     self.process_response_queue.put(random_move)
                 else:
                     finding_max = not game.isPlayerWhite()
-                    _, moves = minmax(game, 20, finding_max)
+                    _, moves = minmax(game, 6, finding_max)
                     if len(moves) == 0:
                         print('moves -= none')
                         continue
@@ -55,6 +55,15 @@ class Bot:
 
     def is_best_move_ready(self) -> bool:
         return not self.process_response_queue.empty()
+
+    def end_bot_thinking(self):
+        self.process.kill()
+        if not self.process_response_queue.empty():
+            self.process_response_queue.get()
+        self.process = mp.Process(target=Process,
+                                  args=(self.process_request_queue, self.process_response_queue),
+                                  daemon=True)
+        self.process.start()
 
     def get_calculated_move(self):
         return self.process_response_queue.get()
