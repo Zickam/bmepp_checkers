@@ -1,1 +1,7 @@
+llvmlite==0.42.0
+Nuitka==2.1.4
+numpy==1.26.4
+ordered-set==4.1.0
 pygame==2.5.2
+Pympler==1.0.1
+zstandard==0.22.0
