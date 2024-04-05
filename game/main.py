@@ -21,6 +21,28 @@ class BoardManager:
     def getAvailableMoves(board: numpy.array, is_white_turn: bool) -> numpy.array:
         return []
 
+    @staticmethod
+    def getFiguresAmount(board: numpy.array) -> int:
+        amount = 0
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i, j][0]:
+                    amount += 1
+        return amount
+
+    @staticmethod
+    def getWBFiguresDifference(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i, j][0]:
+                    match board[i, j][1]:
+                        case True:
+                            w += 1
+                        case False:
+                            b += 1
+
+        return w - b
 
 
 class Game:
@@ -42,7 +64,6 @@ class Game:
         # 2nd element of cell indicates if the checker is white or black
         # 3rd element of cell indicates queen
         self._board_simple: numpy.array[numpy.array[numpy.array[bool, bool, bool]]] = self._initBoardSimple()
-        print(self._board_simple)
 
         self._count_moves_without_change = 0
         self._count_figure = self._getFiguresAmount()
@@ -110,7 +131,7 @@ class Game:
             ]
         )
 
-        for i in range(self.getBoardWidth()):
+        for i in range(3):
             for j in range(self.getBoardWidth()):
                 is_on_white_1 = i % 2 == 1 and j % 2 == 0
                 is_on_white_2 = i % 2 == 0 and j % 2 == 1
@@ -407,6 +428,11 @@ def copy_game(game: Game) -> Game:
 
 if __name__ == "__main__":
     game = Game()
+
+
+    print(BoardManager.getWBFiguresDifference(game._board_simple))
+
+    exit()
 
     for i in game.getBoard():
         for j in i:
