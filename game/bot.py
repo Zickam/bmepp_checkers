@@ -38,6 +38,8 @@ class Process:
                         score = heuristic_function(simulated_game)
                         stack[i] += f' score:{score}'
                     print('\nstack:', *stack)
+                    if len(moves) == 1:
+                        print('(only one possible move, no calculations)')
                     self.process_response_queue.put(moves[0])
 
 

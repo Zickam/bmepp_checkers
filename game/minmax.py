@@ -1,7 +1,7 @@
 import copy
 
 import game.main
-from game.classes import moves_to_notation, Move, Point
+from game.classes import Move
 from game.main import GameState
 
 
@@ -63,6 +63,10 @@ class MinMaxClass:
                 return float('-inf'), best_moves
             else:
                 return float('+inf'), best_moves
+        # if there is only one possible move - make it immediately
+        if len(all_moves) == 1 and moves_stack == ():
+            return None, [all_moves[0]]
+
         for i in range(len(all_moves)):
             move = all_moves[i]
             child = game.main.copy_game(current_game)
