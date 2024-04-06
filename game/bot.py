@@ -2,15 +2,16 @@ import copy
 import multiprocessing as mp
 import random
 import time
-import game.classes
+from game.classes import moves_to_notation
 
-from game.minmax import minmax, heuristic_function
+from game.minmax import MinMaxClass, heuristic_function
 
 
 class Process:
     def __init__(self, process_request_queue: mp.Queue, process_response_queue: mp.Queue):
         self.process_request_queue = process_request_queue
         self.process_response_queue = process_response_queue
+        self.MinMax = MinMaxClass()
         self.mainloop()
 
     def mainloop(self):
@@ -26,7 +27,7 @@ class Process:
                     self.process_response_queue.put(random_move)
                 else:
                     finding_max = not game.isPlayerWhite()
-                    _, moves = minmax(game, 6, finding_max)
+                    _, moves = self.MinMax.minmax(game, 6, finding_max)
                     if len(moves) == 0:
                         print('moves -= none')
                         continue
@@ -67,15 +68,3 @@ class Bot:
 
     def get_calculated_move(self):
         return self.process_response_queue.get()
-
-def moves_to_notation(lst: list[game.classes.Moves]) -> list[str]:
-    notations = []
-    alph = 'abcdefgh'
-    for move in lst:
-        x1, y1, x2, y2 = move.start_point.x, move.start_point.y, move.end_point.x, move.end_point.y
-        y1 = alph[y1]
-        y2 = alph[y2]
-        x1 = 8 - x1
-        x2 = 8 - x2
-        notations.append(f"{y1}{x1}-{y2}{x2}")
-    return notations

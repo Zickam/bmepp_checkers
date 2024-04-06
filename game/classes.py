@@ -57,6 +57,20 @@ class Move:
     def __str__(self) -> str:
         return f"Move: ({self.start_point}, {self.end_point})"
 
+
+def moves_to_notation(lst: list[Move]) -> list[str]:
+    notations = []
+    alph = 'abcdefgh'
+    for move in lst:
+        x1, y1, x2, y2 = move.start_point.x, move.start_point.y, move.end_point.x, move.end_point.y
+        y1 = alph[y1]
+        y2 = alph[y2]
+        x1 = 8 - x1
+        x2 = 8 - x2
+        notations.append(f"{y1}{x1}-{y2}{x2}")
+    return notations
+
+
 class Figure:
     def __init__(self, is_checker: bool = False, is_white: bool = True):
         self.is_checker: bool = is_checker
