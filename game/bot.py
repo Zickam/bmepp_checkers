@@ -39,6 +39,7 @@ class Process:
                         score = heuristic_function(simulated_game)
                         stack[i] += f' score:{score}'
                     print('\nstack:', *stack)
+                    self.MinMax.save_cash()
                     print(f'time: {time.time()-start}')
                     self.process_response_queue.put(moves[0])
 

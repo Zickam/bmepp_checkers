@@ -4,6 +4,8 @@ import pickle
 from game.classes import Move, move_to_notation, notation_to_move
 from game.main import GameState, Game, copy_game, Figure
 
+#cash_file_name = 'cash_10depth_1st_move.pickle'
+cash_file_name = 'cash.pickle'
 
 def next_positions(_game: Game) -> list[Game]:
     pass
@@ -54,16 +56,16 @@ class MinMaxClass:
         self.load_cash()
 
     def save_cash(self):
-        file = open('cash.pickle', 'wb')
+        file = open(cash_file_name, 'wb')
         pickle.dump(self.cash, file)
         file.close()
 
     def load_cash(self):
         try:
-            file = open('cash.pickle', 'rb')
+            file = open(cash_file_name, 'rb')
         except FileNotFoundError:
             self.save_cash()
-            file = open('cash.pickle', 'rb')
+            file = open(cash_file_name, 'rb')
         self.cash = pickle.load(file)
 
     def add_to_cash(self, _game: Game, depth: int, record: int | float, move: Move):
@@ -161,5 +163,5 @@ class MinMaxClass:
         if update_cash_after_calculations:
             move = best_moves[start_depth-depth]
             self.add_to_cash(current_game, depth, record, move)
-            self.save_cash()
+            #self.save_cash()
         return record, best_moves
