@@ -42,12 +42,18 @@ class Game:
         # 2nd element of cell indicates if the checker is white or black
         # 3rd element of cell indicates queen
         self._board_simple: numpy.array[numpy.array[numpy.array[bool, bool, bool]]] = self._initBoardSimple()
-        print(self._board_simple)
 
         self._count_moves_without_change = 0
         self._count_figure = self._getFiguresAmount()
 
         self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
+
+    def getSimpleBoard(self) -> list[bool]:
+        simple_board = []
+        for row in self._board_simple:
+            for figure in row:
+                simple_board += figure.tolist()
+        return simple_board
 
     def getBoard(self) -> list[list[Figure]]:
         return self._board
@@ -198,6 +204,7 @@ class Game:
             self._handleQueenMove(move)
 
         self._available_moves = self._getAvailableMoves()
+        self._board_simple = self._initBoardSimple()
 
         self.handleWin()
         self.handleDraw()

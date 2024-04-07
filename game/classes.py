@@ -58,17 +58,33 @@ class Move:
         return f"Move: ({self.start_point}, {self.end_point})"
 
 
+def move_to_notation(_move: Move) -> str:
+    alph = 'abcdefgh'
+    x1, y1, x2, y2 = _move.start_point.x, _move.start_point.y, _move.end_point.x, _move.end_point.y
+    y1 = alph[y1]
+    y2 = alph[y2]
+    x1 = 8 - x1
+    x2 = 8 - x2
+    return f"{y1}{x1}-{y2}{x2}"
+
+
 def moves_to_notation(lst: list[Move]) -> list[str]:
     notations = []
-    alph = 'abcdefgh'
     for move in lst:
-        x1, y1, x2, y2 = move.start_point.x, move.start_point.y, move.end_point.x, move.end_point.y
-        y1 = alph[y1]
-        y2 = alph[y2]
-        x1 = 8 - x1
-        x2 = 8 - x2
-        notations.append(f"{y1}{x1}-{y2}{x2}")
+        notations.append(move_to_notation(move))
     return notations
+
+
+def notation_to_move(notation: str) -> Move:
+    alph = 'abcdefgh'
+    y1, x1, y2, x2 = notation[0], notation[1], notation[3], notation[4]
+    y1 = alph.find(y1)
+    y2 = alph.find(y2)
+    x1 = 8 - int(x1)
+    x2 = 8 - int(x2)
+    p1 = Point(x1, y1)
+    p2 = Point(x2, y2)
+    return Move(p1, p2)
 
 
 class Figure:

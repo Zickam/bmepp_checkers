@@ -26,6 +26,7 @@ class Process:
                     random_move = random.choice(moves)
                     self.process_response_queue.put(random_move)
                 else:
+                    start = time.time()
                     finding_max = not game.isPlayerWhite()
                     _, moves = self.MinMax.minmax(game, 6, finding_max)
                     if len(moves) == 0:
@@ -38,8 +39,7 @@ class Process:
                         score = heuristic_function(simulated_game)
                         stack[i] += f' score:{score}'
                     print('\nstack:', *stack)
-                    if len(moves) == 1:
-                        print('(only one possible move, no calculations)')
+                    print(f'time: {time.time()-start}')
                     self.process_response_queue.put(moves[0])
 
 
