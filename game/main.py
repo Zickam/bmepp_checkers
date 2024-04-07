@@ -361,10 +361,8 @@ def getMovableQueens(
 
 
 class BoardManager:
-
     @staticmethod
-    def getAvailableMoves(board: numpy.array,
-                          is_white_turn: bool) -> numpy.array:
+    def getAvailableMoves(board: numpy.array, is_white_turn: bool) -> numpy.array:
         return []
 
     @staticmethod
@@ -448,19 +446,22 @@ class Game:
                 if is_on_white_1 or is_on_white_2:
                     board[i][j] = Figure(True, False)
 
-                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (
-                        self.getBoardWidth() - j - 1) % 2 == 0
-                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (
-                        self.getBoardWidth() - j - 1) % 2 == 1
+                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (self.getBoardWidth() - j - 1) % 2 == 0
+                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (self.getBoardWidth() - j - 1) % 2 == 1
                 if is_on_black_1 or is_on_black_2:
-                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j -
-                                                        1] = Figure(True, True)
+                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j - 1] = Figure(True, True)
         return board
 
     def _initBoardSimple(self) -> numpy.array:
-        board = numpy.array([[
-            numpy.array([False, False, False]) for i in range(self.getBoardWidth())
-        ] for j in range(self.getBoardWidth())])
+        board = numpy.array(
+            [
+                [
+                    numpy.array(
+                        [False, False, False]
+                    ) for i in range(self.getBoardWidth())
+                ] for j in range(self.getBoardWidth())
+            ]
+        )
 
         for i in range(3):
             for j in range(self.getBoardWidth()):
@@ -488,8 +489,7 @@ class Game:
         self._count_moves_without_change = 0
 
     def _handleRelocation(self, move: Move):
-        self._board[move.end_point.x][move.end_point.y] = self._board[
-            move.start_point.x][move.start_point.y]
+        self._board[move.end_point.x][move.end_point.y] = self._board[move.start_point.x][move.start_point.y]
         self._board[move.start_point.x][move.start_point.y] = Figure(False)
 
     def _handleContinuousMove(self, move):
@@ -548,7 +548,6 @@ class Game:
             self._game_state = GameState.draw
 
     def handleMove(self, move: Move):
-        print(BoardManager.getSafetyPeshak(self._board))
         if not self._board[move.start_point.x][move.start_point.y].is_queen:
             self._handleCheckerMove(move)
         else:
@@ -722,10 +721,7 @@ class Game:
 
         return possible_moves
 
-    def _getAvailableMoves(
-            self
-    ) -> dict[Point.__hash__, list[Move]]:  # str is the __repr__ of Point
-
+    def _getAvailableMoves(self) -> dict[Point.__hash__, list[Move]]:  # str is the __repr__ of Point
         def iteration_board():
             for i in range(self.getBoardWidth()):
                 for j in range(self.getBoardWidth()):
@@ -735,27 +731,20 @@ class Game:
         unnecessary_moves = {}
 
         for i, j in iteration_board():
-            if self._board[i][j].is_checker and self._is_white_turn == self._board[
-                i][j].is_white:
+            if self._board[i][j].is_checker and self._is_white_turn == self._board[i][j].is_white:
                 possible_moves = self._getPossibleMovesForPoint(Point(i, j))
                 if possible_moves.necessary_moves:
                     for necessary_move in possible_moves.necessary_moves:
                         if necessary_move.start_point.__hash__() in necessary_moves:
-                            necessary_moves[necessary_move.start_point.__hash__()].append(
-                                necessary_move)
+                            necessary_moves[necessary_move.start_point.__hash__()].append(necessary_move)
                         else:
-                            necessary_moves[necessary_move.start_point.__hash__()] = [
-                                necessary_move
-                            ]
+                            necessary_moves[necessary_move.start_point.__hash__()] = [necessary_move]
                 elif not necessary_moves:
                     for unnecessary_move in possible_moves.unnecessary_moves:
                         if unnecessary_move.start_point.__hash__() in unnecessary_moves:
-                            unnecessary_moves[unnecessary_move.start_point.__hash__(
-                            )].append(unnecessary_move)
+                            unnecessary_moves[unnecessary_move.start_point.__hash__()].append(unnecessary_move)
                         else:
-                            unnecessary_moves[unnecessary_move.start_point.__hash__()] = [
-                                unnecessary_move
-                            ]
+                            unnecessary_moves[unnecessary_move.start_point.__hash__()] = [unnecessary_move]
 
         if necessary_moves:
             return necessary_moves
@@ -803,8 +792,6 @@ def getRandomizedBoard():
 if __name__ == "__main__":
     game = Game()
 
-    exit()
-
     for i in game.getBoard():
         for j in i:
             if j.is_checker:
@@ -827,3 +814,4 @@ if __name__ == "__main__":
     #
     # self._board[4][5].is_checker = True
     # self._board[4][5].is_white = True
+
