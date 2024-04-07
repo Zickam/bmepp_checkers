@@ -1,4 +1,5 @@
 import copy
+import random
 from enum import Enum
 import queue
 
@@ -6,6 +7,7 @@ from game.classes import *
 from game import constants
 
 import numpy
+
 
 class GameState(Enum):
     ongoing = "Ongoing"
@@ -16,19 +18,8 @@ class GameState(Enum):
 
 MAX_GAME_BOARD_DEPTH = 60
 
-class BoardManager:
-    @staticmethod
-    def getAvailableMoves(board: numpy.array, is_white_turn: bool) -> numpy.array:
-        return []
 
-    @staticmethod
-    def getFiguresAmount(board: numpy.array) -> int:
-        amount = 0
-        for i in range(len(board)):
-            for j in range(len(board[i])):
-                if board[i, j][0]:
-                    amount += 1
-        return amount
+class HeuristicFunctions:
 
     @staticmethod
     def getWBFiguresDifference(board: numpy.array) -> int:
@@ -43,6 +34,347 @@ class BoardManager:
                             b += 1
 
         return w - b
+
+    @staticmethod
+    def getCountPeshka(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i, j][0]:
+                    if board[i, j][1]:
+                        if not board[i, j][2]:
+                            w += 1
+                    else:
+                        if not board[i, j][2]:
+                            b += 1
+        return w - b
+
+    @staticmethod
+    def getCountKing(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i, j][0]:
+                    if board[i, j][1]:
+                        if board[i, j][2]:
+                            w += 1
+                    else:
+                        if board[i, j][2]:
+                            b += 1
+        return w - b
+
+    @staticmethod
+    def getSafeCheckersAmount(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(1, len(board), 2):
+            if board[0, i][0] and not board[0, i][2]:
+                if board[0, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        for i in range(2, len(board), 2):
+            if board[i, len(board) - 1][0] and not board[i, len(board) - 1][2]:
+                if board[i, len(board) - 1][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        for i in range(0, len(board), 2):
+            if board[len(board) - 1, i][0] and not board[len(board) - 1, i][2]:
+                if board[len(board) - 1, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        for i in range(1, len(board) - 2, 2):
+            if board[i, 0][0] and not board[i, 0][2]:
+                if board[i, 0][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        return w - b
+
+    @staticmethod
+    def getSafeQueensAmount(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(1, len(board), 2):
+            if board[0, i][0] and board[0, i][2]:
+                if board[0, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        for i in range(2, len(board), 2):
+            if board[i, len(board) - 1][0] and board[i, len(board) - 1][2]:
+                if board[i, len(board) - 1][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        for i in range(0, len(board), 2):
+            if board[len(board) - 1, i][0] and board[len(board) - 1, i][2]:
+                if board[len(board) - 1, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        for i in range(1, len(board) - 2, 2):
+            if board[i, 0][0] and board[i, 0][2]:
+                if board[i, 0][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        return w - b
+
+    @staticmethod
+    def getQueensAmount(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            if i % 2 == 0:
+                c = 1
+            else:
+                c = 0
+            for j in range(c, len(board), 2):
+                if board[i, j][0] and board[i, j][2]:
+                    if board[i, j][1]:
+                        w += 1
+                    else:
+                        b += 1
+
+        return w - b
+
+    @staticmethod
+    def getAmountOnPromotionLine(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(1, len(board), 2):
+            if board[0, i][0] and board[0, i][2]:
+                if board[0, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        for i in range(0, len(board), 2):
+            if board[len(board) - 1, i][0] and board[len(board) - 1, i][2]:
+                if board[len(board) - 1, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        w = 4 - w
+        b = 4 - b
+
+        return w - b
+
+    @staticmethod
+    def getDistanceToPromotionLine(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            if i % 2 == 0:
+                c = 1
+            else:
+                c = 0
+            for j in range(c, len(board), 2):
+                if board[i, j][0] and not board[i, j][2]:
+                    if board[i, j][1]:
+                        w += i
+                    else:
+                        b += 7 - i
+        return b - w
+
+    @staticmethod
+    def getAttackersAmount(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i, j][0] and not board[i, j][2]:
+                    if board[i, j][1]:
+                        if 0 <= i <= 2:
+                            w += 1
+                    else:
+                        if 5 <= i <= 7:
+                            b += 1
+        return w - b
+
+    @staticmethod
+    def getDefendersAmount(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i, j][0]:
+                    if board[i, j][1]:
+                        if 0 <= i <= 1:
+                            b += 1
+                    else:
+                        if 6 <= i <= 7:
+                            w += 1
+        return w - b
+
+    @staticmethod
+    def getCentrallyPositionedCheckersAmount(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(2, len(board) - 2, 2):
+            for j in range(2, len(board[i]) - 2, 2):
+                if board[i, j][0] and not board[i, j][2]:
+                    if board[i, j][1]:
+                        w += 1
+                    else:
+                        b += 1
+
+        return w - b
+
+    @staticmethod
+    def getCentrallyPositionedQueensAmount(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(2, len(board) - 2, 2):
+            for j in range(2, len(board[i]) - 2, 2):
+                if board[i, j][0] and board[i, j][2]:
+                    if board[i, j][1]:
+                        w += 1
+                    else:
+                        b += 1
+
+        return w - b
+
+    @staticmethod
+    def getCheckersAmountOnMainDiagonal(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            if board[i, i][0] and not board[i, i][2]:
+                if board[i, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        return w - b
+
+    @staticmethod
+    def getQueensAmountOnMainDiagonal(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            if board[i, i][0] and board[i, i][2]:
+                if board[i, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        return w - b
+
+    @staticmethod
+    def getCheckersAmountOnDoubleDiagonal(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            if board[i,
+            len(board) - 1 - i][0] and not board[i, len(board) - 1 - i][2]:
+                if board[i, len(board) - 1 - i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        return w - b
+
+    @staticmethod
+    def getQueensAmountOnDoubleDiagonal(board: numpy.array) -> int:
+        w, b = 0, 0
+        for i in range(len(board)):
+            if board[i, len(board) - 1 - i][0] and board[i, len(board) - 1 - i][2]:
+                if board[i, len(board) - 1 - i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        return w - b
+
+
+@staticmethod
+def getMovableCheckers(
+        board: numpy.array
+) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
+    w, b = 0, 0
+    for i in range(len(board)):
+        if i % 2 == 0:
+            c = 1
+        else:
+            c = 0
+        for j in range(c, len(board[i]), 2):
+            if board[i, j][0]:
+                if board[i, j][1]:
+                    if board[i, j][2]:
+                        ans = 0
+                        if not board[i + 1, j - 1][0] and (j < 8 or i < 8):
+                            ans += 1
+                        if not board[i - 1, j - 1][0] and (j < 8):
+                            ans += 1
+                            # if not board[i+1, j-1][0] or not board[i-1, j-1][0] and :
+                        if ans:
+                            w += 1
+                else:
+                    if board[i, j][2]:
+                        ansb = 0
+                        if not board[i + 1, j + 1][0] and (j < 8 or i < 8):
+                            ansb += 1
+                        if not board[i - 1, j + 1][0] and (j < 8):
+                            ansb += 1
+                            # if not board[i+1, j-1][0] or not board[i-1, j-1][0] and :
+                        if ansb:
+                            b += 1
+
+    return w - b
+
+
+@staticmethod
+def getMovableQueens(
+        board: numpy.array
+) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
+    w, b = 0, 0
+    for i in range(len(board)):
+        if i % 2 == 0:
+            c = 1
+        else:
+            c = 0
+        for j in range(c, len(board[i]), 2):
+            if board[i, j][0]:
+                if board[i, j][1]:
+                    if not board[i, j][2]:
+                        ans = 0
+                        if not board[i + 1, j - 1][0] and (j < 8 or i < 8):
+                            ans += 1
+                        if not board[i - 1, j - 1][0] and (j < 8):
+                            ans += 1
+                            # if not board[i+1, j-1][0] or not board[i-1, j-1][0] and :
+                        if ans:
+                            w += 1
+                else:
+                    if not board[i, j][2]:
+                        ansb = 0
+                        if not board[i + 1, j + 1][0] and (j < 8 or i < 8):
+                            ansb += 1
+                        if not board[i - 1, j + 1][0] and (j < 8):
+                            ansb += 1
+                            # if not board[i+1, j-1][0] or not board[i-1, j-1][0] and :
+                        if ansb:
+                            b += 1
+
+        return w - b
+
+
+class BoardManager:
+
+    @staticmethod
+    def getAvailableMoves(board: numpy.array,
+                          is_white_turn: bool) -> numpy.array:
+        return []
+
+    @staticmethod
+    def getFiguresAmount(board: numpy.array) -> int:
+        amount = 0
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i, j][0]:
+                    amount += 1
+        return amount
 
 
 class Game:
@@ -63,12 +395,14 @@ class Game:
         # 1st element of cell indicates whether this cell is checker or not
         # 2nd element of cell indicates if the checker is white or black
         # 3rd element of cell indicates queen
-        self._board_simple: numpy.array[numpy.array[numpy.array[bool, bool, bool]]] = self._initBoardSimple()
+        self._board_simple: numpy.array[numpy.array[numpy.array[
+            bool, bool, bool]]] = self._initBoardSimple()
 
         self._count_moves_without_change = 0
         self._count_figure = self._getFiguresAmount()
 
-        self._available_moves: dict[Point.__hash__, list[Move]] = self._getAvailableMoves()
+        self._available_moves: dict[Point.__hash__,
+        list[Move]] = self._getAvailableMoves()
 
     def getBoard(self) -> list[list[Figure]]:
         return self._board
@@ -114,22 +448,19 @@ class Game:
                 if is_on_white_1 or is_on_white_2:
                     board[i][j] = Figure(True, False)
 
-                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (self.getBoardWidth() - j - 1) % 2 == 0
-                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (self.getBoardWidth() - j - 1) % 2 == 1
+                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (
+                        self.getBoardWidth() - j - 1) % 2 == 0
+                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (
+                        self.getBoardWidth() - j - 1) % 2 == 1
                 if is_on_black_1 or is_on_black_2:
-                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j - 1] = Figure(True, True)
+                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j -
+                                                        1] = Figure(True, True)
         return board
 
     def _initBoardSimple(self) -> numpy.array:
-        board = numpy.array(
-            [
-                [
-                    numpy.array(
-                        [False, False, False]
-                    ) for i in range(self.getBoardWidth())
-                ] for j in range(self.getBoardWidth())
-            ]
-        )
+        board = numpy.array([[
+            numpy.array([False, False, False]) for i in range(self.getBoardWidth())
+        ] for j in range(self.getBoardWidth())])
 
         for i in range(3):
             for j in range(self.getBoardWidth()):
@@ -137,12 +468,15 @@ class Game:
                 is_on_white_2 = i % 2 == 0 and j % 2 == 1
 
                 if is_on_white_1 or is_on_white_2:
-                    board[i][j] = numpy.array([1, 1, 0])
+                    board[i][j] = numpy.array([1, 0, 0])
 
-                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (self.getBoardWidth() - j - 1) % 2 == 0
-                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (self.getBoardWidth() - j - 1) % 2 == 1
+                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (
+                        self.getBoardWidth() - j - 1) % 2 == 0
+                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (
+                        self.getBoardWidth() - j - 1) % 2 == 1
                 if is_on_black_1 or is_on_black_2:
-                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j - 1] = numpy.array([1, 0, 0])
+                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j -
+                                                        1] = numpy.array([1, 1, 0])
 
         return board
 
@@ -154,7 +488,8 @@ class Game:
         self._count_moves_without_change = 0
 
     def _handleRelocation(self, move: Move):
-        self._board[move.end_point.x][move.end_point.y] = self._board[move.start_point.x][move.start_point.y]
+        self._board[move.end_point.x][move.end_point.y] = self._board[
+            move.start_point.x][move.start_point.y]
         self._board[move.start_point.x][move.start_point.y] = Figure(False)
 
     def _handleContinuousMove(self, move):
@@ -213,6 +548,7 @@ class Game:
             self._game_state = GameState.draw
 
     def handleMove(self, move: Move):
+        print(BoardManager.getSafetyPeshak(self._board))
         if not self._board[move.start_point.x][move.start_point.y].is_queen:
             self._handleCheckerMove(move)
         else:
@@ -223,7 +559,7 @@ class Game:
         self.handleWin()
         self.handleDraw()
 
-        #print("Current state:", self.getGameState())
+        # print("Current state:", self.getGameState())
 
     def _getFiguresAmount(self) -> int:
         figures_amount = 0
@@ -386,7 +722,10 @@ class Game:
 
         return possible_moves
 
-    def _getAvailableMoves(self) -> dict[Point.__hash__, list[Move]]:  # str is the __repr__ of Point
+    def _getAvailableMoves(
+            self
+    ) -> dict[Point.__hash__, list[Move]]:  # str is the __repr__ of Point
+
         def iteration_board():
             for i in range(self.getBoardWidth()):
                 for j in range(self.getBoardWidth()):
@@ -396,20 +735,27 @@ class Game:
         unnecessary_moves = {}
 
         for i, j in iteration_board():
-            if self._board[i][j].is_checker and self._is_white_turn == self._board[i][j].is_white:
+            if self._board[i][j].is_checker and self._is_white_turn == self._board[
+                i][j].is_white:
                 possible_moves = self._getPossibleMovesForPoint(Point(i, j))
                 if possible_moves.necessary_moves:
                     for necessary_move in possible_moves.necessary_moves:
                         if necessary_move.start_point.__hash__() in necessary_moves:
-                            necessary_moves[necessary_move.start_point.__hash__()].append(necessary_move)
+                            necessary_moves[necessary_move.start_point.__hash__()].append(
+                                necessary_move)
                         else:
-                            necessary_moves[necessary_move.start_point.__hash__()] = [necessary_move]
+                            necessary_moves[necessary_move.start_point.__hash__()] = [
+                                necessary_move
+                            ]
                 elif not necessary_moves:
                     for unnecessary_move in possible_moves.unnecessary_moves:
                         if unnecessary_move.start_point.__hash__() in unnecessary_moves:
-                            unnecessary_moves[unnecessary_move.start_point.__hash__()].append(unnecessary_move)
+                            unnecessary_moves[unnecessary_move.start_point.__hash__(
+                            )].append(unnecessary_move)
                         else:
-                            unnecessary_moves[unnecessary_move.start_point.__hash__()] = [unnecessary_move]
+                            unnecessary_moves[unnecessary_move.start_point.__hash__()] = [
+                                unnecessary_move
+                            ]
 
         if necessary_moves:
             return necessary_moves
@@ -426,11 +772,36 @@ def copy_game(game: Game) -> Game:
     return copy.deepcopy(game)
 
 
+def getRandomizedBoard():
+    board = numpy.array([[numpy.array([False, False, False]) for i in range(8)]
+                         for j in range(8)])
+
+    c = 10
+    for i in range(c):
+        random_i = random.randint(0, 7)
+        if random_i % 2 == 0:
+            random_j = random.choice([j for j in range(1, 7, 2)])
+        else:
+            random_j = random.choice([j for j in range(0, 7, 2)])
+
+        random_side = random.choice([True, False])
+        is_queen = random.choice([True, False])
+        board[random_i, random_j][0] = True
+        board[random_i, random_j][1] = random_side
+        board[random_i, random_j][2] = is_queen
+
+    for i in board:
+        print(*i, sep=" ")
+
+    print(BoardManager.getQueensAmount(board))
+    print(BoardManager.getQueensAmountOnMainDiagonal(board))
+    print(BoardManager.getQueensAmountOnDoubleDiagonal(board))
+    print(BoardManager.getCentrallyPositionedQueensAmount(board))
+    return board
+
+
 if __name__ == "__main__":
     game = Game()
-
-
-    print(BoardManager.getWBFiguresDifference(game._board_simple))
 
     exit()
 
@@ -456,4 +827,3 @@ if __name__ == "__main__":
     #
     # self._board[4][5].is_checker = True
     # self._board[4][5].is_white = True
-
