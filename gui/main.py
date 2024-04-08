@@ -1,15 +1,30 @@
+import datetime
 import time
 from enum import Enum
+import os
 
 import pygame as pg
 
-from game.classes import Point
+from game.classes import Point, Move, move_to_notation
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
 from game.main import Game, GameState
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
 from game.bot import Bot
+
+
+class Log:
+    def __init__(self):
+        if 'player_logs' not in os.listdir():
+            os.mkdir('player_logs')
+        self.file_name = f'player_logs/{str(datetime.datetime.now()).replace(":", "_")}.txt'
+
+    def add_turn(self, move: Move):
+        move = move_to_notation(move)
+        with open(self.file_name, 'a+', encoding='utf-8') as file:
+            file.write(move+'\n')
+            file.close()
 
 
 class SceneState(Enum):
@@ -28,6 +43,7 @@ class Gui:
         self.state = SceneState.menu
         self.difficulty = 1
         self.__bot = Bot()
+        self.player_log = Log()
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
         pg.display.set_caption('Checkers')
@@ -185,6 +201,7 @@ class Gui:
             if move_end.x == i and move_end.y == j:
                 is_white_flag = self.__game.isWhiteTurn()
                 self.__game.handleMove(move)
+                self.player_log.add_turn(move)
                 self.possible_moves.clear()
 
                 if is_white_flag != self.__game.isWhiteTurn():
@@ -200,5 +217,5 @@ class Gui:
             self.state = SceneState.menu
 
     def close(self):
-        raise Exception("Implement an exiting for all the child processes and threads!")
         exit()
+

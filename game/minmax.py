@@ -5,7 +5,7 @@ from game.classes import Move, move_to_notation, notation_to_move
 from game.main import GameState, Game, copy_game, Figure
 
 #cash_file_name = 'cash_10depth_1st_move.pickle'
-cash_file_name = 'cash.pickle'
+cache_file_name = 'cache.pickle'
 
 def next_positions(_game: Game) -> list[Game]:
     pass
@@ -52,41 +52,38 @@ def game_board_to_str(board: list[list[Figure]]) -> str:
 
 class MinMaxClass:
     def __init__(self):
-        self.cash: dict[int: dict[tuple[bool]: tuple[float, str]]] = {}
+        # cache = dict(tuple(depth, board, finding_max): tuple(value, move)
+        self.cache: dict[tuple[int, str, bool]: tuple[float, str]] = {}
         self.load_cash()
 
     def save_cash(self):
-        file = open(cash_file_name, 'wb')
-        pickle.dump(self.cash, file)
+        file = open(cache_file_name, 'wb')
+        pickle.dump(self.cache, file)
         file.close()
 
     def load_cash(self):
         try:
-            file = open(cash_file_name, 'rb')
+            file = open(cache_file_name, 'rb')
         except FileNotFoundError:
             self.save_cash()
-            file = open(cash_file_name, 'rb')
-        self.cash = pickle.load(file)
+            file = open(cache_file_name, 'rb')
+        self.cache = pickle.load(file)
 
-    def add_to_cash(self, _game: Game, depth: int, record: int | float, move: Move):
+    def add_to_cash(self, _game: Game, depth: int, record: int | float, move: Move, finding_max: bool):
         board = game_board_to_str(_game.getBoard())
-        if depth in self.cash.keys():
-            n_depth_dict = self.cash[depth]
-        else:
-            n_depth_dict = {}
-            self.cash[depth] = n_depth_dict
         str_move = move_to_notation(move)
-        n_depth_dict[board] = (record, str_move)
+        key = depth, board, finding_max
+        value = record, str_move
+        self.cache[key] = value
 
-    def check_cash(self, _game: Game, depth: int):
-        if depth not in self.cash.keys():
-            return
-        n_depth_dict = self.cash[depth]
+    def check_cash(self, _game: Game, depth: int, finding_max: bool) -> None | tuple[float, Move]:
         board = game_board_to_str(_game.getBoard())
-        if board in n_depth_dict:
-            record, notation = n_depth_dict[board]
-            move = notation_to_move(notation)
-            return record, move
+        for i in range(depth, 12):
+            key = i, board, finding_max
+            if key in self.cache:
+                value, move = self.cache.get(key)
+                move = notation_to_move(move)
+                return value, move
 
     def minmax(self, current_game: Game,
                depth: int,
@@ -95,7 +92,8 @@ class MinMaxClass:
                beta: float = float('+inf'),
                moves_stack=(),
                branches_stack: tuple[tuple[int, int], ...] = (),
-               start_depth=float('inf')) -> [int, [Move]]:
+               start_depth=float('inf'),
+               moves_without_change_side=0) -> [int, [Move]]:
         if start_depth == float('inf'):
             start_depth = depth
 
@@ -107,30 +105,29 @@ class MinMaxClass:
         if depth == 0:
             return heuristic_function(current_game), moves_stack
 
-        if depth not in [0, 1, 2]:
-            update_cash_after_calculations = True
-        else:
-            update_cash_after_calculations = False
-
         record = float('-inf') if finding_max else float('+inf')
         all_moves = current_game.getAllMoves()
         best_moves = copy.deepcopy(moves_stack)
+
         if len(all_moves) == 0:
             if finding_max:
                 return float('-inf'), best_moves
             else:
                 return float('+inf'), best_moves
+
         # if there is only one possible move - make it immediately
         if len(all_moves) == 1 and moves_stack == ():
             print('(only one possible move, no calculations)')
             return None, [all_moves[0]]
 
-        from_cash = self.check_cash(current_game, depth)
-        if from_cash is not None:
-            value, move = from_cash
-            moves = tuple(list(moves_stack) + [move])
-            print(f'get from cash: depth:{depth}, {move_to_notation(move)}')
-            return value, moves
+        if depth not in [0, 1, 2]:
+            from_cash = self.check_cash(current_game, depth, finding_max)
+
+            if from_cash is not None:
+                value, move = from_cash
+                moves = tuple(list(moves_stack) + [move])
+                #print(f'get from cash: depth:{depth}, {move_to_notation(move)}')
+                return value, moves
 
         for i in range(len(all_moves)):
             move = all_moves[i]
@@ -140,14 +137,22 @@ class MinMaxClass:
             if child.isWhiteTurn() != color_before_move:
                 new_finding_max = not finding_max
                 new_depth = depth - 1
+                new_moves_without_change_side = moves_without_change_side
             else:
+                new_moves_without_change_side = moves_without_change_side + 1
                 new_finding_max = finding_max
                 new_depth = depth
             new_b_stack = branches_stack + ((i, len(all_moves)),)
 
-            # next step of recursion or use cash
-            value, moves = self.minmax(child, new_depth, new_finding_max, alpha, beta,
-                                           tuple(list(moves_stack)+[move]), new_b_stack, start_depth)
+            value, moves = self.minmax(child,
+                                       new_depth,
+                                       new_finding_max,
+                                       alpha,
+                                       beta,
+                                       tuple(list(moves_stack)+[move]),
+                                       new_b_stack,
+                                       start_depth,
+                                       new_moves_without_change_side)
 
             if (finding_max and (value > record or value == float('-inf'))) or \
                     (not finding_max and (value < record or value == float('+inf'))):
@@ -160,8 +165,11 @@ class MinMaxClass:
             if beta <= alpha:
                 break
 
-        if update_cash_after_calculations:
-            move = best_moves[start_depth-depth]
-            self.add_to_cash(current_game, depth, record, move)
-            #self.save_cash()
+        if depth not in [0, 1, 2]:
+            try:
+                move = best_moves[start_depth - depth + moves_without_change_side]
+            except IndexError:
+                print(len(best_moves), start_depth, depth, moves_without_change_side)
+                raise IndexError
+            self.add_to_cash(current_game, depth, record, move, finding_max)
         return record, best_moves
