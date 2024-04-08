@@ -547,7 +547,29 @@ class Game:
         if self._count_moves_without_change >= MAX_GAME_BOARD_DEPTH:
             self._game_state = GameState.draw
 
+
+    def _checkIsMoveCorrect(self, move: Move) -> tuple[bool, str]:
+        if move.is_kill:
+            if not self.getBoard()[move.killed_point.x][move.killed_point.y].is_checker:
+                return False, "Killed checker doesnt exist"
+            if not self.getBoard()[move.start_point.x][move.start_point.y].is_checker:
+                return False, "Killing checker doesnt exist"
+            if self.getBoard()[move.start_point.x][move.start_point.y] == self.getBoard()[move.killed_point.x][move.killed_point.y]:
+                return False, "Killing checker's team is the same as killed checker's team"
+        else:
+            if not self.getBoard()[move.start_point.x][move.start_point.y].is_checker:
+                return False, "Moving checker doesnt exist"
+            if self.getBoard()[move.end_point.x][move.end_point.y].is_checker:
+                return False, "End point is already occupied"
+
+        return True, ""
+
     def handleMove(self, move: Move):
+
+        is_move_correct, exception = self._checkIsMoveCorrect(move)
+        if not is_move_correct:
+            raise Exception(f"Incorrect move: {move}. \nException: {exception}")
+
         if not self._board[move.start_point.x][move.start_point.y].is_queen:
             self._handleCheckerMove(move)
         else:

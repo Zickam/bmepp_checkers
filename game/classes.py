@@ -55,7 +55,7 @@ class Move:
         self.killed_point = killed_point
 
     def __str__(self) -> str:
-        return f"Move: ({self.start_point}, {self.end_point})"
+        return f"Move: ({self.start_point}, {self.end_point}) [is_kill: {self.is_kill}, killed_point: {self.killed_point}]"
 
 
 def move_to_notation(_move: Move) -> str:
