@@ -4,8 +4,9 @@ import pickle
 from game.classes import Move, move_to_notation, notation_to_move
 from game.main import GameState, Game, copy_game, Figure
 
-#cash_file_name = 'cash_10depth_1st_move.pickle'
+# cash_file_name = 'cash_10depth_1st_move.pickle'
 cache_file_name = 'cache.pickle'
+
 
 def next_positions(_game: Game) -> list[Game]:
     pass
@@ -40,6 +41,20 @@ def heuristic_function(_game: Game) -> float | int:
     return queens_dif*15 + fig_dif*3 + center_dif
 
 
+def potential_function(_game: Game) -> float | int:
+    center_dif = 0
+    board = _game.getBoard()
+    for i in [3, 4]:
+        for j in range(2, 6):
+            figure = board[i][j]
+            if figure.is_checker:
+                if figure.is_white:
+                    center_dif += 1
+                else:
+                    center_dif -= 1
+    return center_dif
+
+
 def game_board_to_str(board: list[list[Figure]]) -> str:
     s = ''
     for i, row in enumerate(board):
@@ -55,6 +70,12 @@ class MinMaxClass:
         # cache = dict(tuple(depth, board, finding_max): tuple(value, move)
         self.cache: dict[tuple[int, str, bool]: tuple[float, str]] = {}
         self.load_cash()
+        # dict(depth: count)
+        self.alphabeta_puring_count = {}
+        # dict(depth: count)
+        self.using_cache_count = {}
+        self.depth_zero = 0
+        self.brute_forced_depth = [0, 1, 2]
 
     def save_cash(self):
         file = open(cache_file_name, 'wb')
@@ -90,8 +111,8 @@ class MinMaxClass:
                finding_max: bool,
                alpha: float = float('-inf'),
                beta: float = float('+inf'),
-               moves_stack=(),
                branches_stack: tuple[tuple[int, int], ...] = (),
+               moves_stack=(),
                start_depth=float('inf'),
                moves_without_change_side=0) -> [int, [Move]]:
         if start_depth == float('inf'):
@@ -103,6 +124,7 @@ class MinMaxClass:
                 print(f'{branch_num+1}/{branch_count} ', end='')
 
         if depth == 0:
+            self.depth_zero += 1
             return heuristic_function(current_game), moves_stack
 
         record = float('-inf') if finding_max else float('+inf')
@@ -120,14 +142,16 @@ class MinMaxClass:
             print('(only one possible move, no calculations)')
             return None, [all_moves[0]]
 
-        if depth not in [0, 1, 2]:
+        if depth not in self.brute_forced_depth:
             from_cash = self.check_cash(current_game, depth, finding_max)
 
             if from_cash is not None:
                 value, move = from_cash
                 moves = tuple(list(moves_stack) + [move])
-                #print(f'get from cash: depth:{depth}, {move_to_notation(move)}')
+                add_to_counter(self.using_cache_count, depth)
                 return value, moves
+
+        children = []
 
         for i in range(len(all_moves)):
             move = all_moves[i]
@@ -142,18 +166,20 @@ class MinMaxClass:
                 new_moves_without_change_side = moves_without_change_side + 1
                 new_finding_max = finding_max
                 new_depth = depth
+            args = [new_depth,
+                    new_finding_max,
+                    tuple(list(moves_stack)+[move]),
+                    start_depth,
+                    new_moves_without_change_side]
+            children.append([child, args])
+
+        if depth not in self.brute_forced_depth:
+            children.sort(key=lambda x: potential_function(x[0]), reverse=finding_max)
+
+        for i in range(len(children)):
+            child, args = children[i]
             new_b_stack = branches_stack + ((i, len(all_moves)),)
-
-            value, moves = self.minmax(child,
-                                       new_depth,
-                                       new_finding_max,
-                                       alpha,
-                                       beta,
-                                       tuple(list(moves_stack)+[move]),
-                                       new_b_stack,
-                                       start_depth,
-                                       new_moves_without_change_side)
-
+            value, moves = self.minmax(child, *args[:2], alpha, beta, new_b_stack, *args[2:])
             if (finding_max and (value > record or value == float('-inf'))) or \
                     (not finding_max and (value < record or value == float('+inf'))):
                 record = value
@@ -163,9 +189,10 @@ class MinMaxClass:
             else:
                 beta = min(beta, record)
             if beta <= alpha:
+                add_to_counter(self.alphabeta_puring_count, depth)
                 break
 
-        if depth not in [0, 1, 2]:
+        if depth not in self.brute_forced_depth:
             try:
                 move = best_moves[start_depth - depth + moves_without_change_side]
             except IndexError:
@@ -173,3 +200,10 @@ class MinMaxClass:
                 raise IndexError
             self.add_to_cash(current_game, depth, record, move, finding_max)
         return record, best_moves
+
+
+def add_to_counter(dct: dict, key):
+    if key not in dct:
+        dct[key] = 1
+    else:
+        dct[key] += 1

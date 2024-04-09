@@ -28,7 +28,7 @@ class Process:
                 else:
                     start = time.time()
                     finding_max = not game.isPlayerWhite()
-                    _, moves = self.MinMax.minmax(game, 6, finding_max)
+                    _, moves = self.MinMax.minmax(game, 8, finding_max)
                     if len(moves) == 0:
                         print('moves -= none')
                         continue
@@ -41,6 +41,15 @@ class Process:
                     print('\nstack:', *stack)
                     self.MinMax.save_cash()
                     print(f'time: {time.time()-start}')
+
+                    print('alphabeta count:', self.MinMax.alphabeta_puring_count)
+                    self.MinMax.alphabeta_puring_count = {}
+
+                    print('cash count:', self.MinMax.using_cache_count)
+                    self.MinMax.using_cache_count = {}
+
+                    print('heuristic func count:', self.MinMax.depth_zero)
+                    self.MinMax.depth_zero = 0
                     self.process_response_queue.put(moves[0])
 
 

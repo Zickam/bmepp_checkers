@@ -34,15 +34,22 @@ class SceneState(Enum):
 
 
 class Gui:
-    def __init__(self):
+    def __init__(self, opponent_bot: Bot, main_bot: Bot = None):
+        """
+        Can work in two modes: bot vs player, bot vs bot
+        If main_bot param is not None, will start bot vs bot game
+        """
         self.__game = Game()
         self.__clock = pg.time.Clock()
-        self.frame_start = time.time()
+        self.bot_vs_bot_mode = main_bot is not None
         self.possible_moves = []
         self.selected_checker = None
-        self.state = SceneState.menu
+        self.state = SceneState.menu if not self.bot_vs_bot_mode else SceneState.checkers
         self.difficulty = 1
-        self.__bot = Bot()
+        self.__bot = opponent_bot
+        self.__bot_instead_player = main_bot
+        if self.bot_vs_bot_mode:
+            self.__bot_instead_player.start_best_move_calculation(self.__game)
         self.player_log = Log()
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
@@ -138,23 +145,35 @@ class Gui:
         for event in events:
             if event.type == pg.QUIT:
                 self.close()
-            if event.type == pg.MOUSEBUTTONUP:
-                if event.button in (1, 3):  # RMB, LMB
-                    x, y = event.pos
-                    if self.state == SceneState.checkers:
-                        self.handle_gameplay_click(x, y)
-                        if self.__game.getGameState() != GameState.ongoing:
-                            self.state = SceneState.result
-                    elif self.state == SceneState.menu:
-                        self.handle_menu_click(x, y)
-                    elif self.state == SceneState.result:
-                        self.handle_result_click(x, y)
+            if not self.bot_vs_bot_mode:
+                if event.type == pg.MOUSEBUTTONUP:
+                    if event.button in (1, 3):  # RMB, LMB
+                        x, y = event.pos
+                        if self.state == SceneState.checkers:
+                            self.handle_gameplay_click(x, y)
+                            if self.__game.getGameState() != GameState.ongoing:
+                                self.state = SceneState.result
+                        elif self.state == SceneState.menu:
+                            self.handle_menu_click(x, y)
+                        elif self.state == SceneState.result:
+                            self.handle_result_click(x, y)
 
         if self.__bot.is_best_move_ready():
             flag = self.__game.isWhiteTurn()
             move = self.__bot.get_calculated_move()
             self.__game.handleMove(move)
             if flag == self.__game.isWhiteTurn():
+                self.__bot.start_best_move_calculation(self.__game)
+            elif self.bot_vs_bot_mode:
+                self.__bot_instead_player.start_best_move_calculation(self.__game)
+
+        if self.__bot_instead_player and self.__bot_instead_player.is_best_move_ready():
+            flag = self.__game.isWhiteTurn()
+            move = self.__bot_instead_player.get_calculated_move()
+            self.__game.handleMove(move)
+            if flag == self.__game.isWhiteTurn():
+                self.__bot_instead_player.start_best_move_calculation(self.__game)
+            elif self.bot_vs_bot_mode:
                 self.__bot.start_best_move_calculation(self.__game)
 
     @property
