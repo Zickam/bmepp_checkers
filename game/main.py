@@ -20,6 +20,49 @@ MAX_GAME_BOARD_DEPTH = 60
 
 
 class HeuristicFunctions:
+    get_wb_fig_diff = True
+
+    @staticmethod
+    def calculateHeuristicValue(board: numpy.array) -> int:
+        value = 0
+        Movable_checkers_w = 0
+        Movable_checkers_b = 0
+        Movable_queens_w = 0
+        Movable_queens_b = 0
+
+        value += HeuristicFunction.getAmountOnPromotionLine(board)
+
+        for i in range(0, len(board), 2):
+            if i % 2 == 0:
+                c = 1
+            else:
+                c = 0
+            for j in range(c, len(board[i]), 2):
+                if HeuristicFunctions.get_wb_fig_diff:
+                    value += HeuristicFunctions.getWBFiguresDifference(board)
+                    value += HeuristicFunctions.getMovableCheckers(board, i, j)
+                    value += HeuristicFunctions.getMovableQueens(board, i, j)
+
+        return value
+
+    @staticmethod
+    def getAmountOnPromotionLine(board: numpy.array, i: int, j: int) -> int:
+        w, b = 0, 0
+        for i in range(1, len(board), 2):
+            is_checker_and_queen = board[0, i][0] * board[0, i][2]
+            w += board[0, i][1] * is_checker_and_queen
+            b += (not board[0, i][1]) * is_checker_and_queen
+        for i in range(0, len(board), 2):
+            if board[len(board) - 1, i][0] and board[len(board) - 1, i][2]:
+                if board[len(board) - 1, i][1]:
+                    w += 1
+                else:
+                    b += 1
+
+        w = 4 - w
+        b = 4 - b
+
+        return w - b
 
     @staticmethod
     def getWBFiguresDifference(board: numpy.array) -> int:
@@ -147,28 +190,6 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getAmountOnPromotionLine(board: numpy.array) -> int:
-        w, b = 0, 0
-        for i in range(1, len(board), 2):
-            if board[0, i][0] and board[0, i][2]:
-                if board[0, i][1]:
-                    w += 1
-                else:
-                    b += 1
-
-        for i in range(0, len(board), 2):
-            if board[len(board) - 1, i][0] and board[len(board) - 1, i][2]:
-                if board[len(board) - 1, i][1]:
-                    w += 1
-                else:
-                    b += 1
-
-        w = 4 - w
-        b = 4 - b
-
-        return w - b
-
-    @staticmethod
     def getDistanceToPromotionLine(board: numpy.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
@@ -287,82 +308,83 @@ class HeuristicFunctions:
 
         return w - b
 
+    @staticmethod
+    def getMovableCheckers(
+            board: numpy.array
+        i, j
 
-@staticmethod
-def getMovableCheckers(
-        board: numpy.array
-) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
+    ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
     w, b = 0, 0
-    for i in range(len(board)):
-        if i % 2 == 0:
-            c = 1
+    if board[i, j][0]:
+        if board[i, j][1]:
+            if not board[i, j][2]:
+                if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
+                    w += 1
         else:
-            c = 0
-        for j in range(c, len(board[i]), 2):
-            if board[i, j][0]:
-                if board[i, j][1]:
-                    if board[i, j][2]:
-                        ans = 0
-                        if not board[i + 1, j - 1][0] and (j < 8 or i < 8):
-                            ans += 1
-                        if not board[i - 1, j - 1][0] and (j < 8):
-                            ans += 1
-                            # if not board[i+1, j-1][0] or not board[i-1, j-1][0] and :
-                        if ans:
-                            w += 1
-                else:
-                    if board[i, j][2]:
-                        ansb = 0
-                        if not board[i + 1, j + 1][0] and (j < 8 or i < 8):
-                            ansb += 1
-                        if not board[i - 1, j + 1][0] and (j < 8):
-                            ansb += 1
-                            # if not board[i+1, j-1][0] or not board[i-1, j-1][0] and :
-                        if ansb:
-                            b += 1
+            if not board[i, j][2]:
+                if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
+                    b += 1
 
     return w - b
 
 
 @staticmethod
 def getMovableQueens(
-        board: numpy.array
+        board: numpy.array, i, j
 ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
     w, b = 0, 0
-    for i in range(len(board)):
-        if i % 2 == 0:
-            c = 1
+    if board[i, j][0]:
+        if board[i, j][1]:
+            if board[i, j][2]:
+                if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
+                    w += 1
         else:
-            c = 0
-        for j in range(c, len(board[i]), 2):
-            if board[i, j][0]:
-                if board[i, j][1]:
-                    if not board[i, j][2]:
-                        ans = 0
-                        if not board[i + 1, j - 1][0] and (j < 8 or i < 8):
-                            ans += 1
-                        if not board[i - 1, j - 1][0] and (j < 8):
-                            ans += 1
-                            # if not board[i+1, j-1][0] or not board[i-1, j-1][0] and :
-                        if ans:
-                            w += 1
-                else:
-                    if not board[i, j][2]:
-                        ansb = 0
-                        if not board[i + 1, j + 1][0] and (j < 8 or i < 8):
-                            ansb += 1
-                        if not board[i - 1, j + 1][0] and (j < 8):
-                            ansb += 1
-                            # if not board[i+1, j-1][0] or not board[i-1, j-1][0] and :
-                        if ansb:
-                            b += 1
+            if board[i, j][2]:
+                if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
+                    b += 1
 
-        return w - b
+    return w - b
 
 
 class BoardManager:
     @staticmethod
-    def getAvailableMoves(board: numpy.array, is_white_turn: bool) -> numpy.array:
+    def checkIfCoordsInBoundaries(x: int, y: int) -> bool:
+        if 0 <= x < 8 and 0 <= y < 8:
+            return True
+        return False
+
+    # @staticmethod
+    # def handle_kill(board: numpy.array, x:int, y:int, x_kill,y_kill) -> bool:
+
+    @staticmethod
+    def getAvailableMovesForPoint(board: numpy.array, is_white_turn: bool, x: int, y: int) -> numpy.array:
+        def iteration():
+            for i in [-1, 1]:
+                for j in [-1, 1]:
+                    yield i, j
+
+        neccesary_moves = numpy.array([])
+        unneccesary_moves = numpy.array([])
+        color = board[x, y][1]
+        if not board[x, y][2]:
+            for i, j in iteration():
+                is_in_boundaries = BoardManager.checkIfCoordsInBoundaries(x + i, y + j)
+                is_checker = board[x + i, y + j][0]
+                is_another_color = color != board[x + i, y + j][1]
+                is_in_boundaries_next_cell = BoardManager.checkIfCoordsInBoundaries(x + 2 * i, y + 2 * j)
+                if is_in_boundaries and is_checker and is_another_color and is_in_boundaries_next_cell:
+                    if not board[x + 2 * i, y + 2 * j][0]:
+                        neccesary_moves = numpy.append(neccesary_moves, numpy.array(
+                            [x + 2 * i, y + 2 * j]))  # чекнуть на запись в массив
+                elif not is_checker and j != -1:  # чекнуть на хуйню
+                    unneccesary_moves = numpy.append(unneccesary_moves,
+                                                     numpy.array([x + 2 * i, y + 2 * j]))  # чекнуть на запись в массив
+        if len(necccesary_moves) > 0:
+            return neccesary_moves
+        return unnecesary_moves
+
+    @staticmethod
+    def getAllAvailableMoves(board: numpy.array, is_white_turn: bool) -> numpy.array:
         return []
 
     @staticmethod
@@ -373,6 +395,63 @@ class BoardManager:
                 if board[i, j][0]:
                     amount += 1
         return amount
+
+
+class SimpleGame:
+    def __init__(self):
+        # simple version of border is 8x8 matrix where each cell represents one cell on the real board
+        # 1st element of cell indicates whether this cell is checker or not
+        # 2nd element of cell indicates if the checker is white or black
+        # 3rd element of cell indicates queen
+        self._board: numpy.array[numpy.array[numpy.array[
+            bool, bool, bool]]] = self._initBoard(8)
+
+        # _board_values contains these values:
+        # 0 - white amount
+        # 1 - black amount
+        # 2 - checkers amount
+        # 3 - queens amount
+        # 4 - distance to promotion line
+        self._board_values = [12, 12, 24, 0, 0]
+
+        self._is_white_turn = False
+        self._is_player_white = True
+
+    def setIsPlayerWhite(self, is_player_white: bool):
+        self.is_player_white = is_player_white
+
+    def getIsPlayerWhite(self) -> bool:
+        return self.is_player_white
+
+    def getBoardWidth(self) -> int:
+        return self._board.shape[0]
+
+    def _initBoard(self, board_width: int) -> numpy.array:
+        board = numpy.array(
+            [
+                [
+                    numpy.array(
+                        [False, False, False]
+                    ) for i in range(board_width)
+                ] for j in range(board_width)
+            ]
+        )
+
+        for i in range(3):
+            for j in range(board_width):
+                is_on_white_1 = i % 2 == 1 and j % 2 == 0
+                is_on_white_2 = i % 2 == 0 and j % 2 == 1
+
+                if is_on_white_1 or is_on_white_2:
+                    board[i][j] = numpy.array([1, 0, 0])
+
+                is_on_black_1 = (board_width - i - 1) % 2 == 1 and (
+                        board_width - j - 1) % 2 == 0
+                is_on_black_2 = (board_width - i - 1) % 2 == 0 and (board_width - j - 1) % 2 == 1
+                if is_on_black_1 or is_on_black_2:
+                    board[board_width - i - 1][board_width - j - 1] = numpy.array([1, 1, 0])
+
+        return board
 
 
 class Game:
@@ -389,12 +468,6 @@ class Game:
         self._difficulty = None
 
         self._board: list[list[Figure]] = self._initBoard()
-        # simple version of border is 8x8 matrix where each cell represents one cell on the real board
-        # 1st element of cell indicates whether this cell is checker or not
-        # 2nd element of cell indicates if the checker is white or black
-        # 3rd element of cell indicates queen
-        self._board_simple: numpy.array[numpy.array[numpy.array[
-            bool, bool, bool]]] = self._initBoardSimple()
 
         self._count_moves_without_change = 0
         self._count_figure = self._getFiguresAmount()
@@ -452,35 +525,6 @@ class Game:
                     board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j - 1] = Figure(True, True)
         return board
 
-    def _initBoardSimple(self) -> numpy.array:
-        board = numpy.array(
-            [
-                [
-                    numpy.array(
-                        [False, False, False]
-                    ) for i in range(self.getBoardWidth())
-                ] for j in range(self.getBoardWidth())
-            ]
-        )
-
-        for i in range(3):
-            for j in range(self.getBoardWidth()):
-                is_on_white_1 = i % 2 == 1 and j % 2 == 0
-                is_on_white_2 = i % 2 == 0 and j % 2 == 1
-
-                if is_on_white_1 or is_on_white_2:
-                    board[i][j] = numpy.array([1, 0, 0])
-
-                is_on_black_1 = (self.getBoardWidth() - i - 1) % 2 == 1 and (
-                        self.getBoardWidth() - j - 1) % 2 == 0
-                is_on_black_2 = (self.getBoardWidth() - i - 1) % 2 == 0 and (
-                        self.getBoardWidth() - j - 1) % 2 == 1
-                if is_on_black_1 or is_on_black_2:
-                    board[self.getBoardWidth() - i - 1][self.getBoardWidth() - j -
-                                                        1] = numpy.array([1, 1, 0])
-
-        return board
-
     def _handleKillMove(self, move: Move):
         self._board[move.killed_point.x][move.killed_point.y] = Figure(False)
         self._handleRelocation(move)
@@ -494,7 +538,6 @@ class Game:
 
     def _handleContinuousMove(self, move):
         self._available_moves = self._getAvailableMoves()
-
         if move.end_point.__hash__() in self._available_moves:
             necessary_moves = []
             for possible_move in self._available_moves[move.end_point.__hash__()]:
@@ -547,14 +590,14 @@ class Game:
         if self._count_moves_without_change >= MAX_GAME_BOARD_DEPTH:
             self._game_state = GameState.draw
 
-
     def _checkIsMoveCorrect(self, move: Move) -> tuple[bool, str]:
         if move.is_kill:
             if not self.getBoard()[move.killed_point.x][move.killed_point.y].is_checker:
                 return False, "Killed checker doesnt exist"
             if not self.getBoard()[move.start_point.x][move.start_point.y].is_checker:
                 return False, "Killing checker doesnt exist"
-            if self.getBoard()[move.start_point.x][move.start_point.y] == self.getBoard()[move.killed_point.x][move.killed_point.y]:
+            if self.getBoard()[move.start_point.x][move.start_point.y] == self.getBoard()[move.killed_point.x][
+                move.killed_point.y]:
                 return False, "Killing checker's team is the same as killed checker's team"
         else:
             if not self.getBoard()[move.start_point.x][move.start_point.y].is_checker:
