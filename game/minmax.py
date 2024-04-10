@@ -201,6 +201,130 @@ class MinMaxClass:
             self.add_to_cash(current_game, depth, record, move, finding_max)
         return record, best_moves
 
+    def top_n_minmax(self, current_game: Game,
+                     depth: int,
+                     finding_max: bool,
+                     alpha: float = float('-inf'),
+                     beta: float = float('+inf'),
+                     branches_stack: tuple[tuple[int, int], ...] = (),
+                     moves_stack=(),
+                     start_depth=float('inf'),
+                     moves_without_change_side=0,
+                     top_position_amount=5,
+                     customer_color_white: None | bool = None) -> list[(int, [Move], str), ...]:
+        if start_depth == float('inf'):
+            start_depth = depth
+        if customer_color_white is None:
+            customer_color_white = current_game.isWhiteTurn()
+
+        if depth == 3:
+            print('\r', end='')
+            for branch_num, branch_count in branches_stack:
+                print(f'{branch_num+1}/{branch_count} ', end='')
+
+        if depth == 0:
+            self.depth_zero += 1
+            return [(heuristic_function(current_game), moves_stack, game_board_to_str(current_game.getBoard()))]
+
+        record = float('-inf') if finding_max else float('+inf')
+        all_moves = current_game.getAllMoves()
+        best_moves = copy.deepcopy(moves_stack)
+
+        if len(all_moves) == 0:
+            if finding_max:
+                return [float('-inf'), best_moves, game_board_to_str(current_game.getBoard())]
+            else:
+                return [float('+inf'), best_moves, game_board_to_str(current_game.getBoard())]
+
+        # if there is only one possible move - make it immediately
+        if len(all_moves) == 1 and moves_stack == ():
+            print('(only one possible move, no calculations)')
+            return [(None, [all_moves[0]], game_board_to_str(current_game.getBoard()))]
+
+        '''if depth not in self.brute_forced_depth:
+            from_cash = self.check_cash(current_game, depth, finding_max)
+
+            if from_cash is not None:
+                value, move = from_cash
+                moves = tuple(list(moves_stack) + [move])
+                add_to_counter(self.using_cache_count, depth)
+                return [(value, moves, game_board_to_str(current_game.getBoard()))]'''
+
+        children = []
+
+        for i in range(len(all_moves)):
+            move = all_moves[i]
+            child = copy_game(current_game)
+            color_before_move = child.isWhiteTurn()
+            child.handleMove(move)
+            if child.isWhiteTurn() != color_before_move:
+                new_finding_max = not finding_max
+                new_depth = depth - 1
+                new_moves_without_change_side = moves_without_change_side
+            else:
+                new_moves_without_change_side = moves_without_change_side + 1
+                new_finding_max = finding_max
+                new_depth = depth
+            args = [new_depth,
+                    new_finding_max,
+                    tuple(list(moves_stack)+[move]),
+                    start_depth,
+                    new_moves_without_change_side,
+                    top_position_amount,
+                    customer_color_white]
+            children.append([child, args])
+
+        if depth not in self.brute_forced_depth:
+            children.sort(key=lambda x: potential_function(x[0]), reverse=finding_max)
+
+        variants_list: list[list[tuple[int, [Move], str]]] = []
+        for i in range(len(children)):
+            child, args = children[i]
+            new_b_stack = branches_stack + ((i, len(all_moves)),)
+            value_moves_lst = self.top_n_minmax(child, *args[:2], alpha, beta, new_b_stack, *args[2:])
+
+            if finding_max == customer_color_white:
+                variants_list += value_moves_lst
+                variants_list.sort(key=lambda x: x[0])  # sort by value
+                variants_list = variants_list[:top_position_amount]
+
+            else:
+                if len(variants_list) == 0:
+                    variants_list = value_moves_lst
+                else:
+                    if finding_max:
+                        worst_case_value_in_memory = variants_list[0][0]
+                        worst_case_value_from_next_depth = value_moves_lst[0][0]
+                        if worst_case_value_from_next_depth > worst_case_value_in_memory:
+                            variants_list = value_moves_lst
+                    if not finding_max:
+                        worst_case_value_in_memory = variants_list[-1][0]
+                        worst_case_value_from_next_depth = value_moves_lst[-1][0]
+                        if worst_case_value_from_next_depth < worst_case_value_in_memory:
+                            variants_list = value_moves_lst
+
+            '''if (finding_max and (value > record or value == float('-inf'))) or \
+                    (not finding_max and (value < record or value == float('+inf'))):
+                record = value
+                best_moves = moves'''
+
+            if finding_max:
+                alpha = max(alpha, record)
+            else:
+                beta = min(beta, record)
+            if beta <= alpha:
+                add_to_counter(self.alphabeta_puring_count, depth)
+                break
+
+        '''if depth not in self.brute_forced_depth:
+            try:
+                move = best_moves[start_depth - depth + moves_without_change_side]
+            except IndexError:
+                print(len(best_moves), start_depth, depth, moves_without_change_side)
+                raise IndexError
+            self.add_to_cash(current_game, depth, record, move, finding_max)'''
+        return variants_list
+
 
 def add_to_counter(dct: dict, key):
     if key not in dct:
