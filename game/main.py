@@ -31,7 +31,7 @@ class HeuristicFunctions:
         Movable_queens_w = 0
         Movable_queens_b = 0
 
-        value += HeuristicFunction.getAmountOnPromotionLine(board)
+        value += HeuristicFunctions.getAmountOnPromotionLine(board)
 
         for i in range(0, len(board), 2):
             if i % 2 == 0:
@@ -43,11 +43,15 @@ class HeuristicFunctions:
                     value += HeuristicFunctions.getWBFiguresDifference(board)
                     value += HeuristicFunctions.getMovableCheckers(board, i, j)
                     value += HeuristicFunctions.getMovableQueens(board, i, j)
+                    value += HeuristicFunctions.getMiddleCheckers(board, i, j)
+                    value += HeuristicFunctions.getMiddleQueens(board, i, j)
+                    value += HeuristicFunctions.getQueensAmountOnMainDiagonal(board, i)
+                    value += HeuristicFunctions.getCheckersAmountOnMainDiagonal(board, i)
 
         return value
 
     @staticmethod
-    def getAmountOnPromotionLine(board: np.array, i: int, j: int) -> int:
+    def getAmountOnPromotionLine(board: np.array) -> int:
         w, b = 0, 0
         for i in range(1, len(board), 2):
             is_checker_and_queen = board[0, i][0] * board[0, i][2]
@@ -261,26 +265,24 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getCheckersAmountOnMainDiagonal(board: np.array) -> int:
+    def getCheckersAmountOnMainDiagonal(board: np.array, i) -> int:
         w, b = 0, 0
-        for i in range(len(board)):
-            if board[i, i][0] and not board[i, i][2]:
-                if board[i, i][1]:
-                    w += 1
-                else:
-                    b += 1
+        if board[i, 7 - i][0] and not board[i, 7 - i][2]:
+            if board[i, 7 - i][1]:
+                w += 1
+            else:
+                b += 1
 
         return w - b
 
     @staticmethod
-    def getQueensAmountOnMainDiagonal(board: np.array) -> int:
+    def getQueensAmountOnMainDiagonal(board: np.array, i) -> int:
         w, b = 0, 0
-        for i in range(len(board)):
-            if board[i, i][0] and board[i, i][2]:
-                if board[i, i][1]:
-                    w += 1
-                else:
-                    b += 1
+        if board[i, 7 - i][0] and board[i, 7 - i][2]:
+            if board[i, 7 - i][1]:
+                w += 1
+            else:
+                b += 1
 
         return w - b
 
@@ -329,83 +331,48 @@ class HeuristicFunctions:
         return w - b
 
 
-@staticmethod
-def getMovableQueens(
-        board: np.array, i, j
-) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
-    w, b = 0, 0
-    if board[i, j][0]:
-        if board[i, j][1]:
-            if board[i, j][2]:
-                if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
+    @staticmethod
+    def getMovableQueens(
+            board: np.array, i, j
+    ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
+        w, b = 0, 0
+        if board[i, j][0]:
+            if board[i, j][1]:
+                if board[i, j][2]:
+                    if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
+                        w += 1
+            else:
+                if board[i, j][2]:
+                    if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
+                        b += 1
+
+        return w - b
+
+
+    @staticmethod
+    def getMiddleChekers(board: np.array, i, j) -> int:
+        w, b = 0, 0
+        if board[i, j][0]:
+            if board[i, j][1]:
+                if not board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
                     w += 1
-        else:
-            if board[i, j][2]:
-                if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
+            else:
+                if not board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
                     b += 1
+        return w - b
 
-    return w - b
-
-
-class BoardManager:
-    @staticmethod
-    def checkIfCoordsInBoundaries(x: int, y: int) -> bool:
-        if 0 <= x < 8 and 0 <= y < 8:
-            return True
-        return False
-
-    # @staticmethod
-    # def handle_kill(board: np.array, x:int, y:int, x_kill,y_kill) -> bool:
 
     @staticmethod
-    def _handleKillMove(board: np.array, lst: list[int, int, int, int]):
-        board[lst[2] - lst[0] + lst[2], lst[3] - lst[1] + lst[3]] = board[lst[0], lst[1]]
-        board[lst[0], lst[1]] = np.zeros(3)
-        board[lst[2], lst[3]] = np.zeros(3)
-        # кол-во фигур на поле
-        # кол-во ходов без убийств
-        return board
-
-    @staticmethod
-    @numba.njit
-    def getAvailableMovesForPoint(board: np.array, is_white_turn: bool, x: int, y: int) -> np.array:
-        necessary_moves = np.full((4, 2), -1)
-        necessary_moves_amount = 0
-        unnecessary_moves = np.full((4, 2), -1)
-        unnecessary_moves_amount = 0
-
-        color = board[x, y][1]
-        if not board[x, y][2]:
-            for i in [-1, 1]:
-                for j in [-1, 1]:
-                    is_in_boundaries = 0 <= x + i < 8 and 0 <= y + j < 8
-                    is_checker = board[x + i, y + j][0]
-                    is_another_color = color != board[x + i, y + j][1]
-                    is_in_boundaries_next_cell = 0 <= x + 2 * i < 8 and 0 <= y + 2 * j < 8
-                    if is_in_boundaries and is_checker and is_another_color and is_in_boundaries_next_cell:
-                        if not board[x + 2 * i, y + 2 * j][0]:
-                            necessary_moves[necessary_moves_amount] = np.array([x + 2 * i, y + 2 * j])
-                            necessary_moves_amount += 1
-                    elif not is_checker and j != -1:  # чекнуть на хуйню j != -1
-                        unnecessary_moves[unnecessary_moves_amount] = np.array([x + 2 * i, y + 2 * j])
-                        unnecessary_moves_amount += 1
-
-        if necessary_moves_amount > 0:
-            return necessary_moves
-        return unnecessary_moves
-
-    @staticmethod
-    def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
-        return []
-
-    @staticmethod
-    def getFiguresAmount(board: np.array) -> int:
-        amount = 0
-        for i in range(len(board)):
-            for j in range(len(board[i])):
-                if board[i, j][0]:
-                    amount += 1
-        return amount
+    def getMiddleQueens(board: np.array, i, j) -> int:
+        w, b = 0, 0
+        if board[i, j][0]:
+            if board[i, j][1]:
+                if board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
+                    w += 1
+            else:
+                if board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
+                    b += 1
+        return w - b
 
 
 class SimpleGame:
@@ -865,10 +832,12 @@ if __name__ == "__main__":
 
     game = Game()
     simple_game = SimpleGame()
-    s = time.time()
-    for i in range(10 ** 6):
-        (BoardManager.getAvailableMovesForPoint(simple_game.getBoard(), simple_game.getIsWhiteTurn(), 5, 1))
-    print(time.time() - s)
+    # print(moves)
+    # print(HeuristicFunctions.calculateHeuristicValue(simple_game.getBoard()))
+    # s = time.time()
+    # for i in range(10 ** 6):
+    #     (BoardManager.getAvailableMovesForPoint(simple_game.getBoard(), simple_game.getIsWhiteTurn(), 5, 1))
+    # print(time.time() - s)
 
     for i in game.getBoard():
         for j in i:

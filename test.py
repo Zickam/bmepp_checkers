@@ -1,33 +1,18 @@
-def test():
-    c = 0
-    v = 0
-    for i in range(10 ** 7):
-        if i % 2 == 0:
-            c += 1
-        elif i % 2 == 1:
-            v += 1
+import numba
+@numba.njit
+def add1(x):
+    return x + 1
 
-def test2():
-    c = 0
-    v = 0
+@numba.njit
+def bar(fn, x):
+    return fn(x)
 
-    for i in range(10 ** 7):
-        match i % 2:
-            case 0:
-                c += 1
-            case 1:
-                v += 1
+@numba.njit
+def foo(x):
+    y = bar(add1, x)
+    return y
 
-def test3():
-    c = 0
-    v = 0
-
-    for i in range(10 ** 7):
-        is_even = i % 2
-        c += is_even
-        v += is_even
-
-import time
-s = time.time()
-test2()
-print(time.time() - s)
+# Passing add1 within numba compiled code.
+print(foo(1))
+# Passing add1 into bar from interpreted code
+print(bar(add1, 1))
