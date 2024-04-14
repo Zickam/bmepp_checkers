@@ -6,7 +6,8 @@ import queue
 from game.classes import *
 from game import constants
 
-import numpy
+import numpy as np
+import numba
 
 
 class GameState(Enum):
@@ -23,14 +24,14 @@ class HeuristicFunctions:
     get_wb_fig_diff = True
 
     @staticmethod
-    def calculateHeuristicValue(board: numpy.array) -> int:
+    def calculateHeuristicValue(board: np.array) -> int:
         value = 0
         Movable_checkers_w = 0
         Movable_checkers_b = 0
         Movable_queens_w = 0
         Movable_queens_b = 0
 
-        value += HeuristicFunction.getAmountOnPromotionLine(board)
+        value += HeuristicFunctions.getAmountOnPromotionLine(board)
 
         for i in range(0, len(board), 2):
             if i % 2 == 0:
@@ -42,11 +43,15 @@ class HeuristicFunctions:
                     value += HeuristicFunctions.getWBFiguresDifference(board)
                     value += HeuristicFunctions.getMovableCheckers(board, i, j)
                     value += HeuristicFunctions.getMovableQueens(board, i, j)
+                    value += HeuristicFunctions.getMiddleCheckers(board, i, j)
+                    value += HeuristicFunctions.getMiddleQueens(board, i, j)
+                    value += HeuristicFunctions.getQueensAmountOnMainDiagonal(board, i)
+                    value += HeuristicFunctions.getCheckersAmountOnMainDiagonal(board, i)
 
         return value
 
     @staticmethod
-    def getAmountOnPromotionLine(board: numpy.array, i: int, j: int) -> int:
+    def getAmountOnPromotionLine(board: np.array) -> int:
         w, b = 0, 0
         for i in range(1, len(board), 2):
             is_checker_and_queen = board[0, i][0] * board[0, i][2]
@@ -65,7 +70,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getWBFiguresDifference(board: numpy.array) -> int:
+    def getWBFiguresDifference(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             for j in range(len(board[i])):
@@ -79,7 +84,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getCountPeshka(board: numpy.array) -> int:
+    def getCountPeshka(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             for j in range(len(board[i])):
@@ -93,7 +98,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getCountKing(board: numpy.array) -> int:
+    def getCountKing(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             for j in range(len(board[i])):
@@ -107,7 +112,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getSafeCheckersAmount(board: numpy.array) -> int:
+    def getSafeCheckersAmount(board: np.array) -> int:
         w, b = 0, 0
         for i in range(1, len(board), 2):
             if board[0, i][0] and not board[0, i][2]:
@@ -140,7 +145,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getSafeQueensAmount(board: numpy.array) -> int:
+    def getSafeQueensAmount(board: np.array) -> int:
         w, b = 0, 0
         for i in range(1, len(board), 2):
             if board[0, i][0] and board[0, i][2]:
@@ -173,7 +178,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getQueensAmount(board: numpy.array) -> int:
+    def getQueensAmount(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             if i % 2 == 0:
@@ -190,7 +195,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getDistanceToPromotionLine(board: numpy.array) -> int:
+    def getDistanceToPromotionLine(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             if i % 2 == 0:
@@ -206,7 +211,7 @@ class HeuristicFunctions:
         return b - w
 
     @staticmethod
-    def getAttackersAmount(board: numpy.array) -> int:
+    def getAttackersAmount(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             for j in range(len(board[i])):
@@ -220,7 +225,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getDefendersAmount(board: numpy.array) -> int:
+    def getDefendersAmount(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             for j in range(len(board[i])):
@@ -234,7 +239,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getCentrallyPositionedCheckersAmount(board: numpy.array) -> int:
+    def getCentrallyPositionedCheckersAmount(board: np.array) -> int:
         w, b = 0, 0
         for i in range(2, len(board) - 2, 2):
             for j in range(2, len(board[i]) - 2, 2):
@@ -247,7 +252,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getCentrallyPositionedQueensAmount(board: numpy.array) -> int:
+    def getCentrallyPositionedQueensAmount(board: np.array) -> int:
         w, b = 0, 0
         for i in range(2, len(board) - 2, 2):
             for j in range(2, len(board[i]) - 2, 2):
@@ -260,31 +265,29 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getCheckersAmountOnMainDiagonal(board: numpy.array) -> int:
+    def getCheckersAmountOnMainDiagonal(board: np.array, i) -> int:
         w, b = 0, 0
-        for i in range(len(board)):
-            if board[i, i][0] and not board[i, i][2]:
-                if board[i, i][1]:
-                    w += 1
-                else:
-                    b += 1
+        if board[i, 7 - i][0] and not board[i, 7 - i][2]:
+            if board[i, 7 - i][1]:
+                w += 1
+            else:
+                b += 1
 
         return w - b
 
     @staticmethod
-    def getQueensAmountOnMainDiagonal(board: numpy.array) -> int:
+    def getQueensAmountOnMainDiagonal(board: np.array, i) -> int:
         w, b = 0, 0
-        for i in range(len(board)):
-            if board[i, i][0] and board[i, i][2]:
-                if board[i, i][1]:
-                    w += 1
-                else:
-                    b += 1
+        if board[i, 7 - i][0] and board[i, 7 - i][2]:
+            if board[i, 7 - i][1]:
+                w += 1
+            else:
+                b += 1
 
         return w - b
 
     @staticmethod
-    def getCheckersAmountOnDoubleDiagonal(board: numpy.array) -> int:
+    def getCheckersAmountOnDoubleDiagonal(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             if board[i,
@@ -297,7 +300,7 @@ class HeuristicFunctions:
         return w - b
 
     @staticmethod
-    def getQueensAmountOnDoubleDiagonal(board: numpy.array) -> int:
+    def getQueensAmountOnDoubleDiagonal(board: np.array) -> int:
         w, b = 0, 0
         for i in range(len(board)):
             if board[i, len(board) - 1 - i][0] and board[i, len(board) - 1 - i][2]:
@@ -310,10 +313,10 @@ class HeuristicFunctions:
 
     @staticmethod
     def getMovableCheckers(
-            board: numpy.array,
-        i, j
+            board: np.array,
+            i, j
+    ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
 
-        ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
         w, b = 0, 0
         if board[i, j][0]:
             if board[i, j][1]:
@@ -328,74 +331,105 @@ class HeuristicFunctions:
         return w - b
 
 
-@staticmethod
-def getMovableQueens(
-        board: numpy.array, i, j
-) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
-    w, b = 0, 0
-    if board[i, j][0]:
-        if board[i, j][1]:
-            if board[i, j][2]:
-                if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
+    @staticmethod
+    def getMovableQueens(
+            board: np.array, i, j
+    ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
+        w, b = 0, 0
+        if board[i, j][0]:
+            if board[i, j][1]:
+                if board[i, j][2]:
+                    if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
+                        w += 1
+            else:
+                if board[i, j][2]:
+                    if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
+                        b += 1
+
+        return w - b
+
+
+    @staticmethod
+    def getMiddleChekers(board: np.array, i, j) -> int:
+        w, b = 0, 0
+        if board[i, j][0]:
+            if board[i, j][1]:
+                if not board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
                     w += 1
-        else:
-            if board[i, j][2]:
-                if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
+            else:
+                if not board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
                     b += 1
-
-    return w - b
-
-
-class BoardManager:
-    @staticmethod
-    def checkIfCoordsInBoundaries(x: int, y: int) -> bool:
-        if 0 <= x < 8 and 0 <= y < 8:
-            return True
-        return False
-
-    # @staticmethod
-    # def handle_kill(board: numpy.array, x:int, y:int, x_kill,y_kill) -> bool:
+        return w - b
 
     @staticmethod
-    def getAvailableMovesForPoint(board: numpy.array, is_white_turn: bool, x: int, y: int) -> numpy.array:
-        def iteration():
-            for i in [-1, 1]:
-                for j in [-1, 1]:
-                    yield i, j
-
-        neccesary_moves = numpy.array([])
-        unneccesary_moves = numpy.array([])
-        color = board[x, y][1]
-        if not board[x, y][2]:
-            for i, j in iteration():
-                is_in_boundaries = BoardManager.checkIfCoordsInBoundaries(x + i, y + j)
-                is_checker = board[x + i, y + j][0]
-                is_another_color = color != board[x + i, y + j][1]
-                is_in_boundaries_next_cell = BoardManager.checkIfCoordsInBoundaries(x + 2 * i, y + 2 * j)
-                if is_in_boundaries and is_checker and is_another_color and is_in_boundaries_next_cell:
-                    if not board[x + 2 * i, y + 2 * j][0]:
-                        neccesary_moves = numpy.append(neccesary_moves, numpy.array(
-                            [x + 2 * i, y + 2 * j]))  # чекнуть на запись в массив
-                elif not is_checker and j != -1:  # чекнуть на хуйню
-                    unneccesary_moves = numpy.append(unneccesary_moves,
-                                                     numpy.array([x + 2 * i, y + 2 * j]))  # чекнуть на запись в массив
-        if len(necccesary_moves) > 0:
-            return neccesary_moves
-        return unnecesary_moves
+    def getMiddleQueens(board: np.array, i, j) -> int:
+        w, b = 0, 0
+        if board[i, j][0]:
+            if board[i, j][1]:
+                if board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
+                    w += 1
+            else:
+                if board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
+                    b += 1
+        return w - b
 
     @staticmethod
-    def getAllAvailableMoves(board: numpy.array, is_white_turn: bool) -> numpy.array:
-        return []
+    def getAloneCheckers(board: np.array, i, j) -> int: #k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
+        w, b = 0, 0
+        k, l, n, m = 0, 0, 0, 0
+        if board[i, j][0]:
+            if not board[i, j][2]:
+              if i == 0 or j == 0:
+                k = 1
+              if i == 0 or j == 7:
+                l = 1
+              if i == 7 or j == 0:
+                n = 1
+              if i == 7 or j == 7:
+                m = 1
+              if not k:
+                k = not board[i-1, j-1][0]
+              if not l:
+                l = not board[i-1, j+1][0]
+              if not n:
+                n = not board[i+1, j-1][0]
+              if not m:
+                m = not board[i+1, j+1][0]
+                if k and l and n and m:
+                  if board[i, j][1]:
+                    w += 1
+                  else:
+                    b += 1
+        return w - b
 
     @staticmethod
-    def getFiguresAmount(board: numpy.array) -> int:
-        amount = 0
-        for i in range(len(board)):
-            for j in range(len(board[i])):
-                if board[i, j][0]:
-                    amount += 1
-        return amount
-
+    def getAloneQueens(board: np.array, i, j) -> int: #k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
+        w, b = 0, 0
+        k, l, n, m = 0, 0, 0, 0
+        if board[i, j][0]:
+            if board[i, j][2]:
+              if i == 0 or j == 0:
+                k = 1
+              if i == 0 or j == 7:
+                l = 1
+              if i == 7 or j == 0:
+                n = 1
+              if i == 7 or j == 7:
+                m = 1
+              if not k:
+                k = not board[i-1, j-1][0]
+              if not l:
+                l = not board[i-1, j+1][0]
+              if not n:
+                n = not board[i+1, j-1][0]
+              if not m:
+                m = not board[i+1, j+1][0]
+                if k and l and n and m:
+                  if board[i, j][1]:
+                    w += 1
+                  else:
+                    b += 1
+        return w - b
 
 class SimpleGame:
     def __init__(self):
@@ -403,7 +437,7 @@ class SimpleGame:
         # 1st element of cell indicates whether this cell is checker or not
         # 2nd element of cell indicates if the checker is white or black
         # 3rd element of cell indicates queen
-        self._board: numpy.array[numpy.array[numpy.array[
+        self._board: np.array[np.array[np.array[
             bool, bool, bool]]] = self._initBoard(8)
 
         # _board_values contains these values:
@@ -417,6 +451,12 @@ class SimpleGame:
         self._is_white_turn = False
         self._is_player_white = True
 
+    def getIsWhiteTurn(self) -> bool:
+        return self._is_white_turn
+
+    def getBoard(self) -> np.array:
+        return self._board
+
     def setIsPlayerWhite(self, is_player_white: bool):
         self.is_player_white = is_player_white
 
@@ -426,16 +466,8 @@ class SimpleGame:
     def getBoardWidth(self) -> int:
         return self._board.shape[0]
 
-    def _initBoard(self, board_width: int) -> numpy.array:
-        board = numpy.array(
-            [
-                [
-                    numpy.array(
-                        [False, False, False]
-                    ) for i in range(board_width)
-                ] for j in range(board_width)
-            ]
-        )
+    def _initBoard(self, board_width: int) -> np.array:
+        board = np.array([[np.array([False, False, False]) for i in range(board_width)] for j in range(board_width)])
 
         for i in range(3):
             for j in range(board_width):
@@ -443,22 +475,20 @@ class SimpleGame:
                 is_on_white_2 = i % 2 == 0 and j % 2 == 1
 
                 if is_on_white_1 or is_on_white_2:
-                    board[i][j] = numpy.array([1, 0, 0])
+                    board[i][j] = np.array([1, 0, 0])
 
-                is_on_black_1 = (board_width - i - 1) % 2 == 1 and (
-                        board_width - j - 1) % 2 == 0
+                is_on_black_1 = (board_width - i - 1) % 2 == 1 and (board_width - j - 1) % 2 == 0
                 is_on_black_2 = (board_width - i - 1) % 2 == 0 and (board_width - j - 1) % 2 == 1
+
                 if is_on_black_1 or is_on_black_2:
-                    board[board_width - i - 1][board_width - j - 1] = numpy.array([1, 1, 0])
+                    board[board_width - i - 1][board_width - j - 1] = np.array([1, 1, 0])
 
         return board
 
 
 class Game:
     if constants.BOARD_WIDTH < constants.MIN_BOARD_WIDTH:
-        raise Exception(
-            f"Its not possible to make a board which side is less than {constants.MIN_BOARD_WIDTH}"
-        )
+        raise Exception(f"Its not possible to make a board which side is less than {constants.MIN_BOARD_WIDTH}")
 
     def __init__(self):
         self._board_width = constants.BOARD_WIDTH
@@ -706,10 +736,9 @@ class Game:
 
         return False, None
 
-    def _isQueenMovePossible(self, start_point: Point, direction: Point,
-                             raw_direction: Point) -> list[Move | None]:
+    def _isQueenMovePossible(self, start_point: Point, direction: Point, raw_direction: Point) -> list[Move | None]:
         moves = []
-        # 1. не на границе, за ней есть кто-то(впритык)
+        # 1. не на границе, за ней есть кто-то(впритык член?)
         move = Move(start_point, start_point + direction)
         if self._isMoveWithinBoundaries(move):
             if self._board[move.end_point.x][move.end_point.y].is_checker:
@@ -827,8 +856,8 @@ def copy_game(game: Game) -> Game:
 
 
 def getRandomizedBoard():
-    board = numpy.array([[numpy.array([False, False, False]) for i in range(8)]
-                         for j in range(8)])
+    board = np.array([[np.array([False, False, False]) for i in range(8)]
+                      for j in range(8)])
 
     c = 10
     for i in range(c):
@@ -855,7 +884,16 @@ def getRandomizedBoard():
 
 
 if __name__ == "__main__":
+    import time
+
     game = Game()
+    simple_game = SimpleGame()
+    # print(moves)
+    # print(HeuristicFunctions.calculateHeuristicValue(simple_game.getBoard()))
+    # s = time.time()
+    # for i in range(10 ** 6):
+    #     (BoardManager.getAvailableMovesForPoint(simple_game.getBoard(), simple_game.getIsWhiteTurn(), 5, 1))
+    # print(time.time() - s)
 
     for i in game.getBoard():
         for j in i:
