@@ -2,7 +2,7 @@ import copy
 import pickle
 
 from game.constants import TOP_N_AMOUNT
-from game.classes import Move, move_to_notation, notation_to_move
+from game.classes import Move, move_to_notation, notation_to_move, notations_to_move, moves_to_notation
 from game.main import GameState, Game, copy_game, Figure
 
 cache_file_name = 'cache.pickle'
@@ -68,8 +68,8 @@ def game_board_to_str(board: list[list[Figure]]) -> str:
 
 class MinMaxClass:
     def __init__(self):
-        # cache = dict(tuple(depth, board, finding_max): tuple(value, move)
-        self.cache: dict[tuple[int, str, bool]: tuple[float, str]] = {}
+        # cache = dict(tuple(depth, board, finding_max): tuple(value, tuple(move))
+        self.cache: dict[tuple[int, str, bool]: tuple[float, tuple[str]]] = {}
         # n_cache = dict(tuple(depth, board, finding_max): tuple(tuple(value, tuple(move))))
         self.n_cache:  dict[tuple[int, str, bool]: tuple[tuple[float, tuple[str]]]] = {}
         self.load_cash()
@@ -84,6 +84,9 @@ class MinMaxClass:
         file = open(cache_file_name, 'wb')
         pickle.dump(self.cache, file)
         file.close()
+        file2 = open(n_cache_file_name, 'wb')
+        pickle.dump(self.n_cache, file2)
+        file.close()
 
     def load_cash(self):
         try:
@@ -96,9 +99,9 @@ class MinMaxClass:
         self.cache = pickle.load(file)
         self.n_cache = pickle.load(file2)
 
-    def add_to_cash(self, _game: Game, depth: int, record: int | float, move: Move, finding_max: bool):
+    def add_to_cash(self, _game: Game, depth: int, record: int | float, moves: tuple[Move], finding_max: bool):
         board = game_board_to_str(_game.getBoard())
-        str_move = move_to_notation(move)
+        str_move = moves_to_notation(moves)
         key = depth, board, finding_max
         value = record, str_move
         self.cache[key] = value
@@ -109,20 +112,21 @@ class MinMaxClass:
         value_in_dict = []
         for variant in variants_tuple:
             value, moves = variant
+            moves = list(moves)
             for i in range(len(moves)):
                 move = moves[i]
                 moves[i] = move_to_notation(move)
             value_in_dict.append([value, moves])
         self.n_cache[key] = value_in_dict
 
-    def check_cache(self, _game: Game, depth: int, finding_max: bool) -> None | tuple[float, Move]:
+    def check_cache(self, _game: Game, depth: int, finding_max: bool) -> None | tuple[float, tuple[Move]]:
         board = game_board_to_str(_game.getBoard())
         for i in range(depth, 12):
             key = i, board, finding_max
             if key in self.cache:
-                value, move = self.cache.get(key)
-                move = notation_to_move(move)
-                return value, move
+                value, moves = self.cache.get(key)
+                moves = notations_to_move(moves)
+                return value, moves
 
     def check_n_cache(self, _game: Game, depth: int, finding_max: bool) -> None | list[list[float, list[Move]]]:
         board = game_board_to_str(_game.getBoard())
@@ -179,8 +183,8 @@ class MinMaxClass:
             from_cash = self.check_cache(current_game, depth, finding_max)
 
             if from_cash is not None:
-                value, move = from_cash
-                moves = tuple(list(moves_stack) + [move])
+                value, moves = from_cash
+                moves = tuple(list(moves_stack) + list(moves))
                 add_to_counter(self.using_cache_count, depth)
                 return value, moves
 
@@ -227,11 +231,11 @@ class MinMaxClass:
 
         if depth not in self.brute_forced_depth:
             try:
-                move = best_moves[start_depth - depth + moves_without_change_side]
+                moves = best_moves[start_depth - depth + moves_without_change_side:]
             except IndexError:
                 print(len(best_moves), start_depth, depth, moves_without_change_side)
                 raise IndexError
-            self.add_to_cash(current_game, depth, record, move, finding_max)
+            self.add_to_cash(current_game, depth, record, moves, finding_max)
         return record, best_moves
 
     def top_n_minmax(self, current_game: Game,
@@ -261,7 +265,7 @@ class MinMaxClass:
 
         record = float('-inf') if finding_max else float('+inf')
         all_moves = current_game.getAllMoves()
-        best_moves = copy.deepcopy(moves_stack)
+        #best_moves = copy.deepcopy(moves_stack)
 
         if len(all_moves) == 0:
             if finding_max:
@@ -356,7 +360,7 @@ class MinMaxClass:
             for variant in variants_list:
                 value, moves, board = variant
                 try:
-                    moves = best_moves[start_depth - depth + moves_without_change_side:]
+                    moves = moves[(start_depth - depth + moves_without_change_side):]
                 except IndexError:
                     print(len(best_moves), start_depth, depth, moves_without_change_side)
                     raise IndexError

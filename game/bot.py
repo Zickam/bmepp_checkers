@@ -3,6 +3,7 @@ import multiprocessing as mp
 import random
 import time
 from game.classes import moves_to_notation, notation_to_move
+from game.constants import MINMAX_DEPTH, MINMAX_N_DEPTH
 
 from game.minmax import MinMaxClass, heuristic_function
 
@@ -29,8 +30,8 @@ class Process:
                     start = time.time()
                     print('new calculations')
                     finding_max = not game.isPlayerWhite()
-                    # _, moves = self.MinMax.minmax(game, 6, finding_max)
-                    variants = self.MinMax.top_n_minmax(game, 6, finding_max)
+                    #  _, moves = self.MinMax.minmax(game, 6, finding_max)
+                    variants = self.MinMax.top_n_minmax(game, MINMAX_N_DEPTH, finding_max)
 
                     for _, moves, board in variants:
                         if len(moves) == 0:
@@ -62,7 +63,7 @@ class Process:
                         for move in moves:
                             deep_game.handleMove(move)
                         # !!! FINDING MAX is wrong !!!
-                        value, moves = self.MinMax.minmax(deep_game, 6, finding_max, moves_stack=moves)
+                        value, moves = self.MinMax.minmax(deep_game, MINMAX_DEPTH, finding_max, moves_stack=moves)
                         print(value)
                         if (finding_max and (value > record or value == float('-inf'))) or \
                                 (not finding_max and (value < record or value == float('+inf'))):

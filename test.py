@@ -1,3 +1,4 @@
-import test_process
+import pickle
 
-test_process.main_g()
+x = open('cache5.pickle', 'rb')
+print(pickle.load(x))
