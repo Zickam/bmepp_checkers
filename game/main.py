@@ -855,6 +855,15 @@ def copy_game(game: Game) -> Game:
     return copy.deepcopy(game)
 
 
+def game_board_to_str(board: np.array) -> str:
+    s = ''
+    for i, row in enumerate(board):
+        for j, figure in enumerate(row):
+            if figure[0]:
+                fig_s = f'{i}{j}{int(figure[1])}{int(figure[2])}'
+                s += fig_s
+    return s
+
 def getRandomizedBoard():
     board = np.array([[np.array([False, False, False]) for i in range(8)]
                       for j in range(8)])
@@ -894,7 +903,10 @@ if __name__ == "__main__":
     # for i in range(10 ** 6):
     #     (BoardManager.getAvailableMovesForPoint(simple_game.getBoard(), simple_game.getIsWhiteTurn(), 5, 1))
     # print(time.time() - s)
+    print(game_board_to_str(simple_game.getBoard()))
+    exit(
 
+    )
     for i in game.getBoard():
         for j in i:
             if j.is_checker:

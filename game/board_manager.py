@@ -1,4 +1,5 @@
 import numba
+import numpy
 import numpy as np
 
 
@@ -117,9 +118,9 @@ def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: 
 
 @numba.njit
 def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
-    unnecessary_moves = np.full((512, 2, 2), -1)
+    unnecessary_moves = np.full((50, 2, 2), -1)
     unnecessary_moves_amount = 0
-    necessary_moves = np.full((512, 2, 2), -1)
+    necessary_moves = np.full((50, 2, 2), -1)
     necessary_moves_amount = 0
 
     are_necessary_found = False
@@ -162,8 +163,28 @@ def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
                         unnecessary_moves_amount += 1
 
     if are_necessary_found:
-        return necessary_moves
-    return unnecessary_moves
+        available_moves = np.full((necessary_moves_amount, 2, 2), -1)
+        c = 0
+        for move in necessary_moves:
+            available_moves[c][0][0] = move[0][0]
+            available_moves[c][0][1] = move[0][1]
+            available_moves[c][1][0] = move[1][0]
+            available_moves[c][1][1] = move[1][1]
+
+            c += 1
+
+    else:
+        available_moves = np.full((unnecessary_moves_amount, 2, 2), -1)
+        c = 0
+        for move in unnecessary_moves:
+            available_moves[c][0][0] = move[0][0]
+            available_moves[c][0][1] = move[0][1]
+            available_moves[c][1][0] = move[1][0]
+            available_moves[c][1][1] = move[1][1]
+
+            c += 1
+
+    return available_moves
 
 
 def transformNumpyMovesToList(moves: np.array) -> list:
@@ -187,21 +208,24 @@ if __name__ == "__main__":
     # _handleCheckerKillMove(sg.getBoard(), move)
 
 
-    print(getAllAvailableMoves(sg.getBoard(), True))
-    for i in sg.getBoard():
-        for j in i:
-            if j[0]:
-                if j[1]:
-                    print("W", end="\t")
-                else:
-                    print("B", end="\t")
-            else:
-                print("[]", end="\t")
+    print("moves", getAllAvailableMoves(sg.getBoard(), True))
+    # for i in sg.getBoard():
+    #     for j in i:
+    #         if j[0]:
+    #             if j[1]:
+    #                 print("W", end="\t")
+    #             else:
+    #                 print("B", end="\t")
+    #         else:
+    #             print("[]", end="\t")
+    #
+    #     print()
 
-        print()
     # s = time.time()
+    # a = 0
     # for i in range(10 ** 5):
-    #     m = getAllAvailableMoves(sg.getBoard())
+    #     m = getAllAvailableMoves(sg.getBoard(), True)
+    #     a += 1
     # print(time.time() - s)
     # necessary_moves = np.full((4, 2, 2), -1)
     # print(necessary_moves)
