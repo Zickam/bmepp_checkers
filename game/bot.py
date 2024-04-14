@@ -27,6 +27,7 @@ class Process:
                     self.process_response_queue.put(random_move)
                 else:
                     start = time.time()
+                    print('new calculations')
                     finding_max = not game.isPlayerWhite()
                     # _, moves = self.MinMax.minmax(game, 6, finding_max)
                     variants = self.MinMax.top_n_minmax(game, 6, finding_max)
@@ -42,6 +43,16 @@ class Process:
                             score = heuristic_function(simulated_game)
                             stack[i] += f' score:{score}'
                         print('\nstack:', *stack)
+
+                    print('alphabeta count:', self.MinMax.alphabeta_pruning_count)
+                    self.MinMax.alphabeta_pruning_count = {}
+
+                    print('cash count:', self.MinMax.using_cache_count)
+                    self.MinMax.using_cache_count = {}
+
+                    print('heuristic func count:', self.MinMax.depth_zero)
+                    self.MinMax.depth_zero = 0
+
                     print('-'*30)
 
                     record = float('-inf') if finding_max else float('+inf')
@@ -65,7 +76,10 @@ class Process:
                     stack = ['\n' + str(x) for x in moves_to_notation(moves)]
                     simulated_game = copy.deepcopy(game)
                     for i, move in enumerate(moves):
-                        simulated_game.handleMove(move)
+                        try:
+                            simulated_game.handleMove(move)
+                        except Exception as ex:
+                            print('!error!', ex)
                         score = heuristic_function(simulated_game)
                         stack[i] += f' score:{score}'
                     print('\nstack:', *stack)
@@ -73,8 +87,8 @@ class Process:
                     self.MinMax.save_cash()
                     print(f'time: {time.time()-start}')
 
-                    print('alphabeta count:', self.MinMax.alphabeta_puring_count)
-                    self.MinMax.alphabeta_puring_count = {}
+                    print('alphabeta count:', self.MinMax.alphabeta_pruning_count)
+                    self.MinMax.alphabeta_pruning_count = {}
 
                     print('cash count:', self.MinMax.using_cache_count)
                     self.MinMax.using_cache_count = {}

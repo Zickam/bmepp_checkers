@@ -1,11 +1,12 @@
 import copy
 import pickle
 
+from game.constants import TOP_N_AMOUNT
 from game.classes import Move, move_to_notation, notation_to_move
 from game.main import GameState, Game, copy_game, Figure
 
-# cash_file_name = 'cash_10depth_1st_move.pickle'
 cache_file_name = 'cache.pickle'
+n_cache_file_name = f'cache{TOP_N_AMOUNT}.pickle'
 
 
 def next_positions(_game: Game) -> list[Game]:
@@ -38,7 +39,7 @@ def heuristic_function(_game: Game) -> float | int:
         return float('+inf')
     elif _game.getGameState() == GameState.draw:
         return 0
-    return queens_dif*15 + fig_dif*3 + center_dif
+    return queens_dif*100 + fig_dif*9 + center_dif
 
 
 def potential_function(_game: Game) -> float | int:
@@ -69,9 +70,11 @@ class MinMaxClass:
     def __init__(self):
         # cache = dict(tuple(depth, board, finding_max): tuple(value, move)
         self.cache: dict[tuple[int, str, bool]: tuple[float, str]] = {}
+        # n_cache = dict(tuple(depth, board, finding_max): tuple(tuple(value, tuple(move))))
+        self.n_cache:  dict[tuple[int, str, bool]: tuple[tuple[float, tuple[str]]]] = {}
         self.load_cash()
         # dict(depth: count)
-        self.alphabeta_puring_count = {}
+        self.alphabeta_pruning_count = {}
         # dict(depth: count)
         self.using_cache_count = {}
         self.depth_zero = 0
@@ -85,10 +88,13 @@ class MinMaxClass:
     def load_cash(self):
         try:
             file = open(cache_file_name, 'rb')
+            file2 = open(n_cache_file_name, 'rb')
         except FileNotFoundError:
             self.save_cash()
             file = open(cache_file_name, 'rb')
+            file2 = open(n_cache_file_name, 'rb')
         self.cache = pickle.load(file)
+        self.n_cache = pickle.load(file2)
 
     def add_to_cash(self, _game: Game, depth: int, record: int | float, move: Move, finding_max: bool):
         board = game_board_to_str(_game.getBoard())
@@ -97,7 +103,19 @@ class MinMaxClass:
         value = record, str_move
         self.cache[key] = value
 
-    def check_cash(self, _game: Game, depth: int, finding_max: bool) -> None | tuple[float, Move]:
+    def add_to_n_cache(self, _game: Game, depth: int, variants_tuple: list[list[float, list[Move]]], finding_max: bool):
+        board = game_board_to_str(_game.getBoard())
+        key = depth, board, finding_max
+        value_in_dict = []
+        for variant in variants_tuple:
+            value, moves = variant
+            for i in range(len(moves)):
+                move = moves[i]
+                moves[i] = move_to_notation(move)
+            value_in_dict.append([value, moves])
+        self.n_cache[key] = value_in_dict
+
+    def check_cache(self, _game: Game, depth: int, finding_max: bool) -> None | tuple[float, Move]:
         board = game_board_to_str(_game.getBoard())
         for i in range(depth, 12):
             key = i, board, finding_max
@@ -105,6 +123,21 @@ class MinMaxClass:
                 value, move = self.cache.get(key)
                 move = notation_to_move(move)
                 return value, move
+
+    def check_n_cache(self, _game: Game, depth: int, finding_max: bool) -> None | list[list[float, list[Move]]]:
+        board = game_board_to_str(_game.getBoard())
+        for i in range(depth, 12):
+            key = i, board, finding_max
+            if key in self.n_cache:
+                variants_list = self.n_cache.get(key)
+                variants_to_return = []
+                for variant in variants_list:
+                    value, moves = variant
+                    for j in range(len(moves)):
+                        move = moves[j]
+                        moves[j] = notation_to_move(move)
+                    variants_to_return.append([value, moves])
+                return variants_to_return
 
     def minmax(self, current_game: Game,
                depth: int,
@@ -143,7 +176,7 @@ class MinMaxClass:
             return None, [all_moves[0]]
 
         if depth not in self.brute_forced_depth:
-            from_cash = self.check_cash(current_game, depth, finding_max)
+            from_cash = self.check_cache(current_game, depth, finding_max)
 
             if from_cash is not None:
                 value, move = from_cash
@@ -189,7 +222,7 @@ class MinMaxClass:
             else:
                 beta = min(beta, record)
             if beta <= alpha:
-                add_to_counter(self.alphabeta_puring_count, depth)
+                add_to_counter(self.alphabeta_pruning_count, depth)
                 break
 
         if depth not in self.brute_forced_depth:
@@ -210,7 +243,7 @@ class MinMaxClass:
                      moves_stack=(),
                      start_depth=float('inf'),
                      moves_without_change_side=0,
-                     top_position_amount=5,
+                     top_position_amount=TOP_N_AMOUNT,
                      customer_color_white: None | bool = None) -> list[(int, [Move], str), ...]:
         if start_depth == float('inf'):
             start_depth = depth
@@ -241,14 +274,18 @@ class MinMaxClass:
             print('(only one possible move, no calculations)')
             return [(None, [all_moves[0]], game_board_to_str(current_game.getBoard()))]
 
-        '''if depth not in self.brute_forced_depth:
-            from_cash = self.check_cash(current_game, depth, finding_max)
+        if depth not in self.brute_forced_depth:
+            from_cache = self.check_n_cache(current_game, depth, finding_max)
 
-            if from_cash is not None:
-                value, move = from_cash
-                moves = tuple(list(moves_stack) + [move])
+            if from_cache is not None:
+                variants_list = from_cache
+                variants_to_return = []
+                for variant in variants_list:
+                    value, moves = variant
+                    moves = tuple(list(moves_stack) + list(moves))
+                    variants_to_return.append([value, moves, game_board_to_str(current_game.getBoard())])
                 add_to_counter(self.using_cache_count, depth)
-                return [(value, moves, game_board_to_str(current_game.getBoard()))]'''
+                return variants_to_return
 
         children = []
 
@@ -285,44 +322,46 @@ class MinMaxClass:
 
             if finding_max == customer_color_white:
                 variants_list += value_moves_lst
-                variants_list.sort(key=lambda x: x[0])  # sort by value
+                variants_list.sort(key=lambda x: x[0], reverse=finding_max)  # sort by value
                 variants_list = variants_list[:top_position_amount]
 
             else:
                 if len(variants_list) == 0:
                     variants_list = value_moves_lst
-                else:
-                    if finding_max:
-                        worst_case_value_in_memory = variants_list[0][0]
-                        worst_case_value_from_next_depth = value_moves_lst[0][0]
-                        if worst_case_value_from_next_depth > worst_case_value_in_memory:
-                            variants_list = value_moves_lst
-                    if not finding_max:
-                        worst_case_value_in_memory = variants_list[-1][0]
-                        worst_case_value_from_next_depth = value_moves_lst[-1][0]
-                        if worst_case_value_from_next_depth < worst_case_value_in_memory:
-                            variants_list = value_moves_lst
+                    continue
 
-            '''if (finding_max and (value > record or value == float('-inf'))) or \
-                    (not finding_max and (value < record or value == float('+inf'))):
-                record = value
-                best_moves = moves'''
+                if finding_max:
+                    worst_case_value_in_memory = variants_list[0][0]
+                    worst_case_value_from_next_depth = value_moves_lst[0][0]
+                    if worst_case_value_from_next_depth > worst_case_value_in_memory:
+                        variants_list = value_moves_lst
+                if not finding_max:
+                    worst_case_value_in_memory = variants_list[-1][0]
+                    worst_case_value_from_next_depth = value_moves_lst[-1][0]
+                    if worst_case_value_from_next_depth < worst_case_value_in_memory:
+                        variants_list = value_moves_lst
 
             if finding_max:
-                alpha = max(alpha, record)
+                all_values = [variant[0] for variant in variants_list]
+                alpha = max(alpha, min(all_values))  # Magic, idk, should be checked
             else:
-                beta = min(beta, record)
+                all_values = [variant[0] for variant in variants_list]
+                beta = min(beta, max(all_values))  # Magic, idk, should be checked
             if beta <= alpha:
-                add_to_counter(self.alphabeta_puring_count, depth)
+                add_to_counter(self.alphabeta_pruning_count, depth)
                 break
 
-        '''if depth not in self.brute_forced_depth:
-            try:
-                move = best_moves[start_depth - depth + moves_without_change_side]
-            except IndexError:
-                print(len(best_moves), start_depth, depth, moves_without_change_side)
-                raise IndexError
-            self.add_to_cash(current_game, depth, record, move, finding_max)'''
+        if depth not in self.brute_forced_depth:
+            variants_to_cache = []
+            for variant in variants_list:
+                value, moves, board = variant
+                try:
+                    moves = best_moves[start_depth - depth + moves_without_change_side:]
+                except IndexError:
+                    print(len(best_moves), start_depth, depth, moves_without_change_side)
+                    raise IndexError
+                variants_to_cache.append([value, moves])
+            self.add_to_n_cache(current_game, depth, variants_to_cache, finding_max)
         return variants_list
 
 
