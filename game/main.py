@@ -374,6 +374,63 @@ class HeuristicFunctions:
                     b += 1
         return w - b
 
+    @staticmethod
+    def getAloneCheckers(board: np.array, i, j) -> int: #k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
+        w, b = 0, 0
+        k, l, n, m = 0, 0, 0, 0
+        if board[i, j][0]:
+            if not board[i, j][2]:
+              if i == 0 or j == 0:
+                k = 1
+              if i == 0 or j == 7:
+                l = 1
+              if i == 7 or j == 0:
+                n = 1
+              if i == 7 or j == 7:
+                m = 1
+              if not k:
+                k = not board[i-1, j-1][0]
+              if not l:
+                l = not board[i-1, j+1][0]
+              if not n:
+                n = not board[i+1, j-1][0]
+              if not m:
+                m = not board[i+1, j+1][0]
+                if k and l and n and m:
+                  if board[i, j][1]:
+                    w += 1
+                  else:
+                    b += 1
+        return w - b
+
+    @staticmethod
+    def getAloneQueens(board: np.array, i, j) -> int: #k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
+        w, b = 0, 0
+        k, l, n, m = 0, 0, 0, 0
+        if board[i, j][0]:
+            if board[i, j][2]:
+              if i == 0 or j == 0:
+                k = 1
+              if i == 0 or j == 7:
+                l = 1
+              if i == 7 or j == 0:
+                n = 1
+              if i == 7 or j == 7:
+                m = 1
+              if not k:
+                k = not board[i-1, j-1][0]
+              if not l:
+                l = not board[i-1, j+1][0]
+              if not n:
+                n = not board[i+1, j-1][0]
+              if not m:
+                m = not board[i+1, j+1][0]
+                if k and l and n and m:
+                  if board[i, j][1]:
+                    w += 1
+                  else:
+                    b += 1
+        return w - b
 
 class SimpleGame:
     def __init__(self):
