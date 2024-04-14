@@ -3,7 +3,9 @@ import gui
 
 
 def main():
-    _gui = gui.main.Gui()
+    _bot = game.bot.Bot()
+    # _bot2 = game.bot.Bot()
+    _gui = gui.main.Gui(_bot)
     _gui.mainloop()
 
 

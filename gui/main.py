@@ -1,15 +1,30 @@
+import datetime
 import time
 from enum import Enum
+import os
 
 import pygame as pg
 
-from game.classes import Point
+from game.classes import Point, Move, move_to_notation
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
 from game.main import Game, GameState
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
 from game.bot import Bot
+
+
+class Log:
+    def __init__(self):
+        if 'player_logs' not in os.listdir():
+            os.mkdir('player_logs')
+        self.file_name = f'player_logs/{str(datetime.datetime.now()).replace(":", "_")}.txt'
+
+    def add_turn(self, move: Move):
+        move = move_to_notation(move)
+        with open(self.file_name, 'a+', encoding='utf-8') as file:
+            file.write(move+'\n')
+            file.close()
 
 
 class SceneState(Enum):
@@ -19,15 +34,23 @@ class SceneState(Enum):
 
 
 class Gui:
-    def __init__(self):
+    def __init__(self, opponent_bot: Bot, main_bot: Bot = None):
+        """
+        Can work in two modes: bot vs player, bot vs bot
+        If main_bot param is not None, will start bot vs bot game
+        """
         self.__game = Game()
         self.__clock = pg.time.Clock()
-        self.frame_start = time.time()
+        self.bot_vs_bot_mode = main_bot is not None
         self.possible_moves = []
         self.selected_checker = None
-        self.state = SceneState.menu
+        self.state = SceneState.menu if not self.bot_vs_bot_mode else SceneState.checkers
         self.difficulty = 1
-        self.__bot = Bot()
+        self.__bot = opponent_bot
+        self.__bot_instead_player = main_bot
+        if self.bot_vs_bot_mode:
+            self.__bot_instead_player.start_best_move_calculation(self.__game)
+        self.player_log = Log()
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
         pg.display.set_caption('Checkers')
@@ -122,23 +145,35 @@ class Gui:
         for event in events:
             if event.type == pg.QUIT:
                 self.close()
-            if event.type == pg.MOUSEBUTTONUP:
-                if event.button in (1, 3):  # RMB, LMB
-                    x, y = event.pos
-                    if self.state == SceneState.checkers:
-                        self.handle_gameplay_click(x, y)
-                        if self.__game.getGameState() != GameState.ongoing:
-                            self.state = SceneState.result
-                    elif self.state == SceneState.menu:
-                        self.handle_menu_click(x, y)
-                    elif self.state == SceneState.result:
-                        self.handle_result_click(x, y)
+            if not self.bot_vs_bot_mode:
+                if event.type == pg.MOUSEBUTTONUP:
+                    if event.button in (1, 3):  # RMB, LMB
+                        x, y = event.pos
+                        if self.state == SceneState.checkers:
+                            self.handle_gameplay_click(x, y)
+                            if self.__game.getGameState() != GameState.ongoing:
+                                self.state = SceneState.result
+                        elif self.state == SceneState.menu:
+                            self.handle_menu_click(x, y)
+                        elif self.state == SceneState.result:
+                            self.handle_result_click(x, y)
 
         if self.__bot.is_best_move_ready():
             flag = self.__game.isWhiteTurn()
             move = self.__bot.get_calculated_move()
             self.__game.handleMove(move)
             if flag == self.__game.isWhiteTurn():
+                self.__bot.start_best_move_calculation(self.__game)
+            elif self.bot_vs_bot_mode:
+                self.__bot_instead_player.start_best_move_calculation(self.__game)
+
+        if self.__bot_instead_player and self.__bot_instead_player.is_best_move_ready():
+            flag = self.__game.isWhiteTurn()
+            move = self.__bot_instead_player.get_calculated_move()
+            self.__game.handleMove(move)
+            if flag == self.__game.isWhiteTurn():
+                self.__bot_instead_player.start_best_move_calculation(self.__game)
+            elif self.bot_vs_bot_mode:
                 self.__bot.start_best_move_calculation(self.__game)
 
     @property
@@ -185,6 +220,7 @@ class Gui:
             if move_end.x == i and move_end.y == j:
                 is_white_flag = self.__game.isWhiteTurn()
                 self.__game.handleMove(move)
+                self.player_log.add_turn(move)
                 self.possible_moves.clear()
 
                 if is_white_flag != self.__game.isWhiteTurn():
@@ -200,5 +236,5 @@ class Gui:
             self.state = SceneState.menu
 
     def close(self):
-        raise Exception("Implement an exiting for all the child processes and threads!")
         exit()
+

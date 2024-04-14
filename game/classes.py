@@ -87,6 +87,12 @@ def notation_to_move(notation: str) -> Move:
     return Move(p1, p2)
 
 
+def notations_to_move(notations: [str]) -> list[Move]:
+    moves = []
+    for move in notations:
+        moves.append(notation_to_move(move))
+    return moves
+
 class Figure:
     def __init__(self, is_checker: bool = False, is_white: bool = True):
         self.is_checker: bool = is_checker

@@ -2,7 +2,8 @@ import copy
 import multiprocessing as mp
 import random
 import time
-from game.classes import moves_to_notation
+from game.classes import moves_to_notation, notation_to_move
+from game.constants import MINMAX_DEPTH, MINMAX_N_DEPTH
 
 from game.minmax import MinMaxClass, heuristic_function
 
@@ -27,20 +28,74 @@ class Process:
                     self.process_response_queue.put(random_move)
                 else:
                     start = time.time()
+                    print('new calculations')
                     finding_max = not game.isPlayerWhite()
-                    _, moves = self.MinMax.minmax(game, 6, finding_max)
+                    #  _, moves = self.MinMax.minmax(game, 6, finding_max)
+                    variants = self.MinMax.top_n_minmax(game, MINMAX_N_DEPTH, finding_max)
+
+                    for _, moves, board in variants:
+                        if len(moves) == 0:
+                            print('moves -= none')
+                            continue
+                        stack = ['\n'+str(x) for x in moves_to_notation(moves)]
+                        simulated_game = copy.deepcopy(game)
+                        for i, move in enumerate(moves):
+                            simulated_game.handleMove(move)
+                            score = heuristic_function(simulated_game)
+                            stack[i] += f' score:{score}'
+                        print('\nstack:', *stack)
+
+                    print('alphabeta count:', self.MinMax.alphabeta_pruning_count)
+                    self.MinMax.alphabeta_pruning_count = {}
+
+                    print('cash count:', self.MinMax.using_cache_count)
+                    self.MinMax.using_cache_count = {}
+
+                    print('heuristic func count:', self.MinMax.depth_zero)
+                    self.MinMax.depth_zero = 0
+
+                    print('-'*30)
+
+                    record = float('-inf') if finding_max else float('+inf')
+                    best_moves = []
+                    for _, moves, board in variants:
+                        deep_game = copy.deepcopy(game)
+                        for move in moves:
+                            deep_game.handleMove(move)
+                        # !!! FINDING MAX is wrong !!!
+                        value, moves = self.MinMax.minmax(deep_game, MINMAX_DEPTH, finding_max, moves_stack=moves)
+                        print(value)
+                        if (finding_max and (value > record or value == float('-inf'))) or \
+                                (not finding_max and (value < record or value == float('+inf'))):
+                            record = value
+                            best_moves = moves
+
+                    moves = best_moves
                     if len(moves) == 0:
                         print('moves -= none')
                         continue
-                    stack = ['\n'+str(x) for x in moves_to_notation(moves)]
+                    stack = ['\n' + str(x) for x in moves_to_notation(moves)]
                     simulated_game = copy.deepcopy(game)
                     for i, move in enumerate(moves):
-                        simulated_game.handleMove(move)
+                        try:
+                            simulated_game.handleMove(move)
+                        except Exception as ex:
+                            print('!error!', ex)
                         score = heuristic_function(simulated_game)
                         stack[i] += f' score:{score}'
                     print('\nstack:', *stack)
+
                     self.MinMax.save_cash()
                     print(f'time: {time.time()-start}')
+
+                    print('alphabeta count:', self.MinMax.alphabeta_pruning_count)
+                    self.MinMax.alphabeta_pruning_count = {}
+
+                    print('cash count:', self.MinMax.using_cache_count)
+                    self.MinMax.using_cache_count = {}
+
+                    print('heuristic func count:', self.MinMax.depth_zero)
+                    self.MinMax.depth_zero = 0
                     self.process_response_queue.put(moves[0])
 
 
