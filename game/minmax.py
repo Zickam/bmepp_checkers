@@ -265,7 +265,7 @@ class MinMaxClass:
 
         record = float('-inf') if finding_max else float('+inf')
         all_moves = current_game.getAllMoves()
-        #best_moves = copy.deepcopy(moves_stack)
+        best_moves = copy.deepcopy(moves_stack)
 
         if len(all_moves) == 0:
             if finding_max:

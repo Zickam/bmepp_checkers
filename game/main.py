@@ -310,22 +310,22 @@ class HeuristicFunctions:
 
     @staticmethod
     def getMovableCheckers(
-            board: numpy.array
+            board: numpy.array,
         i, j
 
-    ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
-    w, b = 0, 0
-    if board[i, j][0]:
-        if board[i, j][1]:
-            if not board[i, j][2]:
-                if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
-                    w += 1
-        else:
-            if not board[i, j][2]:
-                if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
-                    b += 1
+        ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
+        w, b = 0, 0
+        if board[i, j][0]:
+            if board[i, j][1]:
+                if not board[i, j][2]:
+                    if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
+                        w += 1
+            else:
+                if not board[i, j][2]:
+                    if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
+                        b += 1
 
-    return w - b
+        return w - b
 
 
 @staticmethod
