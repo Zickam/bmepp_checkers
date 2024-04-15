@@ -446,7 +446,7 @@ class SimpleGame:
         # 2 - checkers amount
         # 3 - queens amount
         # 4 - distance to promotion line
-        self._board_values = [12, 12, 24, 0, 0]
+        self._board_values = np.array([12, 12, 24, 0, 0])
 
         self._is_white_turn = True
         self._is_player_white = True
@@ -470,11 +470,12 @@ class SimpleGame:
         return GameState.ongoing
 
     def toArgs(self):
-        return [self.getBoard(), self.isWhiteTurn()]
+        return copy.deepcopy(self.getBoard()), self.isWhiteTurn(), self._board_values
 
-    def fromArgs(self, board: np.array, is_white_turn: bool):
+    def fromArgs(self, board: np.array, is_white_turn: bool, board_values):
         self._board = board
         self._is_white_turn = is_white_turn
+        self._board_values = board_values
 
 
     def _initBoard(self, board_width: int) -> np.array:
@@ -896,10 +897,10 @@ def getRandomizedBoard():
     for i in board:
         print(*i, sep=" ")
 
-    print(BoardManager.getQueensAmount(board))
+    ''' print(BoardManager.getQueensAmount(board))
     print(BoardManager.getQueensAmountOnMainDiagonal(board))
     print(BoardManager.getQueensAmountOnDoubleDiagonal(board))
-    print(BoardManager.getCentrallyPositionedQueensAmount(board))
+    print(BoardManager.getCentrallyPositionedQueensAmount(board))'''
     return board
 
 

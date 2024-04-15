@@ -4,7 +4,7 @@ import random
 import time
 from game.classes import moves_to_notation, notation_to_move
 from game.constants import MINMAX_DEPTH, MINMAX_N_DEPTH
-
+from game.board_manager import handleMove, getAllAvailableMoves
 from game.minmax import MinMaxClass, heuristic_function
 
 
@@ -19,9 +19,9 @@ class Process:
         while True:
             time.sleep(0.1)
             if not self.process_request_queue.empty():
-                game = self.process_request_queue.get()
-                if game.getDifficulty() == 0:
-                    moves = game.getAllMoves()
+                game, difficulty = self.process_request_queue.get()
+                if difficulty == 0:
+                    moves = getAllAvailableMoves(game.getBoard(), game.isWhiteTurn())
                     if len(moves) == 0:
                         continue
                     random_move = random.choice(moves)
@@ -29,7 +29,7 @@ class Process:
                 else:
                     start = time.time()
                     print('new calculations')
-                    finding_max = not game.getIsPlayerWhite()
+                    finding_max = not game.isPlayerWhite()
                     #  _, moves = self.MinMax.minmax(game, 6, finding_max)
                     variants = self.MinMax.top_n_minmax(game, MINMAX_N_DEPTH, finding_max)
 
@@ -40,7 +40,11 @@ class Process:
                         stack = ['\n'+str(x) for x in moves_to_notation(moves)]
                         simulated_game = copy.deepcopy(game)
                         for i, move in enumerate(moves):
-                            simulated_game.handleMove(move)
+
+                            args = simulated_game.toArgs()
+                            new_args = handleMove(*args, move)
+                            simulated_game.fromArgs(*new_args)
+
                             score = heuristic_function(simulated_game)
                             stack[i] += f' score:{score}'
                         print('\nstack:', *stack)
@@ -61,7 +65,9 @@ class Process:
                     for _, moves, board in variants:
                         deep_game = copy.deepcopy(game)
                         for move in moves:
-                            deep_game.handleMove(move)
+                            args = deep_game.toArgs()
+                            new_args = handleMove(*args, move)
+                            deep_game.fromArgs(*new_args)
                         # !!! FINDING MAX is wrong !!!
                         value, moves = self.MinMax.minmax(deep_game, MINMAX_DEPTH, finding_max, moves_stack=moves)
                         print(value)
@@ -78,7 +84,9 @@ class Process:
                     simulated_game = copy.deepcopy(game)
                     for i, move in enumerate(moves):
                         try:
-                            simulated_game.handleMove(move)
+                            args = simulated_game.toArgs()
+                            new_args = handleMove(*args, move)
+                            simulated_game.fromArgs(*new_args)
                         except Exception as ex:
                             print('!error!', ex)
                         score = heuristic_function(simulated_game)
@@ -108,9 +116,9 @@ class Bot:
                                   daemon=True)
         self.process.start()
 
-    def start_best_move_calculation(self, game):
-        game1 = copy.deepcopy(game)
-        self.process_request_queue.put(game1)
+    def start_best_move_calculation(self, game, difficulty: int):
+        #game = copy.deepcopy(game)
+        self.process_request_queue.put((game, difficulty))
 
     def is_best_move_ready(self) -> bool:
         return not self.process_response_queue.empty()

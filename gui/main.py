@@ -10,7 +10,7 @@ from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
 from game.main import SimpleGame, GameState
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
-from game.board_manager import handleMove, getAllAvailableMoves, getAvailableMovesForCheckerOrQueen, possibleMovesForPoint
+from game.board_manager import handleMove, possibleMovesForPoint
 from game.bot import Bot
 
 
@@ -20,7 +20,7 @@ class Log:
             os.mkdir('player_logs')
         self.file_name = f'player_logs/{str(datetime.datetime.now()).replace(":", "_")}.txt'
 
-    def add_turn(self, move: Move):
+    def add_turn(self, move: tuple[tuple[int, int], ...]):
         move = move_to_notation(move)
         with open(self.file_name, 'a+', encoding='utf-8') as file:
             file.write(move+'\n')
@@ -49,7 +49,7 @@ class Gui:
         self.__bot = opponent_bot
         self.__bot_instead_player = main_bot
         if self.bot_vs_bot_mode:
-            self.__bot_instead_player.start_best_move_calculation(self.__game)
+            self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty)
         self.player_log = Log()
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
@@ -167,9 +167,9 @@ class Gui:
             self.__game.fromArgs(*new_args)
 
             if flag == self.__game.isWhiteTurn():
-                self.__bot.start_best_move_calculation(self.__game)
+                self.__bot.start_best_move_calculation(self.__game, self.difficulty)
             elif self.bot_vs_bot_mode:
-                self.__bot_instead_player.start_best_move_calculation(self.__game)
+                self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty)
 
         if self.__bot_instead_player and self.__bot_instead_player.is_best_move_ready():
             flag = self.__game.isWhiteTurn()
@@ -180,9 +180,9 @@ class Gui:
             self.__game.fromArgs(*new_args)
 
             if flag == self.__game.isWhiteTurn():
-                self.__bot_instead_player.start_best_move_calculation(self.__game)
+                self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty)
             elif self.bot_vs_bot_mode:
-                self.__bot.start_best_move_calculation(self.__game)
+                self.__bot.start_best_move_calculation(self.__game, self.difficulty)
 
     @property
     def is_bot_move(self):
@@ -190,15 +190,13 @@ class Gui:
 
     def handle_menu_click(self, x: int, y: int):
         if play_white_button.collide_point((x, y)):
-            #self.__game.setDifficulty(self.difficulty)
             self.state = SceneState.checkers
             self.__game.setIsPlayerWhite(True)
 
         if play_black_button.collide_point((x, y)):
-            #self.__game.setDifficulty(self.difficulty)
             self.state = SceneState.checkers
             self.__game.setIsPlayerWhite(False)
-            self.__bot.start_best_move_calculation(self.__game)
+            self.__bot.start_best_move_calculation(self.__game, self.difficulty)
 
         if plus_button.collide_point((x, y)) and self.difficulty < MAX_DIFFICULTY:
             self.difficulty += 1
@@ -220,9 +218,7 @@ class Gui:
             # click on checker
             if board[i][j][0] and board[i][j][1] == self.__game.isWhiteTurn():
                 self.selected_checker = [i, j]
-                print(i, j)
                 self.possible_moves = possibleMovesForPoint(self.__game, [i, j])
-                print(self.possible_moves)
 
         # click on hint
         for move in self.possible_moves:
@@ -239,7 +235,7 @@ class Gui:
 
                 if is_white_flag != self.__game.isWhiteTurn():
                     self.selected_checker = None
-                    self.__bot.start_best_move_calculation(self.__game)
+                    self.__bot.start_best_move_calculation(self.__game, self.difficulty)
                 else:
                     self.selected_checker = move_end
                     self.possible_moves = possibleMovesForPoint(self.__game, move_end)

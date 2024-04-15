@@ -43,8 +43,12 @@ def _handleCheckerKillMove(board: np.array, move: np.array) -> np.array:
 
 
 @numba.njit
-def _handleCheckerMovingMove(board: np.array, x: int, y: int) -> np.array:
-    return
+def _handleCheckerMovingMove(board: np.array, start: np.array, end: np.array) -> np.array:
+    for i in range(3):
+        board[end[0], end[1]][i] = board[start[0], start[1]][i]
+        board[start[0], start[1]][i] = False
+
+    return board
 
 @numba.njit
 def _handleQueenKillMove():
@@ -52,16 +56,18 @@ def _handleQueenKillMove():
 
 
 @numba.njit
-def handleMove(board: np.array, is_white_turn: bool, move: np.array) -> np.array:
+def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array,) -> np.array:
     if board[move[0, 0], move[0, 1]][2]:
         _handleQueenKillMove()
     else:
         if abs(move[0, 0] - move[1, 0]) > 1:
             _handleCheckerKillMove(board, move)
+            ind = 1 if is_white_turn else 0
+            board_values[ind] = board_values[ind] - 1
         else:
             _handleCheckerMovingMove(board, move[0], move[1])
 
-    return board, not is_white_turn
+    return board, not is_white_turn, board_values
 
 
 @numba.njit
