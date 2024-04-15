@@ -29,7 +29,7 @@ class Process:
                 else:
                     start = time.time()
                     print('new calculations')
-                    finding_max = not game.isPlayerWhite()
+                    finding_max = not game.getIsPlayerWhite()
                     #  _, moves = self.MinMax.minmax(game, 6, finding_max)
                     variants = self.MinMax.top_n_minmax(game, MINMAX_N_DEPTH, finding_max)
 

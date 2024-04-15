@@ -448,23 +448,34 @@ class SimpleGame:
         # 4 - distance to promotion line
         self._board_values = [12, 12, 24, 0, 0]
 
-        self._is_white_turn = False
+        self._is_white_turn = True
         self._is_player_white = True
 
-    def getIsWhiteTurn(self) -> bool:
+    def isWhiteTurn(self) -> bool:
         return self._is_white_turn
 
     def getBoard(self) -> np.array:
         return self._board
 
     def setIsPlayerWhite(self, is_player_white: bool):
-        self.is_player_white = is_player_white
+        self._is_player_white = is_player_white
 
-    def getIsPlayerWhite(self) -> bool:
-        return self.is_player_white
+    def isPlayerWhite(self) -> bool:
+        return self._is_player_white
 
     def getBoardWidth(self) -> int:
         return self._board.shape[0]
+
+    def getGameState(self) -> GameState:
+        return GameState.ongoing
+
+    def toArgs(self):
+        return [self.getBoard(), self.isWhiteTurn()]
+
+    def fromArgs(self, board: np.array, is_white_turn: bool):
+        self._board = board
+        self._is_white_turn = is_white_turn
+
 
     def _initBoard(self, board_width: int) -> np.array:
         board = np.array([[np.array([False, False, False]) for i in range(board_width)] for j in range(board_width)])
@@ -517,7 +528,7 @@ class Game:
     def isWhiteTurn(self) -> bool:
         return self._is_white_turn
 
-    def isPlayerWhite(self) -> bool:
+    def getIsPlayerWhite(self) -> bool:
         return self._is_player_white
 
     def setIsPlayerWhite(self, new_state: bool):

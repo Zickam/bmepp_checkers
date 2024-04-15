@@ -1,16 +1,16 @@
 import datetime
-import time
 from enum import Enum
 import os
 
 import pygame as pg
 
-from game.classes import Point, Move, move_to_notation
+from game.classes import Move, move_to_notation
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
-from game.main import Game, GameState
+from game.main import SimpleGame, GameState
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
+from game.board_manager import handleMove, getAllAvailableMoves, getAvailableMovesForCheckerOrQueen, possibleMovesForPoint
 from game.bot import Bot
 
 
@@ -39,11 +39,11 @@ class Gui:
         Can work in two modes: bot vs player, bot vs bot
         If main_bot param is not None, will start bot vs bot game
         """
-        self.__game = Game()
+        self.__game = SimpleGame()
         self.__clock = pg.time.Clock()
         self.bot_vs_bot_mode = main_bot is not None
-        self.possible_moves = []
-        self.selected_checker = None
+        self.possible_moves: list[list[list[int, int]]] = []
+        self.selected_checker: None | list[int, int] = None
         self.state = SceneState.menu if not self.bot_vs_bot_mode else SceneState.checkers
         self.difficulty = 1
         self.__bot = opponent_bot
@@ -107,8 +107,8 @@ class Gui:
 
     def render_selected_checker(self):
         if self.selected_checker is not None:
-            x_cord = self.selected_checker.x
-            y_cord = self.selected_checker.y
+            x_cord = self.selected_checker[0]
+            y_cord = self.selected_checker[1]
             coordinate = self.__sprites.get_coordinates(x_cord, y_cord, self.__game.isPlayerWhite())
             coordinate = coordinate.move(self.left_offset, 0)
             self.__screen.blit(self.__sprites.indicator, coordinate)
@@ -117,25 +117,25 @@ class Gui:
         board = self.__game.getBoard()
         for i, row in enumerate(board):
             for j, figure in enumerate(row):
-                if not figure.is_checker:
+                if not figure[0]:  # figure.is_checker
                     continue
                 coordinate = self.__sprites.get_coordinates(i, j, self.__game.isPlayerWhite())
                 coordinate = coordinate.move(self.left_offset, 0)
-                if figure.is_white:
-                    if figure.is_queen:
+                if figure[1]:  # figure.is_white
+                    if figure[2]:  # figure.is_queen
                         self.__screen.blit(self.__sprites.queen_white_checker, coordinate)
                     else:
                         self.__screen.blit(self.__sprites.white_checker, coordinate)
                 else:
-                    if figure.is_queen:
+                    if figure[2]:  # figure.is_queen
                         self.__screen.blit(self.__sprites.queen_black_checker, coordinate)
                     else:
                         self.__screen.blit(self.__sprites.black_checker, coordinate)
 
     def render_hints(self):
         for move in self.possible_moves:
-            move_x = move.end_point.x
-            move_y = move.end_point.y
+            move_x = move[1][0]
+            move_y = move[1][1]
             coordinate = self.__sprites.get_coordinates(move_x, move_y, self.__game.isPlayerWhite())
             coordinate = coordinate.move(self.left_offset, 0)
             self.__screen.blit(self.__sprites.hint, coordinate)
@@ -161,7 +161,11 @@ class Gui:
         if self.__bot.is_best_move_ready():
             flag = self.__game.isWhiteTurn()
             move = self.__bot.get_calculated_move()
-            self.__game.handleMove(move)
+
+            args = self.__game.toArgs()
+            new_args = handleMove(*args, move)
+            self.__game.fromArgs(*new_args)
+
             if flag == self.__game.isWhiteTurn():
                 self.__bot.start_best_move_calculation(self.__game)
             elif self.bot_vs_bot_mode:
@@ -170,7 +174,11 @@ class Gui:
         if self.__bot_instead_player and self.__bot_instead_player.is_best_move_ready():
             flag = self.__game.isWhiteTurn()
             move = self.__bot_instead_player.get_calculated_move()
-            self.__game.handleMove(move)
+
+            args = self.__game.toArgs()
+            new_args = handleMove(*args, move)
+            self.__game.fromArgs(*new_args)
+
             if flag == self.__game.isWhiteTurn():
                 self.__bot_instead_player.start_best_move_calculation(self.__game)
             elif self.bot_vs_bot_mode:
@@ -182,12 +190,12 @@ class Gui:
 
     def handle_menu_click(self, x: int, y: int):
         if play_white_button.collide_point((x, y)):
-            self.__game.setDifficulty(self.difficulty)
+            #self.__game.setDifficulty(self.difficulty)
             self.state = SceneState.checkers
             self.__game.setIsPlayerWhite(True)
 
         if play_black_button.collide_point((x, y)):
-            self.__game.setDifficulty(self.difficulty)
+            #self.__game.setDifficulty(self.difficulty)
             self.state = SceneState.checkers
             self.__game.setIsPlayerWhite(False)
             self.__bot.start_best_move_calculation(self.__game)
@@ -200,7 +208,7 @@ class Gui:
 
     def handle_gameplay_click(self, x: int, y: int):
         if restart_button.collide_point((x, y)):
-            self.__game = Game()
+            self.__game = SimpleGame()
             self.state = SceneState.menu
             self.selected_checker = None
             self.possible_moves.clear()
@@ -210,17 +218,23 @@ class Gui:
         board = self.__game.getBoard()
         if self.is_bot_move is False:
             # click on checker
-            if board[i][j].is_checker and board[i][j].is_white == self.__game.isWhiteTurn():
-                self.selected_checker = Point(i, j)
-                self.possible_moves = self.__game.getPossibleMoves(Point(i, j))
+            if board[i][j][0] and board[i][j][1] == self.__game.isWhiteTurn():
+                self.selected_checker = [i, j]
+                print(i, j)
+                self.possible_moves = possibleMovesForPoint(self.__game, [i, j])
+                print(self.possible_moves)
 
         # click on hint
         for move in self.possible_moves:
-            move_end = move.end_point
-            if move_end.x == i and move_end.y == j:
+            move_end = move[1]
+            if move_end[0] == i and move_end[1] == j:
                 is_white_flag = self.__game.isWhiteTurn()
-                self.__game.handleMove(move)
-                self.player_log.add_turn(move)
+
+                args = self.__game.toArgs()
+                new_args = handleMove(*args, move)
+                self.__game.fromArgs(*new_args)
+
+                #self.player_log.add_turn(move)
                 self.possible_moves.clear()
 
                 if is_white_flag != self.__game.isWhiteTurn():
@@ -228,11 +242,11 @@ class Gui:
                     self.__bot.start_best_move_calculation(self.__game)
                 else:
                     self.selected_checker = move_end
-                    self.possible_moves = self.__game.getPossibleMoves(move_end)
+                    self.possible_moves = possibleMovesForPoint(self.__game, move_end)
 
     def handle_result_click(self, x, y):
         if restart_button.collide_point((x, y)):
-            self.__game = Game()
+            self.__game = SimpleGame()
             self.state = SceneState.menu
 
     def close(self):

@@ -1,6 +1,6 @@
 import numba
-import numpy
 import numpy as np
+from game.main import SimpleGame
 
 
 # move is numpy array where two arrays stored:
@@ -46,13 +46,13 @@ def _handleCheckerKillMove(board: np.array, move: np.array) -> np.array:
 def _handleCheckerMovingMove(board: np.array, x: int, y: int) -> np.array:
     return
 
-
+@numba.njit
 def _handleQueenKillMove():
-    ...
+    return
 
 
 @numba.njit
-def handleMove(board: np.array, move: np.array) -> np.array:
+def handleMove(board: np.array, is_white_turn: bool, move: np.array) -> np.array:
     if board[move[0, 0], move[0, 1]][2]:
         _handleQueenKillMove()
     else:
@@ -60,6 +60,7 @@ def handleMove(board: np.array, move: np.array) -> np.array:
             _handleCheckerKillMove(board, move)
         else:
             _handleCheckerMovingMove(board, move)
+    return is_white_turn
 
 
 @numba.njit
@@ -196,9 +197,23 @@ def transformNumpyMovesToList(moves: np.array) -> list:
     return _moves
 
 
+def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[list[int, int]]]:
+    board = game.getBoard()
+    is_white_turn = game.isWhiteTurn()
+    x, y = point
+    all_moves = getAllAvailableMoves(board, is_white_turn)
+    point_moves = []
+    for move in all_moves:
+        start = move[0]
+        x1, y1 = start
+        if x == x1 and y == y1:
+            point_moves.append(move)
+    return point_moves
+
+
 if __name__ == "__main__":
     from game.main import SimpleGame
-    import time
+    #import time
 
     sg = SimpleGame()
     sg.getBoard()[4, 5][0] = True
