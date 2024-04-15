@@ -59,8 +59,9 @@ def handleMove(board: np.array, is_white_turn: bool, move: np.array) -> np.array
         if abs(move[0, 0] - move[1, 0]) > 1:
             _handleCheckerKillMove(board, move)
         else:
-            _handleCheckerMovingMove(board, move)
-    return is_white_turn
+            _handleCheckerMovingMove(board, move[0], move[1])
+
+    return board, not is_white_turn
 
 
 @numba.njit
@@ -117,7 +118,7 @@ def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: 
     return are_necessary, moves
 
 
-@numba.njit
+# @numba.njit
 def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
     unnecessary_moves = np.full((50, 2, 2), -1)
     unnecessary_moves_amount = 0
@@ -166,22 +167,22 @@ def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
     if are_necessary_found:
         available_moves = np.full((necessary_moves_amount, 2, 2), -1)
         c = 0
-        for move in necessary_moves:
-            available_moves[c][0][0] = move[0][0]
-            available_moves[c][0][1] = move[0][1]
-            available_moves[c][1][0] = move[1][0]
-            available_moves[c][1][1] = move[1][1]
+        for i in range(necessary_moves_amount):
+            available_moves[c][0][0] = necessary_moves[i][0][0]
+            available_moves[c][0][1] = necessary_moves[i][0][1]
+            available_moves[c][1][0] = necessary_moves[i][1][0]
+            available_moves[c][1][1] = necessary_moves[i][1][1]
 
             c += 1
 
     else:
         available_moves = np.full((unnecessary_moves_amount, 2, 2), -1)
         c = 0
-        for move in unnecessary_moves:
-            available_moves[c][0][0] = move[0][0]
-            available_moves[c][0][1] = move[0][1]
-            available_moves[c][1][0] = move[1][0]
-            available_moves[c][1][1] = move[1][1]
+        for i in range(unnecessary_moves_amount):
+            available_moves[c][0][0] = unnecessary_moves[i][0][0]
+            available_moves[c][0][1] = unnecessary_moves[i][0][1]
+            available_moves[c][1][0] = unnecessary_moves[i][1][0]
+            available_moves[c][1][1] = unnecessary_moves[i][1][1]
 
             c += 1
 
