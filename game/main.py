@@ -443,10 +443,9 @@ class SimpleGame:
         # _board_values contains these values:
         # 0 - white amount
         # 1 - black amount
-        # 2 - checkers amount
-        # 3 - queens amount
-        # 4 - distance to promotion line
-        self._board_values = np.array([12, 12, 24, 0, 0])
+        # 2 - queens amount
+        # 3 - distance to promotion line
+        self._board_values = np.array([12, 12, 0, 0])
 
         self._is_white_turn = True
         self._is_player_white = True

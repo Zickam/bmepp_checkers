@@ -30,6 +30,11 @@ def _getAvailableMovesForQueen(board: np.array, x: int,
 
 
 @numba.njit
+def _handleQueenKillMove():
+    return
+
+
+@numba.njit
 def _handleCheckerKillMove(board: np.array, move: np.array) -> np.array:
     x = move[0, 0]
     y = move[0, 1]
@@ -37,9 +42,9 @@ def _handleCheckerKillMove(board: np.array, move: np.array) -> np.array:
     kill_y = move[1, 1]
 
     for i in range(3):
-        board[kill_x][kill_y][i] = board[x][y][i]
-        board[x + (kill_x - x) // 2][y + (kill_y - y) // 2][i] = False
-        board[x][y][i] = False
+        board[kill_x, kill_y, i] = board[x, y, i]
+        board[x + (kill_x - x) // 2, y + (kill_y - y) // 2, i] = False
+        board[x, y, i] = False
 
 
 @numba.njit
@@ -50,12 +55,26 @@ def _handleCheckerMovingMove(board: np.array, start: np.array, end: np.array) ->
 
     return board
 
+
 @numba.njit
-def _handleQueenKillMove():
-    return
+def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_values: np.array,
+                                move: np.array) -> np.array:
+    are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
+    if are_necessary:
+        ...
+    else:
+        is_white_turn = not is_white_turn
+    return is_white_turn, board_values
 
 
-#@numba.njit
+@numba.njit
+def _isCheckerMoveKilling(move: np.array) -> bool:
+    if abs(move[0, 0] - move[1, 0]) > 1:
+        return True
+    return False
+
+
+@numba.njit
 def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> np.array:
     if board[move[0, 0], move[0, 1]][2]:
         _handleQueenKillMove()
@@ -64,14 +83,17 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
             _handleCheckerKillMove(board, move)
             ind = 1 if is_white_turn else 0
             board_values[ind] = board_values[ind] - 1
+            is_white_turn, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move)
         else:
             _handleCheckerMovingMove(board, move[0], move[1])
 
-    return board, not is_white_turn, board_values
+    return board, is_white_turn, board_values
+
 
 def handle_move_pr(board: np.array, is_white_turn: bool, board_values: np.array, move: tuple) -> np.array:
     move = np.array(move)
     return handleMove(board, is_white_turn, board_values, move)
+
 
 @numba.njit
 def _getAvailableMovesForChecker(board: np.array, is_white_turn: bool, x: int,
@@ -137,7 +159,7 @@ def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
     are_necessary_found = False
 
     for i in range(8):
-        for j in range(i % 2 + 1, 8, 2):
+        for j in range((i + 1) % 2, 8, 2):
             if board[i, j][0] and board[i, j][1] == is_white_turn:
                 if board[i, j][2]:  # пришло 13 ходов ибо королева
                     are_necessary, _moves = getAvailableMovesForCheckerOrQueen(
@@ -177,10 +199,10 @@ def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
         available_moves = np.full((necessary_moves_amount, 2, 2), -1)
         c = 0
         for i in range(necessary_moves_amount):
-            available_moves[c][0][0] = necessary_moves[i][0][0]
-            available_moves[c][0][1] = necessary_moves[i][0][1]
-            available_moves[c][1][0] = necessary_moves[i][1][0]
-            available_moves[c][1][1] = necessary_moves[i][1][1]
+            available_moves[c, 0, 0] = necessary_moves[i, 0, 0]
+            available_moves[c, 0, 1] = necessary_moves[i, 0, 1]
+            available_moves[c, 1, 0] = necessary_moves[i, 1, 0]
+            available_moves[c, 1, 1] = necessary_moves[i, 1, 1]
 
             c += 1
 
@@ -188,10 +210,10 @@ def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
         available_moves = np.full((unnecessary_moves_amount, 2, 2), -1)
         c = 0
         for i in range(unnecessary_moves_amount):
-            available_moves[c][0][0] = unnecessary_moves[i][0][0]
-            available_moves[c][0][1] = unnecessary_moves[i][0][1]
-            available_moves[c][1][0] = unnecessary_moves[i][1][0]
-            available_moves[c][1][1] = unnecessary_moves[i][1][1]
+            available_moves[c, 0, 0] = unnecessary_moves[i, 0, 0]
+            available_moves[c, 0, 1] = unnecessary_moves[i, 0, 1]
+            available_moves[c, 1, 0] = unnecessary_moves[i, 1, 0]
+            available_moves[c, 1, 1] = unnecessary_moves[i, 1, 1]
 
             c += 1
 
@@ -223,7 +245,8 @@ def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[
 
 if __name__ == "__main__":
     from game.main import SimpleGame
-    #import time
+
+    # import time
 
     sg = SimpleGame()
     sg.getBoard()[4, 5][0] = True
@@ -231,7 +254,6 @@ if __name__ == "__main__":
 
     # move = np.array([[2, 1], [4, 3]])
     # _handleCheckerKillMove(sg.getBoard(), move)
-
 
     print("moves", getAllAvailableMoves(sg.getBoard(), True))
     # for i in sg.getBoard():
