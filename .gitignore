@@ -1,4 +1,6 @@
 /player_logs
+/cache.pickle
+/cache5.pickle
 /.idea
 /venv
 **/__pycache__

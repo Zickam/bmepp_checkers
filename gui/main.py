@@ -10,7 +10,7 @@ from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
 from game.main import SimpleGame, GameState
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
-from game.board_manager import handleMove, possibleMovesForPoint
+from game.board_manager import handle_move_pr, possibleMovesForPoint
 from game.bot import Bot
 
 
@@ -163,7 +163,7 @@ class Gui:
             move = self.__bot.get_calculated_move()
 
             args = self.__game.toArgs()
-            new_args = handleMove(*args, move)
+            new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
 
             if flag == self.__game.isWhiteTurn():
@@ -176,7 +176,7 @@ class Gui:
             move = self.__bot_instead_player.get_calculated_move()
 
             args = self.__game.toArgs()
-            new_args = handleMove(*args, move)
+            new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
 
             if flag == self.__game.isWhiteTurn():
@@ -227,7 +227,7 @@ class Gui:
                 is_white_flag = self.__game.isWhiteTurn()
 
                 args = self.__game.toArgs()
-                new_args = handleMove(*args, move)
+                new_args = handle_move_pr(*args, move)
                 self.__game.fromArgs(*new_args)
 
                 #self.player_log.add_turn(move)

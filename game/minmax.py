@@ -1,10 +1,10 @@
 import copy
 import pickle
 
-from game.constants import TOP_N_AMOUNT
+from game.constants import TOP_N_AMOUNT, DEPTH_TO_CHECK
 from game.classes import Move, move_to_notation, notation_to_move, notations_to_move, moves_to_notation
 from game.main import GameState, SimpleGame, HeuristicFunctions, game_board_to_str
-from game.board_manager import getAllAvailableMoves, handleMove
+from game.board_manager import getAllAvailableMoves, handleMove, handle_move_pr
 
 cache_file_name = 'cache.pickle'
 n_cache_file_name = f'cache{TOP_N_AMOUNT}.pickle'
@@ -86,14 +86,21 @@ class MinMaxClass:
         self.cache = pickle.load(file)
         self.n_cache = pickle.load(file2)
 
-    def add_to_cash(self, _game: SimpleGame, depth: int, record: int | float, moves: list[tuple[tuple[int, int], ...]], finding_max: bool):
+    def add_to_cash(self, _game: SimpleGame,
+                    depth: int,
+                    record: int | float,
+                    moves: list[tuple[tuple[int, int], ...]],
+                    finding_max: bool):
         board = game_board_to_str(_game.getBoard())
         str_move = moves_to_notation(moves)
         key = depth, board, finding_max
         value = record, str_move
         self.cache[key] = value
 
-    def add_to_n_cache(self, _game: SimpleGame, depth: int, variants_tuple: list[list[float, list[tuple[tuple[int, int], ...]]]], finding_max: bool):
+    def add_to_n_cache(self, _game: SimpleGame,
+                       depth: int,
+                       variants_tuple: list[list[float, list[tuple[tuple[int, int], ...]]]],
+                       finding_max: bool):
         board = game_board_to_str(_game.getBoard())
         key = depth, board, finding_max
         value_in_dict = []
@@ -106,27 +113,31 @@ class MinMaxClass:
             value_in_dict.append([value, moves])
         self.n_cache[key] = value_in_dict
 
-    def check_cache(self, _game: SimpleGame, depth: int, finding_max: bool) -> None | tuple[float, list[tuple[tuple[int, int], ...]]]:
+    def check_cache(self, _game: SimpleGame,
+                    depth: int,
+                    finding_max: bool) -> None | tuple[float, list[tuple[tuple[int, int], ...]]]:
         board = game_board_to_str(_game.getBoard())
-        for i in range(depth, 12):
+        for i in range(depth, DEPTH_TO_CHECK):
             key = i, board, finding_max
             if key in self.cache:
                 value, moves = self.cache.get(key)
                 moves = notations_to_move(moves)
                 return value, moves
 
-    def check_n_cache(self, _game: SimpleGame, depth: int, finding_max: bool) -> None | list[list[float, list[tuple[tuple[int, int], ...]]]]:
+    def check_n_cache(self, _game: SimpleGame,
+                      depth: int,
+                      finding_max: bool) -> None | list[list[float, list[tuple[tuple[int, int], ...]]]]:
         board = game_board_to_str(_game.getBoard())
-        for i in range(depth, 12):
+        for i in range(depth, DEPTH_TO_CHECK):
             key = i, board, finding_max
             if key in self.n_cache:
-                variants_list = self.n_cache.get(key)
+                print(key)
+                variants_list = copy.deepcopy(self.n_cache.get(key))
                 variants_to_return = []
                 for variant in variants_list:
                     value, moves = variant
                     for j in range(len(moves)):
                         move = moves[j]
-                        print(move)
                         moves[j] = notation_to_move(move)
                     variants_to_return.append([value, moves])
                 return variants_to_return
@@ -169,14 +180,14 @@ class MinMaxClass:
             print('(only one possible move, no calculations)')
             return None, [all_moves[0]]
 
-        '''if depth not in self.brute_forced_depth:
+        if depth not in self.brute_forced_depth:
             from_cash = self.check_cache(current_game, depth, finding_max)
 
             if from_cash is not None:
                 value, moves = from_cash
                 moves = tuple(list(moves_stack) + list(moves))
                 add_to_counter(self.using_cache_count, depth)
-                return value, moves'''
+                return value, moves
 
         children = []
 
@@ -187,7 +198,7 @@ class MinMaxClass:
             color_before_move = current_game.isWhiteTurn()
 
             args = current_game.toArgs()
-            new_args = handleMove(*args, move)
+            new_args = handle_move_pr(*args, move)
             empty_game.fromArgs(*new_args)
             child = empty_game
 
@@ -204,7 +215,7 @@ class MinMaxClass:
                     tuple(list(moves_stack)+[move]),
                     start_depth,
                     new_moves_without_change_side]
-            children.append([child, args])
+            children.append([copy.deepcopy(child), args])
 
         if depth not in self.brute_forced_depth:
             children.sort(key=lambda x: potential_function(x[0]), reverse=finding_max)
@@ -273,7 +284,7 @@ class MinMaxClass:
             print('(only one possible move, no calculations)')
             return [(None, [all_moves[0]], game_board_to_str(current_game.getBoard()))]
 
-        '''if depth not in self.brute_forced_depth:
+        if depth not in self.brute_forced_depth:
             from_cache = self.check_n_cache(current_game, depth, finding_max)
 
             if from_cache is not None:
@@ -285,7 +296,7 @@ class MinMaxClass:
                     moves = tuple(list(moves_stack) + list(moves))
                     variants_to_return.append([value, moves, game_board_to_str(current_game.getBoard())])
                 add_to_counter(self.using_cache_count, depth)
-                return variants_to_return'''
+                return variants_to_return
 
         children = []
 
@@ -296,7 +307,7 @@ class MinMaxClass:
             color_before_move = current_game.isWhiteTurn()
 
             args = current_game.toArgs()
-            new_args = handleMove(*args, move)
+            new_args = handle_move_pr(*args, move)
             empty_game.fromArgs(*new_args)
             child = empty_game
 
@@ -315,7 +326,7 @@ class MinMaxClass:
                     new_moves_without_change_side,
                     top_position_amount,
                     customer_color_white]
-            children.append([child, args])
+            children.append([copy.deepcopy(child), args])
 
         if depth not in self.brute_forced_depth:
             children.sort(key=lambda x: potential_function(x[0]), reverse=finding_max)

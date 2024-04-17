@@ -55,8 +55,8 @@ def _handleQueenKillMove():
     return
 
 
-@numba.njit
-def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array,) -> np.array:
+#@numba.njit
+def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> np.array:
     if board[move[0, 0], move[0, 1]][2]:
         _handleQueenKillMove()
     else:
@@ -69,6 +69,9 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
 
     return board, not is_white_turn, board_values
 
+def handle_move_pr(board: np.array, is_white_turn: bool, board_values: np.array, move: tuple) -> np.array:
+    move = np.array(move)
+    return handleMove(board, is_white_turn, board_values, move)
 
 @numba.njit
 def _getAvailableMovesForChecker(board: np.array, is_white_turn: bool, x: int,

@@ -28,11 +28,11 @@ class Process:
                     self.process_response_queue.put(random_move)
                 else:
                     start = time.time()
-                    print('new calculations')
+                    print('\nNEW CALCULATIONS\n')
                     finding_max = not game.isPlayerWhite()
                     #  _, moves = self.MinMax.minmax(game, 6, finding_max)
                     variants = self.MinMax.top_n_minmax(game, MINMAX_N_DEPTH, finding_max)
-
+                    print(variants[0][1])
                     for _, moves, board in variants:
                         if len(moves) == 0:
                             print('moves -= none')
@@ -40,11 +40,13 @@ class Process:
                         stack = ['\n'+str(x) for x in moves_to_notation(moves)]
                         simulated_game = copy.deepcopy(game)
                         for i, move in enumerate(moves):
-
-                            args = simulated_game.toArgs()
-                            new_args = handleMove(*args, move)
-                            simulated_game.fromArgs(*new_args)
-
+                            print(move)
+                            try:
+                                args = simulated_game.toArgs()
+                                new_args = handleMove(*args, move)
+                                simulated_game.fromArgs(*new_args)
+                            except Exception as ex:
+                                print('!error!', ex)
                             score = heuristic_function(simulated_game)
                             stack[i] += f' score:{score}'
                         print('\nstack:', *stack)
@@ -64,10 +66,13 @@ class Process:
                     best_moves = []
                     for _, moves, board in variants:
                         deep_game = copy.deepcopy(game)
-                        for move in moves:
-                            args = deep_game.toArgs()
-                            new_args = handleMove(*args, move)
-                            deep_game.fromArgs(*new_args)
+                        try:
+                            for move in moves:
+                                args = deep_game.toArgs()
+                                new_args = handleMove(*args, move)
+                                deep_game.fromArgs(*new_args)
+                        except TypeError as er:
+                            print(er)
                         # !!! FINDING MAX is wrong !!!
                         value, moves = self.MinMax.minmax(deep_game, MINMAX_DEPTH, finding_max, moves_stack=moves)
                         print(value)
