@@ -158,6 +158,7 @@ class Gui:
                         elif self.state == SceneState.result:
                             self.handle_result_click(x, y)
 
+
         if self.__bot.is_best_move_ready():
             flag = self.__game.isWhiteTurn()
             move = self.__bot.get_calculated_move()
@@ -230,6 +231,8 @@ class Gui:
                 new_args = handle_move_pr(*args, move)
                 self.__game.fromArgs(*new_args)
 
+                print(*self.__game.getBoard(), sep="\n")
+
                 #self.player_log.add_turn(move)
                 self.possible_moves.clear()
 
@@ -239,6 +242,7 @@ class Gui:
                 else:
                     self.selected_checker = move_end
                     self.possible_moves = possibleMovesForPoint(self.__game, move_end)
+
 
     def handle_result_click(self, x, y):
         if restart_button.collide_point((x, y)):

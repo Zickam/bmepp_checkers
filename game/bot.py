@@ -35,6 +35,7 @@ class Process:
                     finding_max = not game.isPlayerWhite()
                     #  _, moves = self.MinMax.minmax(game, 6, finding_max)
                     variants = self.MinMax.top_n_minmax(game, MINMAX_N_DEPTH, finding_max)
+                    print(variants)
                     print(variants[0][1])
                     for _, moves, board in variants:
                         if len(moves) == 0:

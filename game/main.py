@@ -443,7 +443,11 @@ class SimpleGame:
         # 3rd element of cell indicates queen
         self._board: np.array[np.array[np.array[
             bool, bool, bool]]] = self._initBoard(8)
-
+        self._board = np.array([
+            [[0, 0, 0] for j in range(8)] for i in range(8)
+        ])
+        self._board[1, 2] = np.array([1, 1, 1])
+        # self._board[3, 4] = np.array([1, 0, 0])
         # _board_values contains these values:
         # 0 - white amount
         # 1 - black amount
@@ -454,7 +458,7 @@ class SimpleGame:
         self._is_white_turn = True
         self._is_player_white = True
 
-        initNumba()
+
 
     def isWhiteTurn(self) -> bool:
         return self._is_white_turn
