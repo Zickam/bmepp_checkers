@@ -35,7 +35,7 @@ def _handleQueenKillMove():
 
 
 @numba.njit
-def _handleCheckerKillMove(board: np.array, move: np.array) -> np.array:
+def _handleCheckerKillMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> np.array:
     x = move[0, 0]
     y = move[0, 1]
     kill_x = move[1, 0]
@@ -46,9 +46,14 @@ def _handleCheckerKillMove(board: np.array, move: np.array) -> np.array:
         board[x + (kill_x - x) // 2, y + (kill_y - y) // 2, i] = False
         board[x, y, i] = False
 
+    board_values_ind = 1 if is_white_turn else 0
+    board_values[board_values_ind] = board_values[board_values_ind] - 1
+    return is_white_turn, board_values
+
 
 @numba.njit
-def _handleCheckerMovingMove(board: np.array, start: np.array, end: np.array) -> np.array:
+def _handleCheckerMovingMove(board: np.array, move: np.array) -> np.array:
+    start, end = move[0], move[1]
     for i in range(3):
         board[end[0], end[1]][i] = board[start[0], start[1]][i]
         board[start[0], start[1]][i] = False
@@ -60,10 +65,9 @@ def _handleCheckerMovingMove(board: np.array, start: np.array, end: np.array) ->
 def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_values: np.array,
                                 move: np.array) -> np.array:
     are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
-    if are_necessary:
-        ...
-    else:
+    if not are_necessary:
         is_white_turn = not is_white_turn
+
     return is_white_turn, board_values
 
 
@@ -73,19 +77,44 @@ def _isCheckerMoveKilling(move: np.array) -> bool:
         return True
     return False
 
+def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[bool, np.array, np.array]:
+    need_x_for_transformation = 0 if is_white_turn else 1
+    if move[1][0] == need_x_for_transformation:
+        board[move[1, 0], move[1, 1]][2] = True
+        board_values[2] += is_white_turn
+        return True, board, board_values
+    return False, board, board_values
 
-@numba.njit
-def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> np.array:
+def _handleQueenContinousMove():
+    ...
+
+def _handleQueenMovingMove():
+    ...
+
+# @numba.njit
+def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[np.array, bool, np.array]:
     if board[move[0, 0], move[0, 1]][2]:
-        _handleQueenKillMove()
+        is_kill_move = True
+        if is_kill_move:
+            _handleQueenKillMove()
+            _handleQueenContinousMove()
+        else:
+            _handleQueenMovingMove()
+            is_white_turn = not is_white_turn
+
     else:
         if abs(move[0, 0] - move[1, 0]) > 1:
-            _handleCheckerKillMove(board, move)
-            ind = 1 if is_white_turn else 0
-            board_values[ind] = board_values[ind] - 1
-            is_white_turn, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move)
+            is_white_turn, board_values = _handleCheckerKillMove(board, is_white_turn, board_values, move)
+
+            has_transormed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
+            print("HAS TRANSFORMED", has_transormed)
+            if has_transormed:
+                _handleQueenContinousMove()
+            else:
+                is_white_turn, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move)
         else:
-            _handleCheckerMovingMove(board, move[0], move[1])
+            _handleCheckerMovingMove(board, move)
+            is_white_turn = not is_white_turn
 
     return board, is_white_turn, board_values
 
@@ -149,7 +178,7 @@ def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: 
     return are_necessary, moves
 
 
-# @numba.njit
+@numba.njit
 def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
     unnecessary_moves = np.full((50, 2, 2), -1)
     unnecessary_moves_amount = 0

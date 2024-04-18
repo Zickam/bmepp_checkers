@@ -2,6 +2,9 @@ import copy
 import multiprocessing as mp
 import random
 import time
+
+import numpy as np
+
 from game.classes import moves_to_notation, notation_to_move
 from game.constants import MINMAX_DEPTH, MINMAX_N_DEPTH
 from game.board_manager import handleMove, getAllAvailableMoves
@@ -41,6 +44,7 @@ class Process:
                         simulated_game = copy.deepcopy(game)
                         for i, move in enumerate(moves):
                             print(move)
+                            move = np.array([move[0], move[1]])
                             try:
                                 args = simulated_game.toArgs()
                                 new_args = handleMove(*args, move)
@@ -68,6 +72,7 @@ class Process:
                         deep_game = copy.deepcopy(game)
                         try:
                             for move in moves:
+                                move = np.array([move[0], move[1]])
                                 args = deep_game.toArgs()
                                 new_args = handleMove(*args, move)
                                 deep_game.fromArgs(*new_args)
@@ -88,12 +93,15 @@ class Process:
                     stack = ['\n' + str(x) for x in moves_to_notation(moves)]
                     simulated_game = copy.deepcopy(game)
                     for i, move in enumerate(moves):
+                        move = np.array([move[0], move[1]])
+                        print("move", move)
                         try:
                             args = simulated_game.toArgs()
                             new_args = handleMove(*args, move)
                             simulated_game.fromArgs(*new_args)
                         except Exception as ex:
                             print('!error!', ex)
+                            raise ex
                         score = heuristic_function(simulated_game)
                         stack[i] += f' score:{score}'
                     print('\nstack:', *stack)

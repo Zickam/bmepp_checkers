@@ -9,6 +9,10 @@ from game import constants
 import numpy as np
 import numba
 
+@numba.njit
+def initNumba():
+    ...
+
 
 class GameState(Enum):
     ongoing = "Ongoing"
@@ -449,6 +453,8 @@ class SimpleGame:
 
         self._is_white_turn = True
         self._is_player_white = True
+
+        initNumba()
 
     def isWhiteTurn(self) -> bool:
         return self._is_white_turn
