@@ -30,6 +30,14 @@ def heuristic_function(_game: SimpleGame) -> float | int:
                     queens_dif += 1
                 else:
                     queens_dif -= 1
+    fig_dif = 0
+    for row in board:
+        for figure in row:
+            if figure[0]:
+                if figure[1]:
+                    fig_dif += 1
+                else:
+                    fig_dif -= 1
     if _game.getGameState() == GameState.b_win:
         return float('-inf')
     elif _game.getGameState() == GameState.w_win:
@@ -131,7 +139,7 @@ class MinMaxClass:
         for i in range(depth, DEPTH_TO_CHECK):
             key = i, board, finding_max
             if key in self.n_cache:
-                print(key)
+
                 variants_list = copy.deepcopy(self.n_cache.get(key))
                 variants_to_return = []
                 for variant in variants_list:
@@ -275,9 +283,9 @@ class MinMaxClass:
 
         if len(all_moves) == 0:
             if finding_max:
-                return [float('-inf'), best_moves, game_board_to_str(current_game.getBoard())]
+                return [[float('-inf'), best_moves, game_board_to_str(current_game.getBoard())]]
             else:
-                return [float('+inf'), best_moves, game_board_to_str(current_game.getBoard())]
+                return [[float('+inf'), best_moves, game_board_to_str(current_game.getBoard())]]
 
         # if there is only one possible move - make it immediately
         if len(all_moves) == 1 and moves_stack == ():

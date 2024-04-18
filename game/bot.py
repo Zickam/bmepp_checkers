@@ -32,7 +32,6 @@ class Process:
                     finding_max = not game.isPlayerWhite()
                     #  _, moves = self.MinMax.minmax(game, 6, finding_max)
                     variants = self.MinMax.top_n_minmax(game, MINMAX_N_DEPTH, finding_max)
-                    print(variants[0][1])
                     for _, moves, board in variants:
                         if len(moves) == 0:
                             print('moves -= none')
@@ -40,7 +39,6 @@ class Process:
                         stack = ['\n'+str(x) for x in moves_to_notation(moves)]
                         simulated_game = copy.deepcopy(game)
                         for i, move in enumerate(moves):
-                            print(move)
                             try:
                                 args = simulated_game.toArgs()
                                 new_args = handleMove(*args, move)
@@ -75,7 +73,7 @@ class Process:
                             print(er)
                         # !!! FINDING MAX is wrong !!!
                         value, moves = self.MinMax.minmax(deep_game, MINMAX_DEPTH, finding_max, moves_stack=moves)
-                        print(value)
+
                         if (finding_max and (value > record or value == float('-inf'))) or \
                                 (not finding_max and (value < record or value == float('+inf'))):
                             record = value

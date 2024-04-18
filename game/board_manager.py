@@ -127,7 +127,7 @@ def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: 
     return are_necessary, moves
 
 
-# @numba.njit
+@numba.njit
 def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
     unnecessary_moves = np.full((50, 2, 2), -1)
     unnecessary_moves_amount = 0

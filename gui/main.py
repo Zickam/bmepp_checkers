@@ -230,7 +230,7 @@ class Gui:
                 new_args = handle_move_pr(*args, move)
                 self.__game.fromArgs(*new_args)
 
-                #self.player_log.add_turn(move)
+                self.player_log.add_turn(move)
                 self.possible_moves.clear()
 
                 if is_white_flag != self.__game.isWhiteTurn():
