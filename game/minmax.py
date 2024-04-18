@@ -275,9 +275,9 @@ class MinMaxClass:
 
         if len(all_moves) == 0:
             if finding_max:
-                return [float('-inf'), best_moves, game_board_to_str(current_game.getBoard())]
+                return [[float('-inf'), best_moves, game_board_to_str(current_game.getBoard())]]
             else:
-                return [float('+inf'), best_moves, game_board_to_str(current_game.getBoard())]
+                return [[float('+inf'), best_moves, game_board_to_str(current_game.getBoard())]]
 
         # if there is only one possible move - make it immediately
         if len(all_moves) == 1 and moves_stack == ():
