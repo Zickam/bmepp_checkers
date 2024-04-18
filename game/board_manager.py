@@ -15,8 +15,6 @@ def checkIfCoordsInBoundaries(x: int, y: int) -> bool:
     return False
 
 
-
-
 # @numba.njit
 def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                                y: int) -> tuple[bool, np.array]:
@@ -27,49 +25,58 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
 
     for _x in (1, -1):
         for _y in (1, -1):
+            tmp_possible_moves = np.full((7, 2), -1)
+            tmp_possible_moves_amount = 0
+            obstacle_pos = (-1, -1)
+            has_finished = False
             for i in range(1, 7):
                 offset = _x * i, _y * i
                 tmp_coords = (x + offset[0], y + offset[1])
-                if checkIfCoordsInBoundaries(tmp_coords[0], tmp_coords[1]):
-                    if board[tmp_coords[0], tmp_coords[1]][0]: # obstacle
-                        
+
+                if checkIfCoordsInBoundaries(tmp_coords[0], tmp_coords[1]) and not has_finished:
+                    if board[tmp_coords[0], tmp_coords[1]][0]:  # obstacle
+                        obstacle_pos = tmp_coords
                         coords_behind_obstacle = (tmp_coords[0] + _x, tmp_coords[1] + _y)
-                        coords_within_boundaries = checkIfCoordsInBoundaries(coords_behind_obstacle[0], coords_behind_obstacle[1])
-                        if coords_within_boundaries and not board[coords_behind_obstacle[0], coords_behind_obstacle[1]][0]: # its empty behind the obstacle
-                            print(655555)
+                        coords_within_boundaries = checkIfCoordsInBoundaries(coords_behind_obstacle[0],
+                                                                             coords_behind_obstacle[1])
+                        if coords_within_boundaries and not board[coords_behind_obstacle[0], coords_behind_obstacle[1]][
+                            0]:  # its empty behind the obstacle
                             if board[tmp_coords[0], tmp_coords[1]][1] != is_white_turn:
                                 for j in range(0, 6):
-                                    new_tmp_coords = (coords_behind_obstacle[0] + _x * j, coords_behind_obstacle[1] + _y * j)
-                                    print(coords_behind_obstacle, new_tmp_coords)
+                                    new_tmp_coords = (
+                                    coords_behind_obstacle[0] + _x * j, coords_behind_obstacle[1] + _y * j)
                                     if checkIfCoordsInBoundaries(new_tmp_coords[0], new_tmp_coords[1]) and not \
                                             board[new_tmp_coords[0], new_tmp_coords[1]][0]:
                                         necessary_moves[necessary_moves_amount][0] = new_tmp_coords[0]
                                         necessary_moves[necessary_moves_amount][1] = new_tmp_coords[1]
                                         necessary_moves_amount += 1
-
+                                        print("coords_behind_obstacle", coords_behind_obstacle)
                                     else:
-                                        print(987)
-                                        # break
-                            else:
-                                print(5678)
-                                for j in range(7, 0, -1):
-                                    j = -j
-                                    offset = _x * j, _y * j
-                                    _tmp_coords = (x + offset[0], y + offset[1])
-                                    unnecessary_moves[unnecessary_moves_amount][0] = _tmp_coords[0]
-                                    unnecessary_moves[unnecessary_moves_amount][1] = _tmp_coords[1]
-                                    unnecessary_moves_amount += 1
-                                break
-                        else: # its not empty behind the obstacle
-                            print(1234)
-                            for j in range(7, 0, -1):
-                                j = -j
-                                offset = _x * j, _y * j
-                                _tmp_coords = (x + offset[0], y + offset[1])
-                                unnecessary_moves[unnecessary_moves_amount][0] = _tmp_coords[0]
-                                unnecessary_moves[unnecessary_moves_amount][1] = _tmp_coords[1]
-                                unnecessary_moves_amount += 1
+                                        has_finished = True
+                                        break
+                        else:
                             break
+
+                    elif obstacle_pos[0] == -1:
+                        print("tmpcoords", tmp_coords)
+                        tmp_possible_moves[tmp_possible_moves_amount][0] = tmp_coords[0]
+                        tmp_possible_moves[tmp_possible_moves_amount][1] = tmp_coords[1]
+                        tmp_possible_moves_amount += 1
+                else:
+                    obstacle_pos = -2, -2
+
+            if obstacle_pos[0] != -1:
+                print("unnec")
+                print(tmp_possible_moves)
+                for i in range(tmp_possible_moves_amount):
+                    print(tmp_possible_moves[i], obstacle_pos)
+                    if tmp_possible_moves[i][0] == -1:
+                        break
+                    if tmp_possible_moves[i][0] == obstacle_pos[0] and tmp_possible_moves[i][1] == obstacle_pos[1]:
+                        break
+                    unnecessary_moves[unnecessary_moves_amount][0] = tmp_possible_moves[i][0]
+                    unnecessary_moves[unnecessary_moves_amount][1] = tmp_possible_moves[i][1]
+                    unnecessary_moves_amount += 1
 
     if necessary_moves_amount > 0:
         return True, necessary_moves
@@ -77,12 +84,38 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
 
 
 @numba.njit
-def _handleQueenKillMove():
-    return
+def _handleQueenContinousMove() -> bool:
+    return False
 
 
 @numba.njit
-def _handleCheckerKillMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> np.array:
+def _handleQueenMovingMove(board: np.array, move: np.array) -> np.array:
+    start, end = move[0], move[1]
+    for i in range(3):
+        board[end[0], end[1]][i] = board[start[0], start[1]][i]
+        board[start[0], start[1]][i] = False
+
+    return board
+
+
+@numba.njit
+def _isQueenKillMove(board: np.array, is_white_turn: bool, move: np.array) -> bool:  # проверить
+    start, end = move[0], move[1]
+    vec2, vec1 = (end[1] - start[1]) // abs(end[1] - start[1]), (end[0] - start[0]) // abs(end[0] - start[0])
+    for i in range(1, abs(end[0] - start[0])):
+        if board[start[0] + i * vec1, start[1] + i * vec2][0]:
+            for j in range(3):
+                board[start[0] + i * vec1, start[1] + i * vec2][j] = False
+                board[end[0], end[1]][j] = board[start[0], start[1]][j]
+                board[start[0], start[1]][j] = False
+
+            return True
+
+    return False
+
+
+@numba.njit
+def _handleCheckerKillMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[bool, np.array]:
     x = move[0, 0]
     y = move[0, 1]
     kill_x = move[1, 0]
@@ -104,7 +137,6 @@ def _handleCheckerMovingMove(board: np.array, move: np.array) -> np.array:
     for i in range(3):
         board[end[0], end[1]][i] = board[start[0], start[1]][i]
         board[start[0], start[1]][i] = False
-
     return board
 
 
@@ -124,31 +156,27 @@ def _isCheckerMoveKilling(move: np.array) -> bool:
         return True
     return False
 
-def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[bool, np.array, np.array]:
-    need_x_for_transformation = 0 if is_white_turn else 1
+
+def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[
+    bool, np.array, np.array]:
+    need_x_for_transformation = 0 if is_white_turn else 7
     if move[1][0] == need_x_for_transformation:
         board[move[1, 0], move[1, 1]][2] = True
         board_values[2] += is_white_turn
         return True, board, board_values
     return False, board, board_values
 
-def _handleQueenContinousMove():
-    ...
-
-def _handleQueenMovingMove():
-    ...
-def _isQueenKillMove(board: np.array, is_white_turn: bool, move: np.array) -> bool:
-    print("isqueenkillmove", move)
-    return False
 
 # @numba.njit
 def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[np.array, bool, np.array]:
     if board[move[0, 0], move[0, 1]][2]:
-        if _isQueenKillMove(board, is_white_turn):
-            _handleQueenKillMove()
-            _handleQueenContinousMove()
+        is_kill_move = _isQueenKillMove(board, is_white_turn, move)
+        if is_kill_move:
+            is_continuous = _handleQueenContinousMove()
+            if not is_continuous:
+              is_white_turn = not is_white_turn
         else:
-            _handleQueenMovingMove()
+            _handleQueenMovingMove(board, move)
             is_white_turn = not is_white_turn
 
     else:
@@ -171,8 +199,6 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
 def handle_move_pr(board: np.array, is_white_turn: bool, board_values: np.array, move: tuple) -> np.array:
     move = np.array(move)
     return handleMove(board, is_white_turn, board_values, move)
-
-
 
 
 @numba.njit

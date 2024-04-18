@@ -318,9 +318,7 @@ class HeuristicFunctions:
     @staticmethod
     def getMovableCheckers(
             board: np.array,
-            i, j
-    ) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
-
+            i, j) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
         w, b = 0, 0
         if board[i, j][0]:
             if board[i, j][1]:
@@ -364,6 +362,7 @@ class HeuristicFunctions:
                 if not board[i, j][2] and i <= 5 and i >= 2 and j <= 5 and j >= 2:
                     b += 1
         return w - b
+
 
     @staticmethod
     def getMiddleQueens(board: np.array, i, j) -> int:
@@ -434,6 +433,51 @@ class HeuristicFunctions:
                   else:
                     b += 1
         return w - b
+    @staticmethod
+    def getHoles(board: np.array, i, j):
+      w, b = 0, 0
+      k, l, n, m = 0, 0, 0, 0
+      if not board[i, j][0]:
+          if i == 0 or j == 0:
+            k = 1
+          if i == 0 or j == 7:
+            l = 1
+          if i == 7 or j == 0:
+            n = 1
+          if i == 7 or j == 7:
+            m = 1
+          if k + l + n + m > 1:
+            return 0
+          if not k:
+            if board[i-1, j-1][0]:
+              if board[i-1, j-1][1]:
+                w += 1
+              else:
+                b += 1
+          if not l:
+            if board[i-1, j+1][0]:
+              if board[i-1, j+1][1]:
+                w += 1
+              else:
+                b +=1
+          if not n:
+            if board[i+1, j-1][0]:
+              if board[i+1, j-1][1]:
+                w += 1
+              else:
+                b += 1
+          if not m:
+            if board[i+1, j+1][0]:
+              if board[i+1, j+1][1]:
+                w += 1
+              else:
+                b += 1
+      if w > 2:
+        return 1
+      elif b > 2:
+        return -1
+      else:
+        return 0
 
 class SimpleGame:
     def __init__(self):
@@ -447,6 +491,11 @@ class SimpleGame:
             [[0, 0, 0] for j in range(8)] for i in range(8)
         ])
         self._board[1, 2] = np.array([1, 1, 1])
+        self._board[3, 0] = np.array([1, 1, 0])
+        # self._board[2, 3] = np.array([1, 1, 0])
+        self._board[3, 4] = np.array([1, 0, 0])
+        # self._board[5, 6] = np.array([1, 0, 0])
+        # self._board[4, 5] = np.array([1, 0, 0])
         # self._board[3, 4] = np.array([1, 0, 0])
         # _board_values contains these values:
         # 0 - white amount
