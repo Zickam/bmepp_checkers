@@ -50,7 +50,6 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                                         necessary_moves[necessary_moves_amount][0] = new_tmp_coords[0]
                                         necessary_moves[necessary_moves_amount][1] = new_tmp_coords[1]
                                         necessary_moves_amount += 1
-                                        print("coords_behind_obstacle", coords_behind_obstacle)
                                     else:
                                         has_finished = True
                                         break
@@ -58,7 +57,6 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                             break
 
                     elif obstacle_pos[0] == -1:
-                        print("tmpcoords", tmp_coords)
                         tmp_possible_moves[tmp_possible_moves_amount][0] = tmp_coords[0]
                         tmp_possible_moves[tmp_possible_moves_amount][1] = tmp_coords[1]
                         tmp_possible_moves_amount += 1
@@ -66,10 +64,9 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                     obstacle_pos = -2, -2
 
             if obstacle_pos[0] != -1:
-                print("unnec")
-                print(tmp_possible_moves)
                 for i in range(tmp_possible_moves_amount):
-                    print(tmp_possible_moves[i], obstacle_pos)
+                    print("tmp_possible_moves", tmp_possible_moves[i])
+                    print("tmp_possible_moves main", tmp_possible_moves)
                     if tmp_possible_moves[i][0] == -1:
                         break
                     if tmp_possible_moves[i][0] == obstacle_pos[0] and tmp_possible_moves[i][1] == obstacle_pos[1]:
@@ -160,9 +157,11 @@ def _isCheckerMoveKilling(move: np.array) -> bool:
 def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[
     bool, np.array, np.array]:
     need_x_for_transformation = 0 if is_white_turn else 7
+
     if move[1][0] == need_x_for_transformation:
         board[move[1, 0], move[1, 1]][2] = True
         board_values[2] += is_white_turn
+
         return True, board, board_values
     return False, board, board_values
 
@@ -182,16 +181,18 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
     else:
         if abs(move[0, 0] - move[1, 0]) > 1:
             is_white_turn, board_values = _handleCheckerKillMove(board, is_white_turn, board_values, move)
+            is_white_turn, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move)
 
+        else:
+            _handleCheckerMovingMove(board, move)
             has_transormed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
 
             if has_transormed:
-                _handleQueenContinousMove()
+                are_necessary, moves = _getAvailableMovesForQueen(board, is_white_turn, move[1][0], move[1][1])
+                if not are_necessary:
+                    is_white_turn = not is_white_turn
             else:
-                is_white_turn, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move)
-        else:
-            _handleCheckerMovingMove(board, move)
-            is_white_turn = not is_white_turn
+                is_white_turn = not is_white_turn
 
     return board, is_white_turn, board_values
 
