@@ -29,7 +29,8 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
             tmp_possible_moves_amount = 0
             obstacle_pos = (-1, -1)
             has_finished = False
-            for i in range(1, 7):
+            
+            for i in range(1, 9):
                 offset = _x * i, _y * i
                 tmp_coords = (x + offset[0], y + offset[1])
 
@@ -43,8 +44,7 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                             0]:  # its empty behind the obstacle
                             if board[tmp_coords[0], tmp_coords[1]][1] != is_white_turn:
                                 for j in range(0, 6):
-                                    new_tmp_coords = (
-                                    coords_behind_obstacle[0] + _x * j, coords_behind_obstacle[1] + _y * j)
+                                    new_tmp_coords = (coords_behind_obstacle[0] + _x * j, coords_behind_obstacle[1] + _y * j)
                                     if checkIfCoordsInBoundaries(new_tmp_coords[0], new_tmp_coords[1]) and not \
                                             board[new_tmp_coords[0], new_tmp_coords[1]][0]:
                                         necessary_moves[necessary_moves_amount][0] = new_tmp_coords[0]
@@ -65,8 +65,6 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
 
             if obstacle_pos[0] != -1:
                 for i in range(tmp_possible_moves_amount):
-                    print("tmp_possible_moves", tmp_possible_moves[i])
-                    print("tmp_possible_moves main", tmp_possible_moves)
                     if tmp_possible_moves[i][0] == -1:
                         break
                     if tmp_possible_moves[i][0] == obstacle_pos[0] and tmp_possible_moves[i][1] == obstacle_pos[1]:
