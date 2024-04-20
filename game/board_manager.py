@@ -29,7 +29,7 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
             tmp_possible_moves_amount = 0
             obstacle_pos = (-1, -1)
             has_finished = False
-            
+
             for i in range(1, 9):
                 offset = _x * i, _y * i
                 tmp_coords = (x + offset[0], y + offset[1])
@@ -78,8 +78,11 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
     return False, unnecessary_moves
 
 
-@numba.njit
-def _handleQueenContinousMove() -> bool:
+# @numba.njit
+def _handleQueenContinousMove(board: np.array, is_white_turn: bool, move: np.array) -> bool:
+    are_necessary, next_available_moves = _getAvailableMovesForQueen(board, is_white_turn, move[1][0], move[1][1])
+    if are_necessary:
+        return True
     return False
 
 
@@ -123,7 +126,7 @@ def _handleCheckerKillMove(board: np.array, is_white_turn: bool, board_values: n
 
     board_values_ind = 1 if is_white_turn else 0
     board_values[board_values_ind] = board_values[board_values_ind] - 1
-    return is_white_turn, board_values
+    return board_values
 
 
 @numba.njit
@@ -140,10 +143,8 @@ def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_valu
                                 move: np.array) -> np.array:
     are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
     if not are_necessary:
-        is_white_turn = not is_white_turn
-
-    return is_white_turn, board_values
-
+        return False, board_values
+    return True, board_values
 
 @numba.njit
 def _isCheckerMoveKilling(move: np.array) -> bool:
@@ -153,14 +154,14 @@ def _isCheckerMoveKilling(move: np.array) -> bool:
 
 
 def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[
-    bool, np.array, np.array]:
+    np.array, bool, np.array]:
     need_x_for_transformation = 0 if is_white_turn else 7
-
+    print("my pos", move[1][0], need_x_for_transformation)
     if move[1][0] == need_x_for_transformation:
         board[move[1, 0], move[1, 1]][2] = True
         board_values[2] += is_white_turn
-
         return True, board, board_values
+
     return False, board, board_values
 
 
@@ -169,7 +170,7 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
     if board[move[0, 0], move[0, 1]][2]:
         is_kill_move = _isQueenKillMove(board, is_white_turn, move)
         if is_kill_move:
-            is_continuous = _handleQueenContinousMove()
+            is_continuous = _handleQueenContinousMove(board, is_white_turn, move)
             if not is_continuous:
               is_white_turn = not is_white_turn
         else:
@@ -177,20 +178,22 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
             is_white_turn = not is_white_turn
 
     else:
-        if abs(move[0, 0] - move[1, 0]) > 1:
-            is_white_turn, board_values = _handleCheckerKillMove(board, is_white_turn, board_values, move)
-            is_white_turn, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move)
-
-        else:
-            _handleCheckerMovingMove(board, move)
-            has_transormed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
-
-            if has_transormed:
-                are_necessary, moves = _getAvailableMovesForQueen(board, is_white_turn, move[1][0], move[1][1])
-                if not are_necessary:
-                    is_white_turn = not is_white_turn
+        if abs(move[0, 0] - move[1, 0]) > 1: # kill move
+            board_values = _handleCheckerKillMove(board, is_white_turn, board_values, move)
+            has_transformed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
+            if has_transformed:
+                is_continuous = _handleQueenContinousMove(board, is_white_turn, move)
             else:
+                is_continuous, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move)
+            if not is_continuous:
                 is_white_turn = not is_white_turn
+
+        else: # moving move
+            _handleCheckerMovingMove(board, move)
+            has_transformed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
+
+            is_white_turn = not is_white_turn
+
 
     return board, is_white_turn, board_values
 
