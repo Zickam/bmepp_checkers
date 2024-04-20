@@ -15,7 +15,7 @@ def checkIfCoordsInBoundaries(x: int, y: int) -> bool:
     return False
 
 
-# @numba.njit
+@numba.njit
 def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                                y: int) -> tuple[bool, np.array]:
     necessary_moves = np.full((13, 2), -1)
@@ -78,7 +78,7 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
     return False, unnecessary_moves
 
 
-# @numba.njit
+@numba.njit
 def _handleQueenContinousMove(board: np.array, is_white_turn: bool, move: np.array) -> bool:
     are_necessary, next_available_moves = _getAvailableMovesForQueen(board, is_white_turn, move[1][0], move[1][1])
     if are_necessary:
@@ -153,10 +153,11 @@ def _isCheckerMoveKilling(move: np.array) -> bool:
     return False
 
 
+@numba.njit
 def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[
     np.array, bool, np.array]:
     need_x_for_transformation = 0 if is_white_turn else 7
-    print("my pos", move[1][0], need_x_for_transformation)
+
     if move[1][0] == need_x_for_transformation:
         board[move[1, 0], move[1, 1]][2] = True
         board_values[2] += is_white_turn
@@ -165,7 +166,7 @@ def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_value
     return False, board, board_values
 
 
-# @numba.njit
+@numba.njit
 def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[np.array, bool, np.array]:
     if board[move[0, 0], move[0, 1]][2]:
         is_kill_move = _isQueenKillMove(board, is_white_turn, move)
@@ -242,7 +243,7 @@ def _getAvailableMovesForChecker(board: np.array, is_white_turn: bool, x: int,
     return False, unnecessary_moves
 
 
-# @numba.njit
+@numba.njit
 def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: int,
                                        y: int) -> tuple[bool, np.array]:
     if not board[x, y][0]:
@@ -257,7 +258,7 @@ def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: 
     return are_necessary, moves
 
 
-# @numba.njit
+@numba.njit
 def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
     unnecessary_moves = np.full((50, 2, 2), -1)
     unnecessary_moves_amount = 0
