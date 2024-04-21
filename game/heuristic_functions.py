@@ -26,6 +26,9 @@ heuristic_funcs = np.array([
     True, # 18 holes
 ])
 
+
+
+# 0 - 1
 heuristic_weights = np.array([
     1, # 0 checkers_amount
     1, # 1 queens amount

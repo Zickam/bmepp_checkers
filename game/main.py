@@ -103,6 +103,8 @@ class SimpleGame:
         return board
 
 
+
+
 class Game:
     if constants.BOARD_WIDTH < constants.MIN_BOARD_WIDTH:
         raise Exception(f"Its not possible to make a board which side is less than {constants.MIN_BOARD_WIDTH}")

@@ -351,6 +351,29 @@ def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[
             point_moves.append(move)
     return point_moves
 
+# 0 - ongoing, 1 - white win, 2 - black win
+@numba.njit
+def handleWin(board: np.array, is_white_turn: bool) -> int:
+    current_side_has_moves = False
+    for moves in getAllAvailableMoves(board, is_white_turn):
+        for move in moves:
+            if is_white_turn and board[move[0, 0]][
+                move[0, 1]][1]:
+                current_side_has_moves = True
+            elif not is_white_turn and not board[move[0, 0]][
+                move[0, 1]][1]:
+                current_side_has_moves = True
+
+    if not current_side_has_moves:
+        if is_white_turn:
+            game_state = 2
+        else:
+            game_state = 1
+    else:
+        game_state = 0
+        
+    return game_state
+
 
 if __name__ == "__main__":
     from game.main import SimpleGame
