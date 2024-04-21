@@ -26,8 +26,31 @@ heuristic_funcs = np.array([
     True, # 18 holes
 ])
 
+heuristic_weights = np.array([
+    1, # 0 checkers_amount
+    1, # 1 queens amount
+    1, # 2 safe checkers
+    1, # 3 safe queens
+    1, # 4 movable checkers
+    1, # 5 movable queens
+    1, # 6 distance to promotion line
+    1, # 7 free cells on promotion line
+    1, # 8 defenders amount
+    1, # 9 attackers amount
+    1, # 10 middle checkers
+    1, # 11 middle queens
+    1, # 12 checkers on main diagonal
+    1, # 13 queens on main diagonal
+    1, # 14 checkers on double diagonal
+    1, # 15 queens on double diagonal
+    1, # 16 alone checkers
+    1, # 17 alone queens
+    1, # 18 holes
+], dtype=float)
+
+
 @numba.njit
-def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_funcs: np.array) -> int:
+def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_funcs: np.array, heuristic_weights: np.array) -> int:
     value = 0
 
     # if heuristic_funcs[0]:
@@ -38,46 +61,46 @@ def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_f
     #     value += board_values[2]
 
     if heuristic_funcs[2]:
-        value += getSafeCheckersAmount(board)
+        value += getSafeCheckersAmount(board) * heuristic_weights[2]
     if heuristic_funcs[3]:
-        value += getSafeQueensAmount(board)
+        value += getSafeQueensAmount(board) * heuristic_weights[3]
     if heuristic_funcs[7]:
-        value += getFreeCellsOnPromotionLine(board)
+        value += getFreeCellsOnPromotionLine(board) * heuristic_weights[7]
 
     for i in range(0, len(board)):
         for j in range((i + 1) % 2, len(board[i]), 2):
             if heuristic_funcs[0]:
-                value += getCountPeshka(board, i, j)
+                value += getCountPeshka(board, i, j) * heuristic_weights[0]
             if heuristic_funcs[1]:
-                value += getCountKing(board, i, j)
+                value += getCountKing(board, i, j) * heuristic_weights[1]
             if heuristic_funcs[4]:
-                value += getMovableCheckers(board, i, j)
+                value += getMovableCheckers(board, i, j) * heuristic_weights[4]
             if heuristic_funcs[5]:
-                value += getMovableQueens(board, i, j)
+                value += getMovableQueens(board, i, j) * heuristic_weights[5]
             if heuristic_funcs[6]:
-                value += getDistanceToPromotionLine(board, i, j)
+                value += getDistanceToPromotionLine(board, i, j) * heuristic_weights[6]
             if heuristic_funcs[8]:
-                value += getDefendersAmount(board, i, j)
+                value += getDefendersAmount(board, i, j) * heuristic_weights[8]
             if heuristic_funcs[9]:
-                value += getAttackersAmount(board, i, j)
+                value += getAttackersAmount(board, i, j) * heuristic_weights[9]
             if heuristic_funcs[10]:
-                value += getMiddleCheckers(board, i, j)
+                value += getMiddleCheckers(board, i, j) * heuristic_weights[10]
             if heuristic_funcs[11]:
-                value += getMiddleQueens(board, i, j)
+                value += getMiddleQueens(board, i, j) * heuristic_weights[11]
             if heuristic_funcs[12]:
-                value += getCheckersAmountOnMainDiagonal(board, i)
+                value += getCheckersAmountOnMainDiagonal(board, i) * heuristic_weights[12]
             if heuristic_funcs[13]:
-                value += getQueensAmountOnMainDiagonal(board, i)
+                value += getQueensAmountOnMainDiagonal(board, i) * heuristic_weights[13]
             if heuristic_funcs[14]:
-                value += getCheckersAmountOnDoubleDiagonal(board, i)
+                value += getCheckersAmountOnDoubleDiagonal(board, i) * heuristic_weights[14]
             if heuristic_funcs[15]:
-                value += getQueensAmountOnDoubleDiagonal(board, i)
+                value += getQueensAmountOnDoubleDiagonal(board, i) * heuristic_weights[15]
             if heuristic_funcs[16]:
-                value += getAloneCheckers(board, i, j)
+                value += getAloneCheckers(board, i, j) * heuristic_weights[16]
             if heuristic_funcs[17]:
-                value += getAloneQueens(board, i, j)
+                value += getAloneQueens(board, i, j) * heuristic_weights[17]
             if heuristic_funcs[18]:
-                value += getHoles(board, i, j)
+                value += getHoles(board, i, j) * heuristic_weights[18]
 
     return value
 
