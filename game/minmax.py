@@ -3,15 +3,16 @@ import pickle
 
 from game.constants import TOP_N_AMOUNT, DEPTH_TO_CHECK
 from game.classes import Move, move_to_notation, notation_to_move, notations_to_move, moves_to_notation
-from game.main import GameState, SimpleGame, HeuristicFunctions, game_board_to_str
+from game.main import GameState, SimpleGame, game_board_to_str
 from game.board_manager import getAllAvailableMoves, handleMove, handle_move_pr
+from game import heuristic_functions
 
 cache_file_name = 'cache.pickle'
 n_cache_file_name = f'cache{TOP_N_AMOUNT}.pickle'
 
 
 def heuristic_function(_game: SimpleGame) -> float | int:
-    fig_dif = HeuristicFunctions.getWBFiguresDifference(_game.getBoard())
+    fig_dif = heuristic_functions.getWBFiguresDifference(_game.getBoard())
     center_dif = 0
     board = _game.getBoard()
     for i in [3, 4]:
