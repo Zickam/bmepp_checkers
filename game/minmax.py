@@ -189,14 +189,14 @@ class MinMaxClass:
             print('(only one possible move, no calculations)')
             return None, [all_moves[0]]
 
-        if depth not in self.brute_forced_depth:
-            from_cash = self.check_cache(current_game, depth, finding_max)
-
-            if from_cash is not None:
-                value, moves = from_cash
-                moves = tuple(list(moves_stack) + list(moves))
-                add_to_counter(self.using_cache_count, depth)
-                return value, moves
+        # if depth not in self.brute_forced_depth:
+        #     from_cash = self.check_cache(current_game, depth, finding_max)
+        #
+        #     if from_cash is not None:
+        #         value, moves = from_cash
+        #         moves = tuple(list(moves_stack) + list(moves))
+        #         add_to_counter(self.using_cache_count, depth)
+        #         return value, moves
 
         children = []
 
@@ -245,13 +245,13 @@ class MinMaxClass:
                 add_to_counter(self.alphabeta_pruning_count, depth)
                 break
 
-        if depth not in self.brute_forced_depth:
-            try:
-                moves = best_moves[start_depth - depth + moves_without_change_side:]
-            except IndexError:
-                print(len(best_moves), start_depth, depth, moves_without_change_side)
-                raise IndexError
-            self.add_to_cash(current_game, depth, record, moves, finding_max)
+        # if depth not in self.brute_forced_depth:
+        #     try:
+        #         moves = best_moves[start_depth - depth + moves_without_change_side:]
+        #     except IndexError:
+        #         print(len(best_moves), start_depth, depth, moves_without_change_side)
+        #         raise IndexError
+        #     self.add_to_cash(current_game, depth, record, moves, finding_max)
         return record, best_moves
 
     def top_n_minmax(self, current_game: SimpleGame,
@@ -293,19 +293,19 @@ class MinMaxClass:
             print('(only one possible move, no calculations)')
             return [(None, [all_moves[0]], game_board_to_str(current_game.getBoard()))]
 
-        if depth not in self.brute_forced_depth:
-            from_cache = self.check_n_cache(current_game, depth, finding_max)
-
-            if from_cache is not None:
-                variants_list = from_cache
-                variants_to_return = []
-                for variant in variants_list:
-                    value, moves = variant
-                    moves: tuple[tuple[tuple[int, int], ...]]
-                    moves = tuple(list(moves_stack) + list(moves))
-                    variants_to_return.append([value, moves, game_board_to_str(current_game.getBoard())])
-                add_to_counter(self.using_cache_count, depth)
-                return variants_to_return
+        # if depth not in self.brute_forced_depth:
+        #     from_cache = self.check_n_cache(current_game, depth, finding_max)
+        #
+        #     if from_cache is not None:
+        #         variants_list = from_cache
+        #         variants_to_return = []
+        #         for variant in variants_list:
+        #             value, moves = variant
+        #             moves: tuple[tuple[tuple[int, int], ...]]
+        #             moves = tuple(list(moves_stack) + list(moves))
+        #             variants_to_return.append([value, moves, game_board_to_str(current_game.getBoard())])
+        #         add_to_counter(self.using_cache_count, depth)
+        #         return variants_to_return
 
         children = []
 
@@ -377,17 +377,17 @@ class MinMaxClass:
                 add_to_counter(self.alphabeta_pruning_count, depth)
                 break
 
-        if depth not in self.brute_forced_depth:
-            variants_to_cache = []
-            for variant in variants_list:
-                value, moves, board = variant
-                try:
-                    moves = moves[(start_depth - depth + moves_without_change_side):]
-                except IndexError:
-                    print(len(best_moves), start_depth, depth, moves_without_change_side)
-                    raise IndexError
-                variants_to_cache.append([value, moves])
-            self.add_to_n_cache(current_game, depth, variants_to_cache, finding_max)
+        # if depth not in self.brute_forced_depth:
+        #     variants_to_cache = []
+        #     for variant in variants_list:
+        #         value, moves, board = variant
+        #         try:
+        #             moves = moves[(start_depth - depth + moves_without_change_side):]
+        #         except IndexError:
+        #             print(len(best_moves), start_depth, depth, moves_without_change_side)
+        #             raise IndexError
+        #         variants_to_cache.append([value, moves])
+        #     self.add_to_n_cache(current_game, depth, variants_to_cache, finding_max)
         return variants_list
 
 
