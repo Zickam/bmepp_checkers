@@ -8,10 +8,6 @@ class BotWithWeights(Bot):
         super().__init__()
 
 
-class Weights:
-    pass
-
-
 class Tournament:
     pass
 
