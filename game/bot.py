@@ -120,7 +120,6 @@ class Bot:
         self.process.start()
 
     def start_best_move_calculation(self, game, difficulty: int):
-        #game = copy.deepcopy(game)
         self.process_request_queue.put((game, difficulty))
 
     def is_best_move_ready(self) -> bool:

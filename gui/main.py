@@ -170,7 +170,6 @@ class Gui:
                 self.__bot.start_best_move_calculation(self.__game, self.difficulty)
             elif self.bot_vs_bot_mode:
                 self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty)
-
         if self.__bot_instead_player and self.__bot_instead_player.is_best_move_ready():
             flag = self.__game.isWhiteTurn()
             move = self.__bot_instead_player.get_calculated_move()
