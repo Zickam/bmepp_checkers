@@ -45,7 +45,7 @@ class Gui:
         self.possible_moves: list[list[list[int, int]]] = []
         self.selected_checker: None | list[int, int] = None
         self.state = SceneState.menu if not self.bot_vs_bot_mode else SceneState.checkers
-        self.difficulty = 1
+        self.difficulty = 2
         self.__bot = opponent_bot
         self.__bot_instead_player = main_bot
         if self.bot_vs_bot_mode:

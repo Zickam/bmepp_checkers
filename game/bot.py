@@ -3,7 +3,7 @@ import multiprocessing as mp
 import random
 import time
 from game.classes import moves_to_notation, notation_to_move
-from game.constants import MINMAX_DEPTH, MINMAX_N_DEPTH
+from game.constants import MINMAX_DEPTH, MINMAX_N_DEPTH, MINMAX_DIFFICULTY_MEDIUM, MINMAX_DIFFICULTY_HARD
 from game.board_manager import handleMove, getAllAvailableMoves
 from game.minmax import MinMaxClass, heuristic_function
 
@@ -14,6 +14,79 @@ class Process:
         self.process_response_queue = process_response_queue
         self.MinMax = MinMaxClass()
         self.mainloop()
+
+    def console_log(self, start=None):
+        if start:
+            print(f'time: {time.time() - start}')
+
+        print('alphabeta count:', self.MinMax.alphabeta_pruning_count)
+        self.MinMax.alphabeta_pruning_count = {}
+
+        print('cash count:', self.MinMax.using_cache_count)
+        self.MinMax.using_cache_count = {}
+
+        print('heuristic func count:', self.MinMax.depth_zero)
+        self.MinMax.depth_zero = 0
+
+        print('\n')
+
+    @staticmethod
+    def print_stack(game, moves):
+        try:
+            stack = ['\n' + str(x) for x in moves_to_notation(moves)]
+            simulated_game = copy.deepcopy(game)
+            for i, move in enumerate(moves):
+                try:
+                    args = simulated_game.toArgs()
+                    new_args = handleMove(*args, move)
+                    simulated_game.fromArgs(*new_args)
+                except Exception as ex:
+                    print('🚨!error!🚨', ex)
+                score = heuristic_function(simulated_game)
+                stack[i] += f' score:{score}'
+            print('\nstack:', *stack)
+        except TypeError:  # ! ВОЗМОЖНО НЕ ТАЙП ЕРОР!
+            print('🚨moves = none🚨')
+
+    def best_move_selection(self, game, variants, finding_max, depth=None):
+        record = float('-inf') if finding_max else float('+inf')
+        best_moves = []
+        for _, moves, board in variants:
+            deep_game = copy.deepcopy(game)
+            try:
+                for move in moves:
+                    args = deep_game.toArgs()
+                    new_args = handleMove(*args, move)
+                    deep_game.fromArgs(*new_args)
+            except TypeError as er:
+                print(er)
+            # !!! FINDING MAX is wrong !!!
+            value, moves = self.MinMax.minmax(deep_game, depth, finding_max, moves_stack=moves)
+
+            if (finding_max and (value > record or value == float('-inf'))) or \
+                    (not finding_max and (value < record or value == float('+inf'))):
+                record = value
+                best_moves = moves
+
+        return record, best_moves
+
+    def bot_game(self, game, top_n_depth, depth):
+        start = time.time()
+        print('\n😀NEW CALCULATIONS😀\n')
+        finding_max = not game.isPlayerWhite()
+
+        variants = self.MinMax.top_n_minmax(game, top_n_depth, finding_max)
+        for _, moves, board in variants:
+            self.print_stack(game, moves)
+        self.console_log()
+
+        record, moves = self.best_move_selection(game, variants, finding_max, depth)
+
+        self.print_stack(game, moves)
+        # self.MinMax.save_cash()
+        self.console_log(start)
+        best_move = moves[0]
+        self.process_response_queue.put(best_move)
 
     def mainloop(self):
         while True:
@@ -26,88 +99,12 @@ class Process:
                         continue
                     random_move = random.choice(moves)
                     self.process_response_queue.put(random_move)
-                else:
-                    start = time.time()
-                    print('\nNEW CALCULATIONS\n')
-                    finding_max = not game.isPlayerWhite()
-                    #  _, moves = self.MinMax.minmax(game, 6, finding_max)
-                    variants = self.MinMax.top_n_minmax(game, MINMAX_N_DEPTH, finding_max)
-                    for _, moves, board in variants:
-                        if len(moves) == 0:
-                            print('moves -= none')
-                            continue
-                        stack = ['\n'+str(x) for x in moves_to_notation(moves)]
-                        simulated_game = copy.deepcopy(game)
-                        for i, move in enumerate(moves):
-                            try:
-                                args = simulated_game.toArgs()
-                                new_args = handleMove(*args, move)
-                                simulated_game.fromArgs(*new_args)
-                            except Exception as ex:
-                                print('!error!', ex)
-                            score = heuristic_function(simulated_game)
-                            stack[i] += f' score:{score}'
-                        print('\nstack:', *stack)
-
-                    print('alphabeta count:', self.MinMax.alphabeta_pruning_count)
-                    self.MinMax.alphabeta_pruning_count = {}
-
-                    print('cash count:', self.MinMax.using_cache_count)
-                    self.MinMax.using_cache_count = {}
-
-                    print('heuristic func count:', self.MinMax.depth_zero)
-                    self.MinMax.depth_zero = 0
-
-                    print('-'*30)
-
-                    record = float('-inf') if finding_max else float('+inf')
-                    best_moves = []
-                    for _, moves, board in variants:
-                        deep_game = copy.deepcopy(game)
-                        try:
-                            for move in moves:
-                                args = deep_game.toArgs()
-                                new_args = handleMove(*args, move)
-                                deep_game.fromArgs(*new_args)
-                        except TypeError as er:
-                            print(er)
-                        # !!! FINDING MAX is wrong !!!
-                        value, moves = self.MinMax.minmax(deep_game, MINMAX_DEPTH, finding_max, moves_stack=moves)
-
-                        if (finding_max and (value > record or value == float('-inf'))) or \
-                                (not finding_max and (value < record or value == float('+inf'))):
-                            record = value
-                            best_moves = moves
-
-                    moves = best_moves
-                    if len(moves) == 0:
-                        print('moves -= none')
-                        continue
-                    stack = ['\n' + str(x) for x in moves_to_notation(moves)]
-                    simulated_game = copy.deepcopy(game)
-                    for i, move in enumerate(moves):
-                        try:
-                            args = simulated_game.toArgs()
-                            new_args = handleMove(*args, move)
-                            simulated_game.fromArgs(*new_args)
-                        except Exception as ex:
-                            print('!error!', ex)
-                        score = heuristic_function(simulated_game)
-                        stack[i] += f' score:{score}'
-                    print('\nstack:', *stack)
-
-                    self.MinMax.save_cash()
-                    print(f'time: {time.time()-start}')
-
-                    print('alphabeta count:', self.MinMax.alphabeta_pruning_count)
-                    self.MinMax.alphabeta_pruning_count = {}
-
-                    print('cash count:', self.MinMax.using_cache_count)
-                    self.MinMax.using_cache_count = {}
-
-                    print('heuristic func count:', self.MinMax.depth_zero)
-                    self.MinMax.depth_zero = 0
-                    self.process_response_queue.put(moves[0])
+                elif difficulty == 1:
+                    top_n_depth, depth = MINMAX_DIFFICULTY_MEDIUM[0], MINMAX_DIFFICULTY_MEDIUM[1]
+                    self.bot_game(game, top_n_depth, depth)
+                elif difficulty == 2:
+                    top_n_depth, depth = MINMAX_DIFFICULTY_HARD[0], MINMAX_DIFFICULTY_HARD[1]
+                    self.bot_game(game, top_n_depth, depth)
 
 
 class Bot:
