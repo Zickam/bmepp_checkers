@@ -8,14 +8,14 @@ from game.main import SimpleGame
 # 2nd array: [x, y] of end pos
 
 
-@numba.njit
+# @numba.njit
 def checkIfCoordsInBoundaries(x: int, y: int) -> bool:
     if 0 <= x < 8 and 0 <= y < 8:
         return True
     return False
 
 
-@numba.njit
+# @numba.njit
 def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                                y: int) -> tuple[bool, np.array]:
     necessary_moves = np.full((13, 2), -1)
@@ -36,6 +36,9 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
 
                 if checkIfCoordsInBoundaries(tmp_coords[0], tmp_coords[1]) and not has_finished:
                     if board[tmp_coords[0], tmp_coords[1]][0]:  # obstacle
+                        if board[tmp_coords[0], tmp_coords[1]][1] == board[x, y][1]:
+                            break
+
                         obstacle_pos = tmp_coords
                         coords_behind_obstacle = (tmp_coords[0] + _x, tmp_coords[1] + _y)
                         coords_within_boundaries = checkIfCoordsInBoundaries(coords_behind_obstacle[0],
@@ -57,6 +60,7 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                             break
 
                     elif obstacle_pos[0] == -1:
+
                         tmp_possible_moves[tmp_possible_moves_amount][0] = tmp_coords[0]
                         tmp_possible_moves[tmp_possible_moves_amount][1] = tmp_coords[1]
                         tmp_possible_moves_amount += 1
@@ -64,6 +68,7 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                     obstacle_pos = -2, -2
 
             if obstacle_pos[0] != -1:
+                # raise Exception
                 for i in range(tmp_possible_moves_amount):
                     if tmp_possible_moves[i][0] == -1:
                         break
@@ -78,7 +83,7 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
     return False, unnecessary_moves
 
 
-@numba.njit
+# @numba.njit
 def _handleQueenContinousMove(board: np.array, is_white_turn: bool, move: np.array) -> bool:
     are_necessary, next_available_moves = _getAvailableMovesForQueen(board, is_white_turn, move[1][0], move[1][1])
     if are_necessary:
@@ -86,7 +91,7 @@ def _handleQueenContinousMove(board: np.array, is_white_turn: bool, move: np.arr
     return False
 
 
-@numba.njit
+# @numba.njit
 def _handleQueenMovingMove(board: np.array, move: np.array) -> np.array:
     start, end = move[0], move[1]
     for i in range(3):
@@ -96,7 +101,7 @@ def _handleQueenMovingMove(board: np.array, move: np.array) -> np.array:
     return board
 
 
-@numba.njit
+# @numba.njit
 def _isQueenKillMove(board: np.array, is_white_turn: bool, move: np.array) -> bool:  # проверить
     start, end = move[0], move[1]
     vec2, vec1 = (end[1] - start[1]) // abs(end[1] - start[1]), (end[0] - start[0]) // abs(end[0] - start[0])
@@ -112,7 +117,7 @@ def _isQueenKillMove(board: np.array, is_white_turn: bool, move: np.array) -> bo
     return False
 
 
-@numba.njit
+# @numba.njit
 def _handleCheckerKillMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[bool, np.array]:
     x = move[0, 0]
     y = move[0, 1]
@@ -129,7 +134,7 @@ def _handleCheckerKillMove(board: np.array, is_white_turn: bool, board_values: n
     return board_values
 
 
-@numba.njit
+# @numba.njit
 def _handleCheckerMovingMove(board: np.array, move: np.array) -> np.array:
     start, end = move[0], move[1]
     for i in range(3):
@@ -138,7 +143,7 @@ def _handleCheckerMovingMove(board: np.array, move: np.array) -> np.array:
     return board
 
 
-@numba.njit
+# @numba.njit
 def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_values: np.array,
                                 move: np.array) -> np.array:
     are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
@@ -146,14 +151,14 @@ def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_valu
         return False, board_values
     return True, board_values
 
-@numba.njit
+# @numba.njit
 def _isCheckerMoveKilling(move: np.array) -> bool:
     if abs(move[0, 0] - move[1, 0]) > 1:
         return True
     return False
 
 
-@numba.njit
+# @numba.njit
 def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[
     np.array, bool, np.array]:
     need_x_for_transformation = 0 if is_white_turn else 7
@@ -166,7 +171,7 @@ def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_value
     return False, board, board_values
 
 
-@numba.njit
+# @numba.njit
 def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[np.array, bool, np.array]:
     if board[move[0, 0], move[0, 1]][2]:
         is_kill_move = _isQueenKillMove(board, is_white_turn, move)
@@ -204,7 +209,7 @@ def handle_move_pr(board: np.array, is_white_turn: bool, board_values: np.array,
     return handleMove(board, is_white_turn, board_values, move)
 
 
-@numba.njit
+# @numba.njit
 def _getAvailableMovesForChecker(board: np.array, is_white_turn: bool, x: int,
                                  y: int) -> tuple[bool, np.array]:
     necessary_moves = np.full((4, 2), -1)
@@ -243,7 +248,7 @@ def _getAvailableMovesForChecker(board: np.array, is_white_turn: bool, x: int,
     return False, unnecessary_moves
 
 
-@numba.njit
+# @numba.njit
 def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: int,
                                        y: int) -> tuple[bool, np.array]:
     if not board[x, y][0]:
@@ -258,7 +263,7 @@ def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: 
     return are_necessary, moves
 
 
-@numba.njit
+# @numba.njit
 def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
     unnecessary_moves = np.full((50, 2, 2), -1)
     unnecessary_moves_amount = 0
@@ -352,7 +357,7 @@ def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[
     return point_moves
 
 # 0 - ongoing, 1 - white win, 2 - black win
-@numba.njit
+# @numba.njit
 def handleWin(board: np.array, is_white_turn: bool) -> int:
     current_side_has_moves = False
     for moves in getAllAvailableMoves(board, is_white_turn):
