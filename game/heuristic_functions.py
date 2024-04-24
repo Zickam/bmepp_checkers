@@ -5,55 +5,54 @@ import numpy as np
 
 # !!!!DO NOT CHANGE THE ORDER OF HEURISTIC FUNCTIONS!!!
 heuristic_funcs = np.array([
-    True, # 0 checkers_amount
-    True, # 1 queens amount
-    True, # 2 safe checkers
-    True, # 3 safe queens
-    True, # 4 movable checkers
-    True, # 5 movable queens
-    True, # 6 distance to promotion line
-    True, # 7 free cells on promotion line
-    True, # 8 defenders amount
-    True, # 9 attackers amount
-    True, # 10 middle checkers
-    True, # 11 middle queens
-    True, # 12 checkers on main diagonal
-    True, # 13 queens on main diagonal
-    True, # 14 checkers on double diagonal
-    True, # 15 queens on double diagonal
-    True, # 16 alone checkers
-    True, # 17 alone queens
-    True, # 18 holes
+    True,  # 0 checkers_amount
+    True,  # 1 queens amount
+    True,  # 2 safe checkers
+    True,  # 3 safe queens
+    True,  # 4 movable checkers
+    True,  # 5 movable queens
+    True,  # 6 distance to promotion line
+    True,  # 7 free cells on promotion line
+    True,  # 8 defenders amount
+    True,  # 9 attackers amount
+    True,  # 10 middle checkers
+    True,  # 11 middle queens
+    True,  # 12 checkers on main diagonal
+    True,  # 13 queens on main diagonal
+    True,  # 14 checkers on double diagonal
+    True,  # 15 queens on double diagonal
+    True,  # 16 alone checkers
+    True,  # 17 alone queens
+    True,  # 18 holes
 ])
-
-
 
 # 0 - 1
 heuristic_weights = np.array([
-    1, # 0 checkers_amount
-    1, # 1 queens amount
-    1, # 2 safe checkers
-    1, # 3 safe queens
-    1, # 4 movable checkers
-    1, # 5 movable queens
-    1, # 6 distance to promotion line
-    1, # 7 free cells on promotion line
-    1, # 8 defenders amount
-    1, # 9 attackers amount
-    1, # 10 middle checkers
-    1, # 11 middle queens
-    1, # 12 checkers on main diagonal
-    1, # 13 queens on main diagonal
-    1, # 14 checkers on double diagonal
-    1, # 15 queens on double diagonal
-    1, # 16 alone checkers
-    1, # 17 alone queens
-    1, # 18 holes
+    1,  # 0 checkers_amount
+    1,  # 1 queens amount
+    1,  # 2 safe checkers
+    1,  # 3 safe queens
+    1,  # 4 movable checkers
+    1,  # 5 movable queens
+    1,  # 6 distance to promotion line
+    1,  # 7 free cells on promotion line
+    1,  # 8 defenders amount
+    1,  # 9 attackers amount
+    1,  # 10 middle checkers
+    1,  # 11 middle queens
+    1,  # 12 checkers on main diagonal
+    1,  # 13 queens on main diagonal
+    1,  # 14 checkers on double diagonal
+    1,  # 15 queens on double diagonal
+    1,  # 16 alone checkers
+    1,  # 17 alone queens
+    1,  # 18 holes
 ], dtype=float)
 
 
 @numba.njit
-def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_funcs: np.array, heuristic_weights: np.array) -> int:
+def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_funcs: np.array,
+                            heuristic_weights: np.array) -> int:
     value = 0
 
     # if heuristic_funcs[0]:
@@ -107,6 +106,12 @@ def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_f
 
     return value
 
+
+def heuristic_function(current_game, weights: list[float]) -> float:
+    weights = np.array(weights)
+    return calculateHeuristicValue(current_game.getBoard(), np.array([]), heuristic_funcs, weights)
+
+
 @numba.njit
 def getFreeCellsOnPromotionLine(board: np.array) -> int:
     w, b = 0, 0
@@ -122,6 +127,7 @@ def getFreeCellsOnPromotionLine(board: np.array) -> int:
 
     return w - b
 
+
 @numba.njit
 def getWBFiguresDifference(board: np.array) -> int:
     w, b = 0, 0
@@ -136,6 +142,7 @@ def getWBFiguresDifference(board: np.array) -> int:
 
     return w - b
 
+
 @numba.njit
 def getCountPeshka(board: np.array, i, j) -> int:
     w, b = 0, 0
@@ -148,6 +155,7 @@ def getCountPeshka(board: np.array, i, j) -> int:
                 b += 1
     return w - b
 
+
 @numba.njit
 def getCountKing(board: np.array, i, j) -> int:
     w, b = 0, 0
@@ -159,6 +167,7 @@ def getCountKing(board: np.array, i, j) -> int:
             if board[i, j][2]:
                 b += 1
     return w - b
+
 
 @numba.njit
 def getSafeCheckersAmount(board: np.array) -> int:
@@ -193,6 +202,7 @@ def getSafeCheckersAmount(board: np.array) -> int:
 
     return w - b
 
+
 @numba.njit
 def getSafeQueensAmount(board: np.array) -> int:
     w, b = 0, 0
@@ -226,6 +236,7 @@ def getSafeQueensAmount(board: np.array) -> int:
 
     return w - b
 
+
 @numba.njit
 def getQueensAmount(board: np.array) -> int:
     w, b = 0, 0
@@ -243,6 +254,7 @@ def getQueensAmount(board: np.array) -> int:
 
     return w - b
 
+
 @numba.njit
 def getDistanceToPromotionLine(board: np.array, i, j) -> int:
     w, b = 0, 0
@@ -252,6 +264,7 @@ def getDistanceToPromotionLine(board: np.array, i, j) -> int:
         else:
             b += 7 - i
     return b - w
+
 
 @numba.njit
 def getAttackersAmount(board: np.array, i: int, j: int) -> int:
@@ -265,6 +278,7 @@ def getAttackersAmount(board: np.array, i: int, j: int) -> int:
                 b += 1
     return w - b
 
+
 @numba.njit
 def getDefendersAmount(board: np.array, i: int, j: int) -> int:
     w, b = 0, 0
@@ -276,6 +290,7 @@ def getDefendersAmount(board: np.array, i: int, j: int) -> int:
             if 6 <= i <= 7:
                 w += 1
     return w - b
+
 
 @numba.njit
 def getCentrallyPositionedCheckersAmount(board: np.array) -> int:
@@ -290,6 +305,7 @@ def getCentrallyPositionedCheckersAmount(board: np.array) -> int:
 
     return w - b
 
+
 @numba.njit
 def getCentrallyPositionedQueensAmount(board: np.array) -> int:
     w, b = 0, 0
@@ -303,6 +319,7 @@ def getCentrallyPositionedQueensAmount(board: np.array) -> int:
 
     return w - b
 
+
 @numba.njit
 def getCheckersAmountOnMainDiagonal(board: np.array, i) -> int:
     w, b = 0, 0
@@ -313,6 +330,7 @@ def getCheckersAmountOnMainDiagonal(board: np.array, i) -> int:
             b += 1
 
     return w - b
+
 
 @numba.njit
 def getQueensAmountOnMainDiagonal(board: np.array, i) -> int:
@@ -325,6 +343,7 @@ def getQueensAmountOnMainDiagonal(board: np.array, i) -> int:
 
     return w - b
 
+
 @numba.njit
 def getCheckersAmountOnDoubleDiagonal(board: np.array, i) -> int:
     w, b = 0, 0
@@ -335,6 +354,7 @@ def getCheckersAmountOnDoubleDiagonal(board: np.array, i) -> int:
             b += 1
 
     return w - b
+
 
 @numba.njit
 def getQueensAmountOnDoubleDiagonal(board: np.array, i: int) -> int:
@@ -347,6 +367,7 @@ def getQueensAmountOnDoubleDiagonal(board: np.array, i: int) -> int:
 
     return w - b
 
+
 @numba.njit
 def getMovableCheckers(
         board: np.array,
@@ -354,11 +375,11 @@ def getMovableCheckers(
     w, b = 0, 0
     if board[i, j][0] and not board[i, j, 2]:
         if board[i, j][1]:
-            if (0 <= i - 1 and 0 <= j - 1 and not board[i - 1, j - 1][0])\
+            if (0 <= i - 1 and 0 <= j - 1 and not board[i - 1, j - 1][0]) \
                     or (0 <= i - 1 and j + 1 <= 7 and not board[i - 1, j + 1][0]):
                 w += 1
         else:
-            if (i + 1 <= 7 and j + 1 <= 7 and not board[i + 1, j + 1][0])\
+            if (i + 1 <= 7 and j + 1 <= 7 and not board[i + 1, j + 1][0]) \
                     or (i + 1 <= 7 and 0 <= j - 1 and not board[i + 1, j - 1][0]):
                 b += 1
     return w - b
@@ -387,10 +408,10 @@ def getMiddleCheckers(board: np.array, i, j) -> int:
     w, b = 0, 0
     if board[i, j][0]:
         if board[i, j][1]:
-            if not board[i, j][2] and 5 >= i >= 2 and 5 >= j >= 2:
+            if not board[i, j][2] and 5 >= i >= 2 and 4 >= j >= 3:
                 w += 1
         else:
-            if not board[i, j][2] and 5 >= i >= 2 and 5 >= j >= 2:
+            if not board[i, j][2] and 5 >= i >= 2 and 4 >= j >= 3:
                 b += 1
     return w - b
 
@@ -400,119 +421,126 @@ def getMiddleQueens(board: np.array, i, j) -> int:
     w, b = 0, 0
     if board[i, j][0]:
         if board[i, j][1]:
-            if board[i, j][2] and 5 >= i >= 2 and 5 >= j >= 2:
+            if board[i, j][2] and 5 >= i >= 2 and 4 >= j >= 3:
                 w += 1
         else:
-            if board[i, j][2] and 5 >= i >= 2 and 5 >= j >= 2:
+            if board[i, j][2] and 5 >= i >= 2 and 4 >= j >= 3:
                 b += 1
     return w - b
 
+
 @numba.njit
-def getAloneCheckers(board: np.array, i, j) -> int: #k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
+def getAloneCheckers(board: np.array, i,
+                     j) -> int:  # k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
     w, b = 0, 0
     k, l, n, m = 0, 0, 0, 0
     if board[i, j][0]:
         if not board[i, j][2]:
-          if i == 0 or j == 0:
-            k = 1
-          if i == 0 or j == 7:
-            l = 1
-          if i == 7 or j == 0:
-            n = 1
-          if i == 7 or j == 7:
-            m = 1
-          if not k:
-            k = not board[i-1, j-1][0]
-          if not l:
-            l = not board[i-1, j+1][0]
-          if not n:
-            n = not board[i+1, j-1][0]
-          if not m:
-            m = not board[i+1, j+1][0]
-            if k and l and n and m:
-              if board[i, j][1]:
-                w += 1
-              else:
-                b += 1
+            if i == 0 or j == 0:
+                k = 1
+            if i == 0 or j == 7:
+                l = 1
+            if i == 7 or j == 0:
+                n = 1
+            if i == 7 or j == 7:
+                m = 1
+            if not k:
+                k = not board[i - 1, j - 1][0]
+            if not l:
+                l = not board[i - 1, j + 1][0]
+            if not n:
+                n = not board[i + 1, j - 1][0]
+            if not m:
+                m = not board[i + 1, j + 1][0]
+                if k and l and n and m:
+                    if board[i, j][1]:
+                        w += 1
+                    else:
+                        b += 1
     return w - b
 
+
 @numba.njit
-def getAloneQueens(board: np.array, i, j) -> int: #k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
+def getAloneQueens(board: np.array, i,
+                   j) -> int:  # k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
     w, b = 0, 0
     k, l, n, m = 0, 0, 0, 0
     if board[i, j][0]:
         if board[i, j][2]:
-          if i == 0 or j == 0:
-            k = 1
-          if i == 0 or j == 7:
-            l = 1
-          if i == 7 or j == 0:
-            n = 1
-          if i == 7 or j == 7:
-            m = 1
-          if not k:
-            k = not board[i-1, j-1][0]
-          if not l:
-            l = not board[i-1, j+1][0]
-          if not n:
-            n = not board[i+1, j-1][0]
-          if not m:
-            m = not board[i+1, j+1][0]
-            if k and l and n and m:
-              if board[i, j][1]:
-                w += 1
-              else:
-                b += 1
+            if i == 0 or j == 0:
+                k = 1
+            if i == 0 or j == 7:
+                l = 1
+            if i == 7 or j == 0:
+                n = 1
+            if i == 7 or j == 7:
+                m = 1
+            if not k:
+                k = not board[i - 1, j - 1][0]
+            if not l:
+                l = not board[i - 1, j + 1][0]
+            if not n:
+                n = not board[i + 1, j - 1][0]
+            if not m:
+                m = not board[i + 1, j + 1][0]
+                if k and l and n and m:
+                    if board[i, j][1]:
+                        w += 1
+                    else:
+                        b += 1
     return w - b
+
 
 @numba.njit
 def getHoles(board: np.array, i, j):
-  w, b = 0, 0
-  k, l, n, m = 0, 0, 0, 0
-  if not board[i, j][0]:
-      if i == 0 or j == 0:
-        k = 1
-      if i == 0 or j == 7:
-        l = 1
-      if i == 7 or j == 0:
-        n = 1
-      if i == 7 or j == 7:
-        m = 1
-      if k + l + n + m > 1:
+    w, b = 0, 0
+    k, l, n, m = 0, 0, 0, 0
+    if not board[i, j][0]:
+        if i == 0 or j == 0:
+            k = 1
+        if i == 0 or j == 7:
+            l = 1
+        if i == 7 or j == 0:
+            n = 1
+        if i == 7 or j == 7:
+            m = 1
+        if k + l + n + m > 1:
+            return 0
+        if not k:
+            if board[i - 1, j - 1][0]:
+                if board[i - 1, j - 1][1]:
+                    w += 1
+                else:
+                    b += 1
+        if not l:
+            if board[i - 1, j + 1][0]:
+                if board[i - 1, j + 1][1]:
+                    w += 1
+                else:
+                    b += 1
+        if not n:
+            if board[i + 1, j - 1][0]:
+                if board[i + 1, j - 1][1]:
+                    w += 1
+                else:
+                    b += 1
+        if not m:
+            if board[i + 1, j + 1][0]:
+                if board[i + 1, j + 1][1]:
+                    w += 1
+                else:
+                    b += 1
+    if w > 2:
+        return 1
+    elif b > 2:
+        return -1
+    else:
         return 0
-      if not k:
-        if board[i-1, j-1][0]:
-          if board[i-1, j-1][1]:
-            w += 1
-          else:
-            b += 1
-      if not l:
-        if board[i-1, j+1][0]:
-          if board[i-1, j+1][1]:
-            w += 1
-          else:
-            b +=1
-      if not n:
-        if board[i+1, j-1][0]:
-          if board[i+1, j-1][1]:
-            w += 1
-          else:
-            b += 1
-      if not m:
-        if board[i+1, j+1][0]:
-          if board[i+1, j+1][1]:
-            w += 1
-          else:
-            b += 1
-  if w > 2:
-    return 1
-  elif b > 2:
-    return -1
-  else:
-    return 0
+
 
 if __name__ == "__main__":
     import time
+
     board_width = 8
     board = np.array([[np.array([False, False, False]) for i in range(board_width)] for j in range(board_width)])
 
@@ -548,4 +576,3 @@ if __name__ == "__main__":
 
         print()
     print(value)
-

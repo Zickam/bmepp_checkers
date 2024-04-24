@@ -1,16 +1,11 @@
 from game.bot import Bot
 from constants import *
 
-bot = Bot()
+# TO DO:
+# Веса из файла
+# Сохранение результатов
+# Проведение матчей,                        потом мутации
 
-
-class BotWithWeights(Bot):
-    def __init__(self, weights: list[float]):
-        super().__init__()
-        self.weights = weights
-
-    def get_results(self):
-        return self.results
 
 class Tournament:
     pass

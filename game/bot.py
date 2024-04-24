@@ -2,8 +2,8 @@ import copy
 import multiprocessing as mp
 import random
 import time
-from game.classes import moves_to_notation, notation_to_move
-from game.constants import MINMAX_DEPTH, MINMAX_N_DEPTH, MINMAX_DIFFICULTY_MEDIUM, MINMAX_DIFFICULTY_HARD
+from game.classes import moves_to_notation
+from game.constants import MINMAX_DIFFICULTY_MEDIUM, MINMAX_DIFFICULTY_HARD
 from game.board_manager import handleMove, getAllAvailableMoves
 from game.minmax import MinMaxClass, heuristic_function
 
@@ -31,7 +31,7 @@ class Process:
         print('\n')
 
     @staticmethod
-    def print_stack(game, moves):
+    def print_stack(game, moves, weights):
         try:
             stack = ['\n' + str(x) for x in moves_to_notation(moves)]
             simulated_game = copy.deepcopy(game)
@@ -42,13 +42,13 @@ class Process:
                     simulated_game.fromArgs(*new_args)
                 except Exception as ex:
                     print('🚨!error!🚨', ex)
-                score = heuristic_function(simulated_game)
+                score = heuristic_function(simulated_game, weights)
                 stack[i] += f' score:{score}'
             print('\nstack:', *stack)
         except TypeError:  # ! ВОЗМОЖНО НЕ ТАЙП ЕРОР!
             print('🚨moves = none🚨')
 
-    def best_move_selection(self, game, variants, finding_max, depth=None):
+    def best_move_selection(self, game, variants, finding_max, weights, depth):
         record = float('-inf') if finding_max else float('+inf')
         best_moves = []
         for _, moves, board in variants:
@@ -61,7 +61,7 @@ class Process:
             except TypeError as er:
                 print(er)
             # !!! FINDING MAX is wrong !!!
-            value, moves = self.MinMax.minmax(deep_game, depth, finding_max, moves_stack=moves)
+            value, moves = self.MinMax.minmax(deep_game, depth, finding_max, weights, moves_stack=moves)
 
             if (finding_max and (value > record or value == float('-inf'))) or \
                     (not finding_max and (value < record or value == float('+inf'))):
@@ -70,18 +70,18 @@ class Process:
 
         return record, best_moves
 
-    def bot_game(self, game, top_n_depth, depth, finding_max):
+    def bot_game(self, game, top_n_depth, depth, finding_max, weights):
         start = time.time()
         print('\n😀NEW CALCULATIONS😀\n')
 
-        variants = self.MinMax.top_n_minmax(game, top_n_depth, finding_max)
+        variants = self.MinMax.top_n_minmax(game, top_n_depth, finding_max, weights)
         for _, moves, board in variants:
-            self.print_stack(game, moves)
+            self.print_stack(game, moves, weights)
         self.console_log()
 
-        record, moves = self.best_move_selection(game, variants, finding_max, depth)
+        record, moves = self.best_move_selection(game, variants, finding_max, weights, depth)
 
-        self.print_stack(game, moves)
+        self.print_stack(game, moves, weights)
         # self.MinMax.save_cash()
         self.console_log(start)
         best_move = moves[0]
@@ -91,7 +91,7 @@ class Process:
         while True:
             time.sleep(0.1)
             if not self.process_request_queue.empty():
-                game, difficulty, finding_max = self.process_request_queue.get()
+                game, difficulty, finding_max, weights = self.process_request_queue.get()
                 if difficulty == 0:
                     moves = getAllAvailableMoves(game.getBoard(), game.isWhiteTurn())
                     if len(moves) == 0:
@@ -100,14 +100,22 @@ class Process:
                     self.process_response_queue.put(random_move)
                 elif difficulty == 1:
                     top_n_depth, depth = MINMAX_DIFFICULTY_MEDIUM[0], MINMAX_DIFFICULTY_MEDIUM[1]
-                    self.bot_game(game, top_n_depth, depth, finding_max)
+                    self.bot_game(game, top_n_depth, depth, finding_max, weights)
                 elif difficulty == 2:
                     top_n_depth, depth = MINMAX_DIFFICULTY_HARD[0], MINMAX_DIFFICULTY_HARD[1]
-                    self.bot_game(game, top_n_depth, depth, finding_max)
+                    self.bot_game(game, top_n_depth, depth, finding_max, weights)
 
 
 class Bot:
-    def __init__(self):
+    def __init__(self, weights=None):
+        if weights is None:
+            #  Simple weights just for fun
+            weights = [0] * 19
+            weights[0] = 9
+            weights[1] = 100
+            weights[10] = 1
+            weights[11] = 1
+        self.weights = weights
         self.process_request_queue = mp.Queue()
         self.process_response_queue = mp.Queue()
         self.process = mp.Process(target=Process,
@@ -116,7 +124,7 @@ class Bot:
         self.process.start()
 
     def start_best_move_calculation(self, game, difficulty: int, finding_max: bool):
-        self.process_request_queue.put((game, difficulty, finding_max))
+        self.process_request_queue.put((game, difficulty, finding_max, self.weights))
 
     def is_best_move_ready(self) -> bool:
         return not self.process_response_queue.empty()

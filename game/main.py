@@ -470,7 +470,7 @@ class Game:
         return []
 
 
-del Game
+del Game  # HAHA
 
 
 def game_board_to_str(board: np.array) -> str:

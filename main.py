@@ -1,4 +1,4 @@
-import game
+import game.bot
 import gui
 
 

@@ -3,15 +3,15 @@ import pickle
 
 from game.constants import TOP_N_AMOUNT, DEPTH_TO_CHECK
 from game.classes import Move, move_to_notation, notation_to_move, notations_to_move, moves_to_notation
-from game.main import GameState, SimpleGame, game_board_to_str
-from game.board_manager import getAllAvailableMoves, handleMove, handle_move_pr
-from game import heuristic_functions
+from game.main import SimpleGame, game_board_to_str
+from game.board_manager import getAllAvailableMoves, handle_move_pr
+from game.heuristic_functions import heuristic_function
 
 cache_file_name = 'cache.pickle'
 n_cache_file_name = f'cache{TOP_N_AMOUNT}.pickle'
 
 
-def heuristic_function(_game: SimpleGame) -> float | int:
+'''def heuristic_function(_game: SimpleGame) -> float | int:
     fig_dif = heuristic_functions.getWBFiguresDifference(_game.getBoard())
     center_dif = 0
     board = _game.getBoard()
@@ -45,7 +45,7 @@ def heuristic_function(_game: SimpleGame) -> float | int:
         return float('+inf')
     elif _game.getGameState() == GameState.draw:
         return 0
-    return queens_dif*100 + fig_dif*9 + center_dif * 5
+    return queens_dif*100 + fig_dif*9 + center_dif * 5'''
 
 
 def potential_function(_game: SimpleGame) -> float | int:
@@ -154,6 +154,7 @@ class MinMaxClass:
     def minmax(self, current_game: SimpleGame,
                depth: int,
                finding_max: bool,
+               weights,
                alpha: float = float('-inf'),
                beta: float = float('+inf'),
                branches_stack: tuple[tuple[int, int], ...] = (),
@@ -170,7 +171,7 @@ class MinMaxClass:
 
         if depth == 0:
             self.depth_zero += 1
-            return heuristic_function(current_game), moves_stack
+            return heuristic_function(current_game, weights), moves_stack
 
         record = float('-inf') if finding_max else float('+inf')
 
@@ -221,6 +222,7 @@ class MinMaxClass:
                 new_depth = depth
             args = [new_depth,
                     new_finding_max,
+                    weights,
                     tuple(list(moves_stack)+[move]),
                     start_depth,
                     new_moves_without_change_side]
@@ -232,7 +234,7 @@ class MinMaxClass:
         for i in range(len(children)):
             child, args = children[i]
             new_b_stack = branches_stack + ((i, len(all_moves)),)
-            value, moves = self.minmax(child, *args[:2], alpha, beta, new_b_stack, *args[2:])
+            value, moves = self.minmax(child, args[0], args[1], args[2], alpha, beta, new_b_stack, *args[3:])
             if (finding_max and (value > record or value == float('-inf'))) or \
                     (not finding_max and (value < record or value == float('+inf'))):
                 record = value
@@ -257,6 +259,7 @@ class MinMaxClass:
     def top_n_minmax(self, current_game: SimpleGame,
                      depth: int,
                      finding_max: bool,
+                     weights,
                      alpha: float = float('-inf'),
                      beta: float = float('+inf'),
                      branches_stack: tuple[tuple[int, int], ...] = (),
@@ -277,7 +280,7 @@ class MinMaxClass:
 
         if depth == 0:
             self.depth_zero += 1
-            return [(heuristic_function(current_game), moves_stack, game_board_to_str(current_game.getBoard()))]
+            return [(heuristic_function(current_game, weights), moves_stack, game_board_to_str(current_game.getBoard()))]
 
         all_moves = getAllAvailableMoves(current_game.getBoard(), current_game.isWhiteTurn())
         best_moves = copy.deepcopy(moves_stack)
@@ -330,6 +333,7 @@ class MinMaxClass:
                 new_depth = depth
             args = [new_depth,
                     new_finding_max,
+                    weights,
                     tuple(list(moves_stack)+[move]),
                     start_depth,
                     new_moves_without_change_side,
@@ -344,7 +348,7 @@ class MinMaxClass:
         for i in range(len(children)):
             child, args = children[i]
             new_b_stack = branches_stack + ((i, len(all_moves)),)
-            value_moves_lst = self.top_n_minmax(child, *args[:2], alpha, beta, new_b_stack, *args[2:])
+            value_moves_lst = self.top_n_minmax(child, args[0], args[1], args[2], alpha, beta, new_b_stack, *args[3:])
 
             if finding_max == customer_color_white:
                 variants_list += value_moves_lst
