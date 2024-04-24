@@ -146,7 +146,8 @@ def _handleCheckerMovingMove(board: np.array, move: np.array) -> np.array:
 # @numba.njit
 def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_values: np.array,
                                 move: np.array) -> np.array:
-    are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
+    are_necessary, all_available_moves_for_checkers = getAllAvailableMoves(board, is_white_turn)
+    # are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
     if not are_necessary:
         return False, board_values
     return True, board_values
@@ -264,7 +265,7 @@ def getAvailableMovesForCheckerOrQueen(board: np.array, is_white_turn: bool, x: 
 
 
 # @numba.njit
-def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
+def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> tuple[bool, np.array]:
     unnecessary_moves = np.full((50, 2, 2), -1)
     unnecessary_moves_amount = 0
     necessary_moves = np.full((50, 2, 2), -1)
@@ -331,7 +332,7 @@ def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
 
             c += 1
 
-    return available_moves
+    return are_necessary_found, available_moves
 
 
 def transformNumpyMovesToList(moves: np.array) -> list:
@@ -347,7 +348,7 @@ def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[
     board = game.getBoard()
     is_white_turn = game.isWhiteTurn()
     x, y = point
-    all_moves = getAllAvailableMoves(board, is_white_turn)
+    are_necessary, all_moves = getAllAvailableMoves(board, is_white_turn)
     point_moves = []
     for move in all_moves:
         start = move[0]
@@ -360,7 +361,7 @@ def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[
 # @numba.njit
 def handleWin(board: np.array, is_white_turn: bool) -> int:
     current_side_has_moves = False
-    for moves in getAllAvailableMoves(board, is_white_turn):
+    for moves in getAllAvailableMoves(board, is_white_turn)[1]:
         for move in moves:
             if is_white_turn and board[move[0, 0]][
                 move[0, 1]][1]:

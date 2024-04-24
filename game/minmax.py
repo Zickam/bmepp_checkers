@@ -174,7 +174,7 @@ class MinMaxClass:
 
         record = float('-inf') if finding_max else float('+inf')
 
-        all_moves = getAllAvailableMoves(current_game.getBoard(), current_game.isWhiteTurn())
+        are_necessary, all_moves = getAllAvailableMoves(current_game.getBoard(), current_game.isWhiteTurn())
 
         best_moves = copy.deepcopy(moves_stack)
 
@@ -279,7 +279,7 @@ class MinMaxClass:
             self.depth_zero += 1
             return [(heuristic_function(current_game), moves_stack, game_board_to_str(current_game.getBoard()))]
 
-        all_moves = getAllAvailableMoves(current_game.getBoard(), current_game.isWhiteTurn())
+        are_necessary, all_moves = getAllAvailableMoves(current_game.getBoard(), current_game.isWhiteTurn())
         best_moves = copy.deepcopy(moves_stack)
 
         if len(all_moves) == 0:

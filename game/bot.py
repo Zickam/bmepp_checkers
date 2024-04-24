@@ -21,7 +21,7 @@ class Process:
             if not self.process_request_queue.empty():
                 game, difficulty = self.process_request_queue.get()
                 if difficulty == 0:
-                    moves = getAllAvailableMoves(game.getBoard(), game.isWhiteTurn())
+                    are_necessary, moves = getAllAvailableMoves(game.getBoard(), game.isWhiteTurn())
                     if len(moves) == 0:
                         continue
                     random_move = random.choice(moves)
