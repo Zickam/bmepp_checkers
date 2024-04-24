@@ -4,7 +4,6 @@
 /.idea
 /venv
 /test.py
-/competition/data
 **/__pycache__
 
 # compile trash

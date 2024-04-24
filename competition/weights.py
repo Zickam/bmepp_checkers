@@ -7,7 +7,7 @@ class Weights:
             float_weights = []
             for weight in str_list:
                 float_weights.append(float(weight))
-            return float_weights
+            return float_weights[:19]
         except ValueError as ex:
             print(ex, 'у вас весах не то:', str_weights)
 
