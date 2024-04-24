@@ -70,10 +70,9 @@ class Process:
 
         return record, best_moves
 
-    def bot_game(self, game, top_n_depth, depth):
+    def bot_game(self, game, top_n_depth, depth, finding_max):
         start = time.time()
         print('\n😀NEW CALCULATIONS😀\n')
-        finding_max = not game.isPlayerWhite()
 
         variants = self.MinMax.top_n_minmax(game, top_n_depth, finding_max)
         for _, moves, board in variants:
@@ -92,7 +91,7 @@ class Process:
         while True:
             time.sleep(0.1)
             if not self.process_request_queue.empty():
-                game, difficulty = self.process_request_queue.get()
+                game, difficulty, finding_max = self.process_request_queue.get()
                 if difficulty == 0:
                     moves = getAllAvailableMoves(game.getBoard(), game.isWhiteTurn())
                     if len(moves) == 0:
@@ -101,10 +100,10 @@ class Process:
                     self.process_response_queue.put(random_move)
                 elif difficulty == 1:
                     top_n_depth, depth = MINMAX_DIFFICULTY_MEDIUM[0], MINMAX_DIFFICULTY_MEDIUM[1]
-                    self.bot_game(game, top_n_depth, depth)
+                    self.bot_game(game, top_n_depth, depth, finding_max)
                 elif difficulty == 2:
                     top_n_depth, depth = MINMAX_DIFFICULTY_HARD[0], MINMAX_DIFFICULTY_HARD[1]
-                    self.bot_game(game, top_n_depth, depth)
+                    self.bot_game(game, top_n_depth, depth, finding_max)
 
 
 class Bot:
@@ -116,8 +115,8 @@ class Bot:
                                   daemon=True)
         self.process.start()
 
-    def start_best_move_calculation(self, game, difficulty: int):
-        self.process_request_queue.put((game, difficulty))
+    def start_best_move_calculation(self, game, difficulty: int, finding_max: bool):
+        self.process_request_queue.put((game, difficulty, finding_max))
 
     def is_best_move_ready(self) -> bool:
         return not self.process_response_queue.empty()

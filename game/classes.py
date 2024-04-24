@@ -58,7 +58,7 @@ class Move:
         return f"Move: ({self.start_point}, {self.end_point}) [is_kill: {self.is_kill}, killed_point: {self.killed_point}]"
 
 
-def move_to_notation(_move: tuple[tuple[int, int], ...]) -> str:
+def move_to_notation(_move) -> str:
     alph = 'abcdefgh'
     x1, y1, x2, y2 = _move[0][0], _move[0][1], _move[1][0], _move[1][1]
     y1 = alph[y1]
@@ -66,7 +66,6 @@ def move_to_notation(_move: tuple[tuple[int, int], ...]) -> str:
     x1 = 8 - x1
     x2 = 8 - x2
     return f"{y1}{x1}-{y2}{x2}"
-
 
 
 def moves_to_notation(lst: list[tuple[tuple[int, int], ...]]) -> list[str]:

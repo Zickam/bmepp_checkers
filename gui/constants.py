@@ -1,5 +1,5 @@
 WIN_SIZE = (800, 800)
-FPS = 144
+FPS = 60
 
 IGC = (0, 220, 0)
 HRC = (243, 97, 97)  # hint red color

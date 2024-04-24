@@ -70,10 +70,10 @@ def get_difficulty_num(difficulty):
     return Text((400, 550), f'{difficulty}')
 
 
-def get_win_text(gamestate):
-    if gamestate == GameState.b_win:
+def get_win_text(game_state: int):
+    if game_state == 2:
         return Text((400, 400), 'BLACK WIN!')
-    elif gamestate == GameState.w_win:
+    elif game_state == 1:
         return Text((400, 400), 'WHITE WIN!')
     else:
         return Text((400, 400), 'DRAW! HAHA')

@@ -83,9 +83,9 @@ class Sprites:
         center = (self.cell_size // 2, self.cell_size // 2)
         pg.draw.circle(image, big_circle_color, center, self.cell_size // self.checker_scale)
 
-        pg.draw.circle(image, small_circle_color, center, self.cell_size // self.checker_scale // 1.1, 3)
+        pg.draw.circle(image, small_circle_color, center, self.cell_size // self.checker_scale // 1.1, WIN_SIZE[0]//250)
         if not is_queen:
-            pg.draw.circle(image, small_circle_color, center, self.cell_size // self.checker_scale // 2, 3)
+            pg.draw.circle(image, small_circle_color, center, self.cell_size // self.checker_scale // 2, WIN_SIZE[0]//250)
         return image
 
     def make_hint(self) -> pg.Surface:

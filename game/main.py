@@ -470,8 +470,7 @@ class Game:
         return []
 
 
-def copy_game(game: Game) -> Game:
-    return copy.deepcopy(game)
+del Game
 
 
 def game_board_to_str(board: np.array) -> str:

@@ -45,7 +45,7 @@ def heuristic_function(_game: SimpleGame) -> float | int:
         return float('+inf')
     elif _game.getGameState() == GameState.draw:
         return 0
-    return queens_dif*100 + fig_dif*9 + center_dif
+    return queens_dif*100 + fig_dif*9 + center_dif * 5
 
 
 def potential_function(_game: SimpleGame) -> float | int:
