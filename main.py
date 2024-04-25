@@ -1,7 +1,6 @@
 import game.bot
 import gui
 
-
 def main():
     _bot = game.bot.Bot()
     _bot2 = game.bot.Bot()

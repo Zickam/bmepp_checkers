@@ -36,6 +36,9 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
 
                 if checkIfCoordsInBoundaries(tmp_coords[0], tmp_coords[1]) and not has_finished:
                     if board[tmp_coords[0], tmp_coords[1]][0]:  # obstacle
+                        if board[tmp_coords[0], tmp_coords[1]][1] == board[x, y][1]:
+                            break
+
                         obstacle_pos = tmp_coords
                         coords_behind_obstacle = (tmp_coords[0] + _x, tmp_coords[1] + _y)
                         coords_within_boundaries = checkIfCoordsInBoundaries(coords_behind_obstacle[0],
@@ -57,6 +60,7 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                             break
 
                     elif obstacle_pos[0] == -1:
+
                         tmp_possible_moves[tmp_possible_moves_amount][0] = tmp_coords[0]
                         tmp_possible_moves[tmp_possible_moves_amount][1] = tmp_coords[1]
                         tmp_possible_moves_amount += 1
@@ -141,7 +145,8 @@ def _handleCheckerMovingMove(board: np.array, move: np.array) -> np.array:
 @numba.njit
 def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_values: np.array,
                                 move: np.array) -> np.array:
-    are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
+    are_necessary, all_available_moves_for_checkers = getAllAvailableMoves(board, is_white_turn)
+    # are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
     if not are_necessary:
         return False, board_values
     return True, board_values
@@ -326,7 +331,7 @@ def getAllAvailableMoves(board: np.array, is_white_turn: bool) -> np.array:
 
             c += 1
 
-    return available_moves
+    return are_necessary_found, available_moves
 
 
 def transformNumpyMovesToList(moves: np.array) -> list:
@@ -342,7 +347,7 @@ def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[
     board = game.getBoard()
     is_white_turn = game.isWhiteTurn()
     x, y = point
-    all_moves = getAllAvailableMoves(board, is_white_turn)
+    are_necessary, all_moves = getAllAvailableMoves(board, is_white_turn)
     point_moves = []
     for move in all_moves:
         start = move[0]

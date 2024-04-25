@@ -33,9 +33,25 @@ class SimpleGame:
         self._board: np.array[np.array[np.array[
             bool, bool, bool]]] = self._initBoard(8)
 
-        # self._board = np.array([
-        #     [[0, 0, 0] for j in range(8)] for i in range(8)
-        # ])
+        self._board = np.array([
+            [[0, 0, 0] for j in range(8)] for i in range(8)
+        ])
+        self._board[2, 1] = np.array([True, 0, False])
+        self._board[3, 2] = np.array([True, 1, False])
+        self._board[5, 2] = np.array([1, 1, 0])
+        # self._board[2, 5] = np.array([1, 0, 0])
+        self._board[1, 0] = np.array([1, 0, 0])
+        self._board[3, 4] = np.array([1, 0, 0])
+        self._board[4, 3] = np.array([1, 1, 0])
+        self._board[1, 6] = np.array([1, 0, 0])
+        self._board[0, 7] = np.array([1, 0, 0])
+        self._board[7, 0] = np.array([1, 1, 0])
+
+        #
+        # self._board[6, 1] = np.array([1, 1, 0])
+        # self._board[3, 2] = np.array([1, 1, 0])
+        # self._board[1, 0] = np.array([1, 0, 1])
+
         # self._board[3, 0] = np.array([1, 0, 0])
         # self._board[2, 1] = np.array([1, 0, 0])
         # self._board[3, 2] = np.array([1, 0, 0])
