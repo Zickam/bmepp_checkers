@@ -38,7 +38,7 @@ class Weights:
                 file.write(str_weights)
 
 
-class Result:
+class Results:
     @staticmethod
     def str_to_results(str_results: str) -> list[int]:
         str_results.replace('\n', '')
@@ -63,12 +63,12 @@ class Result:
         strings = open(filename, 'r').readlines()
         results = []
         for s in strings:
-            results.append(Result.str_to_results(s))
+            results.append(Results.str_to_results(s))
         return results
 
     @staticmethod
     def save_results_in_file(filename: str, results: list[list[int]]):
         with open(filename, 'w') as file:
             for result in results:
-                str_results = Result.weights_to_str(result) + '\n'
+                str_results = Results.weights_to_str(result) + '\n'
                 file.write(str_results)

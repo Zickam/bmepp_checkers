@@ -1,1 +1,2 @@
 PARALLEL_MATCHES = 8
+PATH_TO_DATA = 'data/'
