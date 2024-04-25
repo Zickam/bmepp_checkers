@@ -360,7 +360,7 @@ def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[
 @numba.njit
 def handleWin(board: np.array, is_white_turn: bool) -> int:
     current_side_has_moves = False
-    all_moves = getAllAvailableMoves(board, is_white_turn)
+    _, all_moves = getAllAvailableMoves(board, is_white_turn)
     for move in all_moves:
         row = board[move[0, 0]]
         checker = row[move[0, 1]]
