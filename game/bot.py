@@ -74,14 +74,15 @@ class Process:
         start = time.time()
         print('\n😀NEW CALCULATIONS😀\n')
 
+        print('First stage')
         variants = self.MinMax.top_n_minmax(game, top_n_depth, finding_max, weights)
         for _, moves, board in variants:
-            self.print_stack(game, moves, weights)
-        self.console_log()
+            #self.print_stack(game, moves, weights)
+            pass
 
+        print('Second stage')
         record, moves = self.best_move_selection(game, variants, finding_max, weights, depth)
-
-        self.print_stack(game, moves, weights)
+        #self.print_stack(game, moves, weights)
         # self.MinMax.save_cash()
         self.console_log(start)
         best_move = moves[0]
@@ -137,6 +138,11 @@ class Bot:
                                   args=(self.process_request_queue, self.process_response_queue),
                                   daemon=True)
         self.process.start()
+
+    def kill(self):
+        self.process.kill()
+        del self.process_response_queue
+        del self.process_request_queue
 
     def get_calculated_move(self):
         return self.process_response_queue.get()

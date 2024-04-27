@@ -30,7 +30,10 @@ class Sprites:
         Alph = string.ascii_lowercase
         Nums = [str(x) for x in range(1, 27)]
 
-        font = pg.font.Font(BOARD_FONT_PATH, self.font_size)
+        try:
+            font = pg.font.Font(BOARD_FONT_PATH, self.font_size)
+        except FileNotFoundError:  # If start point was bmepp_ckeckers/competition/main.py
+            font = pg.font.Font('../'+BOARD_FONT_PATH, self.font_size)
         image = pg.Surface((self.height, self.height))
         image.fill(WCC)
 

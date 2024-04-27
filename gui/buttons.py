@@ -4,8 +4,12 @@ import pygame as pg
 from gui.constants import BUTTONS_FONT_PATH, GC, BC, WC, WIN_SIZE
 
 pg.init()
-button_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 17)
-caption_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 5)
+try:
+    button_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 17)
+    caption_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 5)
+except FileNotFoundError:  # If start point was bmepp_ckeckers/competition/main.py
+    button_font = pg.font.Font('../'+BUTTONS_FONT_PATH, WIN_SIZE[1] // 17)
+    caption_font = pg.font.Font('../'+BUTTONS_FONT_PATH, WIN_SIZE[1] // 5)
 
 
 class Text:

@@ -5,10 +5,10 @@ import numpy as np
 
 import pygame as pg
 
-from game.classes import Move, move_to_notation
+from game.classes import move_to_notation
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
-from game.main import SimpleGame, GameState
+from game.main import SimpleGame
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
@@ -35,7 +35,7 @@ class SceneState(Enum):
 
 
 class Gui:
-    def __init__(self, opponent_bot: Bot, main_bot: Bot = None):
+    def __init__(self, opponent_bot: Bot, main_bot: Bot = None, caption='Checkers'):
         """
         Can work in two modes: bot vs player, bot vs bot
         If main_bot param is not None, will start bot vs bot game, opponent_bot playing black, main_bot playing white
@@ -54,7 +54,7 @@ class Gui:
         self.player_log = Log()
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
-        pg.display.set_caption('Checkers')
+        pg.display.set_caption(caption)
         self.__sprites = Sprites(self.__game.getBoardWidth())
         self.left_offset = WIN_SIZE[0] - self.__sprites.board.get_width()
 
@@ -71,6 +71,8 @@ class Gui:
             pg.event.get()
             self.handle_bot_events()
             if self.state == SceneState.result:
+                self.__bot.kill()
+                self.__bot_instead_player.kill()
                 return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
 
     def render(self):
@@ -87,7 +89,8 @@ class Gui:
         self.render_selected_checker()
         self.render_checkers()
         self.render_hints()
-        restart_button.render(self.__screen)
+        if not self.bot_vs_bot_mode:
+            restart_button.render(self.__screen)
 
     def render_menu(self):
         self.__screen.fill(GC)
@@ -268,4 +271,3 @@ class Gui:
 
     def close(self):
         exit()
-
