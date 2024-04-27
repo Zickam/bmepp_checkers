@@ -13,6 +13,7 @@ from gui.buttons import caption_text, play_white_button, play_black_button, diff
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
 from game.bot import Bot
+from game.minmax import game_board_to_str
 
 
 class Log:
@@ -34,6 +35,17 @@ class SceneState(Enum):
     result = 2
 
 
+class DrawHandler:
+    def __init__(self):
+        self.cache = set()
+
+    def check_draw(self, board):
+        if game_board_to_str(board) in self.cache:
+            return True
+        else:
+            self.cache.add(game_board_to_str(board))
+
+
 class Gui:
     def __init__(self, opponent_bot: Bot, main_bot: Bot = None, caption='Checkers'):
         """
@@ -51,6 +63,7 @@ class Gui:
         self.__bot_instead_player = main_bot
         if self.bot_vs_bot_mode:
             self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
+        self.draw_handler = DrawHandler()
         self.player_log = Log()
 
         self.__screen = pg.display.set_mode(WIN_SIZE)
@@ -73,6 +86,8 @@ class Gui:
             if self.state == SceneState.result:
                 self.__bot.kill()
                 self.__bot_instead_player.kill()
+                if self.draw_handler.check_draw(self.__game.getBoard()):
+                    return 3
                 return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
 
     def render(self):
@@ -164,7 +179,7 @@ class Gui:
                         if self.state == SceneState.checkers:
                             self.handle_gameplay_click(x, y)
                             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
-                            if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
+                            if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
                         elif self.state == SceneState.menu:
                             self.handle_menu_click(x, y)
@@ -184,6 +199,10 @@ class Gui:
             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
+                return
+            if self.bot_vs_bot_mode and self.draw_handler.check_draw(self.__game.getBoard()):
+                self.state = SceneState.result
+                return
 
             if flag == self.__game.isWhiteTurn():
                 self.__bot.start_best_move_calculation(self.__game, self.difficulty, False)
@@ -201,6 +220,10 @@ class Gui:
             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
+                return
+            if self.bot_vs_bot_mode and self.draw_handler.check_draw(self.__game.getBoard()):
+                self.state = SceneState.result
+                return
 
             if flag == self.__game.isWhiteTurn():
                 self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)

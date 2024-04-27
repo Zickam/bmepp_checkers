@@ -8,10 +8,10 @@ import time
 
 # TO DO:
 # Веса из файла ✅
-# Боты из весов ❌
+# Боты из весов ✅
 # Сохранение результатов в файл ✅
-# создание файлов для поколений
-# Проведение матчей ❌,                        потом мутации❌
+# создание файлов для поколений❌
+# Проведение матчей ✅,                        потом мутации❌
 
 # IDEAS:
 # разделение игры на этапы ✅
@@ -134,17 +134,22 @@ class DuelProcess:
                 duel.result[0] += 1
             if result1 == 2:  # bot1 lose as white
                 duel.result[2] += 1
+            if result1 == 3:  # draw
+                duel.result[1] += 1
 
             if result2 == 2:  # bot1 win as black
                 duel.result[0] += 1
             if result2 == 1:  # bot1 lose as black
                 duel.result[2] += 1
+            if result2 == 3:  # draw
+                duel.result[1] += 1
 
-            print('!'* 400)
+            print('!'*400)
             print(result1)
             print(result2)
 
             self.process_response_queue.put(duel)
+
 
 def run_tournament():
     while True:
