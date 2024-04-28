@@ -63,7 +63,7 @@ def potential_function(_game: SimpleGame) -> float | int:
 
 
 class MinMaxClass:
-    def __init__(self):
+    def __init__(self, need_to_print=True):
         # cache = dict(tuple(depth, board, finding_max): tuple(value, tuple(move))
         self.cache: dict[tuple[int, str, bool]: tuple[float, tuple[str]]] = {}
         # n_cache = dict(tuple(depth, board, finding_max): tuple(tuple(value, tuple(move))))
@@ -75,6 +75,7 @@ class MinMaxClass:
         self.using_cache_count = {}
         self.depth_zero = 0
         self.brute_forced_depth = [0, 1, 2]
+        self.need_to_print = need_to_print
 
     def save_cash(self):
         file = open(cache_file_name, 'wb')
@@ -164,7 +165,7 @@ class MinMaxClass:
         if start_depth == float('inf'):
             start_depth = depth
 
-        if depth == 3:
+        if depth == 3 and self.need_to_print:
             print('\r', end='')
             for branch_num, branch_count in branches_stack:
                 print(f'{branch_num+1}/{branch_count} ', end='')
@@ -187,7 +188,6 @@ class MinMaxClass:
 
         # if there is only one possible move - make it immediately
         if len(all_moves) == 1 and moves_stack == ():
-            print('(only one possible move, no calculations)')
             return None, [all_moves[0]]
 
         # if depth not in self.brute_forced_depth:
@@ -273,7 +273,7 @@ class MinMaxClass:
         if customer_color_white is None:
             customer_color_white = current_game.isWhiteTurn()
 
-        if depth == 3:
+        if depth == 3 and self.need_to_print:
             print('\r', end='')
             for branch_num, branch_count in branches_stack:
                 print(f'{branch_num+1}/{branch_count} ', end='')
@@ -293,7 +293,6 @@ class MinMaxClass:
 
         # if there is only one possible move - make it immediately
         if len(all_moves) == 1 and moves_stack == ():
-            print('(only one possible move, no calculations)')
             return [(None, [all_moves[0]], game_board_to_str(current_game.getBoard()))]
 
         # if depth not in self.brute_forced_depth:

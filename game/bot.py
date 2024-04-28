@@ -9,10 +9,11 @@ from game.minmax import MinMaxClass, heuristic_function
 
 
 class Process:
-    def __init__(self, process_request_queue: mp.Queue, process_response_queue: mp.Queue):
+    def __init__(self, process_request_queue: mp.Queue, process_response_queue: mp.Queue, need_to_print: bool):
         self.process_request_queue = process_request_queue
         self.process_response_queue = process_response_queue
-        self.MinMax = MinMaxClass()
+        self.need_to_print = need_to_print
+        self.MinMax = MinMaxClass(need_to_print=self.need_to_print)
         self.mainloop()
 
     def console_log(self, start=None):
@@ -72,19 +73,23 @@ class Process:
 
     def bot_game(self, game, top_n_depth, depth, finding_max, weights):
         start = time.time()
-        print('\n😀NEW CALCULATIONS😀\n')
+        if self.need_to_print:
+            print('\n😀NEW CALCULATIONS😀\n')
 
-        print('First stage')
+            print('First stage')
         variants = self.MinMax.top_n_minmax(game, top_n_depth, finding_max, weights)
-        for _, moves, board in variants:
-            #self.print_stack(game, moves, weights)
-            pass
+        if self.need_to_print:
+            for _, moves, board in variants:
+                #self.print_stack(game, moves, weights)
+                pass
 
-        print('Second stage')
+        if self.need_to_print:
+            print('Second stage')
         record, moves = self.best_move_selection(game, variants, finding_max, weights, depth)
-        #self.print_stack(game, moves, weights)
+        if self.need_to_print:
+            self.print_stack(game, moves, weights)
+            self.console_log(start)
         # self.MinMax.save_cash()
-        self.console_log(start)
         best_move = moves[0]
         self.process_response_queue.put(best_move)
 
@@ -108,7 +113,7 @@ class Process:
 
 
 class Bot:
-    def __init__(self, weights=None):
+    def __init__(self, weights=None, need_to_print=True):
         if weights is None:
             #  Simple weights just for fun
             weights = [0] * 19
@@ -116,16 +121,20 @@ class Bot:
             weights[1] = 100
             weights[10] = 1
             weights[11] = 1
+        self.need_to_print = need_to_print
         self.weights = weights
         self.process_request_queue = mp.Queue()
         self.process_response_queue = mp.Queue()
         self.process = mp.Process(target=Process,
-                                  args=(self.process_request_queue, self.process_response_queue),
+                                  args=(self.process_request_queue, self.process_response_queue, self.need_to_print),
                                   daemon=True)
         self.process.start()
 
     def start_best_move_calculation(self, game, difficulty: int, finding_max: bool):
         self.process_request_queue.put((game, difficulty, finding_max, self.weights))
+
+    def change_weights(self, weights: list[float]):
+        self.weights = weights
 
     def is_best_move_ready(self) -> bool:
         return not self.process_response_queue.empty()
@@ -135,7 +144,7 @@ class Bot:
         if not self.process_response_queue.empty():
             self.process_response_queue.get()
         self.process = mp.Process(target=Process,
-                                  args=(self.process_request_queue, self.process_response_queue),
+                                  args=(self.process_request_queue, self.process_response_queue, self.need_to_print),
                                   daemon=True)
         self.process.start()
 

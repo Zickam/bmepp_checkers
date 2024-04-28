@@ -17,6 +17,9 @@ import time
 # разделение игры на этапы ✅
 # запоминать блоки весов, которые остаются n раундов ✅
 
+# TO DO:
+# убрать принты✅, лишние инициализации гуи✅, хранение проведенных дуэлей :)
+
 
 class Duel:
     def __init__(self, id1, id2, weights1, weights2):
@@ -32,8 +35,6 @@ class Generation:
         self.generation_number: int = self.calculate_generation()
         results_path = f"{PATH_TO_DATA}results{self.generation_number}.txt"
         self.results: list[list[int, int, int, int]] = Results.load_results_from_file(results_path)
-        for row in self.results:
-            print(row)
         weights_path = f"{PATH_TO_DATA}weights{self.generation_number}.txt"
         self.weights: list[list[float]] = Weights.load_weights_from_file(weights_path)
 
@@ -117,17 +118,23 @@ class DuelProcess:
         self.mainloop()
 
     def mainloop(self):
+        if self.process_request_queue.empty():
+            return
+
+        bot1 = Bot(need_to_print=False)
+        bot2 = Bot(need_to_print=False)
+        gui = Gui(bot2, bot1, with_display=True)
+
         while not self.process_request_queue.empty():
             duel = self.process_request_queue.get()
 
-            bot1 = Bot(duel.weights1)
-            bot2 = Bot(duel.weights2)
-            gui = Gui(bot2, bot1, caption=f'Duel: {duel.id1} vs {duel.id2}')
+            bot1.change_weights(duel.weights1)
+            bot2.change_weights(duel.weights2)
+            gui.change_bots(bot2, bot1)
+
             result1 = gui.bots_duel()
 
-            bot1 = Bot(duel.weights1)
-            bot2 = Bot(duel.weights2)
-            gui = Gui(bot1, bot2, caption=f'Duel: {duel.id2} vs {duel.id1}')
+            gui.change_bots(bot1, bot2)
             result2 = gui.bots_duel()
 
             if result1 == 1:  # bot1 win as white
@@ -145,8 +152,6 @@ class DuelProcess:
                 duel.result[1] += 1
 
             print('!'*400)
-            print(result1)
-            print(result2)
 
             self.process_response_queue.put(duel)
 

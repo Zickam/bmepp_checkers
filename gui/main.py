@@ -47,13 +47,18 @@ class DrawHandler:
 
 
 class Gui:
-    def __init__(self, opponent_bot: Bot, main_bot: Bot = None, caption='Checkers'):
+    def __init__(self, opponent_bot: Bot,
+                 main_bot: Bot = None,
+                 caption='Checkers',
+                 with_display=True,
+                 need_to_calculate=False):
         """
         Can work in two modes: bot vs player, bot vs bot
         If main_bot param is not None, will start bot vs bot game, opponent_bot playing black, main_bot playing white
         """
         self.__game = SimpleGame()
         self.__clock = pg.time.Clock()
+        self.with_display = with_display
         self.bot_vs_bot_mode = main_bot is not None
         self.possible_moves: list[list[list[int, int]]] = []
         self.selected_checker: None | list[int, int] = None
@@ -61,13 +66,15 @@ class Gui:
         self.difficulty = 2
         self.__bot = opponent_bot
         self.__bot_instead_player = main_bot
-        if self.bot_vs_bot_mode:
+        if self.bot_vs_bot_mode and need_to_calculate:
             self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
         self.draw_handler = DrawHandler()
         self.player_log = Log()
 
-        self.__screen = pg.display.set_mode(WIN_SIZE)
-        pg.display.set_caption(caption)
+        if self.with_display:
+            self.__screen = pg.display.set_mode(WIN_SIZE)
+            pg.display.set_caption(caption)
+
         self.__sprites = Sprites(self.__game.getBoardWidth())
         self.left_offset = WIN_SIZE[0] - self.__sprites.board.get_width()
 
@@ -80,12 +87,11 @@ class Gui:
 
     def bots_duel(self) -> int:
         while True:
-            self.render()
+            if self.with_display:
+                self.render()
             pg.event.get()
             self.handle_bot_events()
             if self.state == SceneState.result:
-                self.__bot.kill()
-                self.__bot_instead_player.kill()
                 if self.draw_handler.check_draw(self.__game.getBoard()):
                     return 3
                 return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
@@ -291,6 +297,16 @@ class Gui:
         if restart_button.collide_point((x, y)):
             self.__game = SimpleGame()
             self.state = SceneState.menu
+
+    def change_bots(self, bot1: Bot, bot2: Bot):
+        self.__bot = bot1
+        self.__bot_instead_player = bot2
+        self.draw_handler = DrawHandler()
+        self.state = SceneState.checkers
+        self.__game = SimpleGame()
+        self.possible_moves = []
+        self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
+
 
     def close(self):
         exit()
