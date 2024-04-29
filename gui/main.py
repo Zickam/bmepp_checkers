@@ -78,6 +78,9 @@ class Gui:
         self.__sprites = Sprites(self.__game.getBoardWidth())
         self.left_offset = WIN_SIZE[0] - self.__sprites.board.get_width()
 
+    def change_caption(self, caption: str):
+        pg.display.set_caption(caption)
+
     def mainloop(self):
         while True:
             self.render()

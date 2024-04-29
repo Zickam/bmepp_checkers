@@ -90,6 +90,8 @@ class Process:
             self.print_stack(game, moves, weights)
             self.console_log(start)
         # self.MinMax.save_cash()
+        if len(moves) == 0:
+            return
         best_move = moves[0]
         self.process_response_queue.put(best_move)
 
