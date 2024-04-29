@@ -10,7 +10,7 @@ from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
 from game.main import SimpleGame
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
-    minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
+    minus_button, plus_button, restart_button, get_difficulty_num, get_win_text, training_button, help_button
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
 from game.bot import Bot
 from game.minmax import game_board_to_str
@@ -33,6 +33,7 @@ class SceneState(Enum):
     menu = 0
     checkers = 1
     result = 2
+    checkers_with_help = 3
 
 
 class DrawHandler:
@@ -103,6 +104,8 @@ class Gui:
             self.render_menu()
         elif self.state == SceneState.result:
             self.render_result()
+        elif self.state == SceneState.checkers_with_help:
+            self.render_gameplay()
         pg.display.update()
 
     def render_gameplay(self):
@@ -112,6 +115,8 @@ class Gui:
         self.render_hints()
         if not self.bot_vs_bot_mode:
             restart_button.render(self.__screen)
+        if self.state == SceneState.checkers_with_help:
+            help_button.render(self.__screen)
 
     def render_menu(self):
         self.__screen.fill(GC)
@@ -124,6 +129,7 @@ class Gui:
         difficulty_text.render(self.__screen)
         minus_button.render(self.__screen)
         plus_button.render(self.__screen)
+        training_button.render(self.__screen)
         get_difficulty_num(self.difficulty).render(self.__screen)
 
     def render_result(self):
@@ -138,7 +144,7 @@ class Gui:
             board_sprite = self.__sprites.rotated_board
         self.__screen.blit(board_sprite, (self.left_offset, 0))
 
-    def render_selected_checker(self):
+    def render_selected_checker(self, checker=None):
         if self.selected_checker is not None:
             x_cord = self.selected_checker[0]
             y_cord = self.selected_checker[1]
@@ -165,7 +171,7 @@ class Gui:
                     else:
                         self.__screen.blit(self.__sprites.black_checker, coordinate)
 
-    def render_hints(self):
+    def render_hints(self, hint=None):
         for move in self.possible_moves:
             move_x = move[1][0]
             move_y = move[1][1]
@@ -182,11 +188,19 @@ class Gui:
                 if event.type == pg.MOUSEBUTTONUP:
                     if event.button in (1, 3):  # RMB, LMB
                         x, y = event.pos
+
                         if self.state == SceneState.checkers:
                             self.handle_gameplay_click(x, y)
                             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
+
+                        elif self.state == SceneState.checkers_with_help:
+                            self.handle_gameplay_click(x, y)
+                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
+                            if state in [1, 2]:  # game is ended (w win, b win)
+                                self.state = SceneState.result
+
                         elif self.state == SceneState.menu:
                             self.handle_menu_click(x, y)
                         elif self.state == SceneState.result:
@@ -256,6 +270,10 @@ class Gui:
         if minus_button.collide_point((x, y)) and self.difficulty > MIN_DIFFICULTY:
             self.difficulty -= 1
 
+        if training_button.collide_point((x, y)):
+            self.state = SceneState.checkers_with_help
+            self.__game.setIsPlayerWhite(True)
+
     def handle_gameplay_click(self, x: int, y: int):
         if restart_button.collide_point((x, y)):
             self.__game = SimpleGame()
@@ -264,13 +282,11 @@ class Gui:
             self.possible_moves.clear()
             self.__bot.end_bot_thinking()
 
+        if help_button.collide_point((x, y)):
+            print(1)
+
         i, j = self.__sprites.get_cell(x - self.left_offset, y, self.__game.isPlayerWhite())
         board = self.__game.getBoard()
-        if self.is_bot_move is False:
-            # click on checker
-            if board[i][j][0] and board[i][j][1] == self.__game.isWhiteTurn():
-                self.selected_checker = [i, j]
-                self.possible_moves = possibleMovesForPoint(self.__game, [i, j])
 
         # click on hint
         for move in self.possible_moves:
@@ -289,9 +305,20 @@ class Gui:
                     self.selected_checker = None
                     finding_max = not self.__game.isPlayerWhite()
                     self.__bot.start_best_move_calculation(self.__game, self.difficulty, finding_max)
+                    return
                 else:
                     self.selected_checker = move_end
                     self.possible_moves = possibleMovesForPoint(self.__game, move_end)
+                    return
+
+        if self.is_bot_move is False:
+            # click on checker
+            if board[i][j][0] and board[i][j][1] == self.__game.isWhiteTurn():
+                self.selected_checker = [i, j]
+                self.possible_moves = possibleMovesForPoint(self.__game, [i, j])
+            else:
+                self.selected_checker = None
+                self.possible_moves = []
 
     def handle_result_click(self, x, y):
         if restart_button.collide_point((x, y)):

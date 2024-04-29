@@ -1,7 +1,7 @@
 from game.main import GameState
 
 import pygame as pg
-from gui.constants import BUTTONS_FONT_PATH, GC, BC, WC, WIN_SIZE
+from gui.constants import BUTTONS_FONT_PATH, GC, BC, WC, WIN_SIZE, RC
 
 pg.init()
 try:
@@ -32,25 +32,35 @@ class Text:
 
 
 class Button(Text):
-    def __init__(self, coordinates: (int, int), text: str, size: (int, int), is_black: bool, stroke=True):
+    def __init__(self, coordinates: (int, int),
+                 text: str,
+                 size: (int, int),
+                 is_black: bool,
+                 stroke=True,
+                 is_red=False):
         self.size = size
         self.is_black = is_black
         self.stroke = stroke
+        self.is_red = is_red
         super().__init__(coordinates, text)
 
     def make_image(self) -> pg.Surface:
         image = pg.Surface(self.size)
         center_for_text = (self.size[0] // 2, self.size[1] // 2)
-        if self.is_black:
-            bg_color = BC
+        if self.is_red:
+            bg_color = RC
             text_color = WC
         else:
-            bg_color = WC
-            text_color = BC
-        if self.stroke:
-            image.fill(text_color)
-        else:
-            image.fill(bg_color)
+            if self.is_black:
+                bg_color = BC
+                text_color = WC
+            else:
+                bg_color = WC
+                text_color = BC
+            if self.stroke:
+                image.fill(text_color)
+            else:
+                image.fill(bg_color)
         pg.draw.rect(image, bg_color, (2, 2, self.size[0] - 4, self.size[1] - 4))
         text = button_font.render(self.text, 1, text_color)
         text_rect = text.get_rect(center=center_for_text)
@@ -67,7 +77,9 @@ play_black_button = Button((580, 310), 'PLAY BLACK', (280, 70), True)
 difficulty_text = Text((400, 500), 'Difficulty')
 minus_button = Button((295, 550), '-', (50, 50), True, False)
 plus_button = Button((495, 550), '+', (50, 50), False, False)
+training_button = Button((400, 650), 'TRAINING', (220, 70), False, True)
 restart_button = Button((20, 20), 'R', (40, 40), True, False)
+help_button = Button((781, 20), '?', (40, 40), False, False, True)
 
 
 def get_difficulty_num(difficulty):

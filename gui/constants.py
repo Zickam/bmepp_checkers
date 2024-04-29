@@ -1,4 +1,4 @@
-WIN_SIZE = (640, 640)
+WIN_SIZE = (800, 800)
 FPS = 60
 
 IGC = (0, 220, 0)
@@ -8,6 +8,7 @@ CWC = (250, 250, 250)  # checker's white color
 BC = (15, 15, 15)  # black color
 WC = (240, 240, 240)  # white color
 GC = (127, 127, 127)  # gray color
+RC = (255, 0, 0)  # red color
 BCC = (108, 152, 76)  # black cells color
 WCC = (245, 245, 226)  # white cells color
 BBC = (20, 20, 20)  # board border color
