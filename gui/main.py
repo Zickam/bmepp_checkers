@@ -90,6 +90,7 @@ class Gui:
 
     def bots_duel(self) -> int:
         while True:
+            self.__clock.tick(FPS)
             if self.with_display:
                 self.render()
             pg.event.get()
