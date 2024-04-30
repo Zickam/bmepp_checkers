@@ -1,4 +1,5 @@
 import datetime
+import time
 from enum import Enum
 import os
 import numpy as np
@@ -9,8 +10,8 @@ from game.classes import move_to_notation
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
 from game.main import SimpleGame
-from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
-    minus_button, plus_button, restart_button, get_difficulty_num, get_win_text, training_button, help_button
+from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, minus_button, \
+    plus_button, restart_button, get_difficulty_num, get_win_text, training_button, help_button, help_buttons_animation
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
 from game.bot import Bot
 from game.minmax import game_board_to_str
@@ -194,12 +195,14 @@ class Gui:
                             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
+                            return
 
                         elif self.state == SceneState.checkers_with_help:
                             self.handle_gameplay_click(x, y)
                             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
+                            return
 
                         elif self.state == SceneState.menu:
                             self.handle_menu_click(x, y)
@@ -283,7 +286,18 @@ class Gui:
             self.__bot.end_bot_thinking()
 
         if help_button.collide_point((x, y)):
-            print(1)
+            self.__bot.start_best_move_calculation(self.__game, self.difficulty, self.__game.isPlayerWhite())
+            start = time.time()
+            while not self.__bot.is_best_move_ready():
+                [exit() for event in pg.event.get() if event.type == pg.QUIT]
+                ind = int((time.time() - start) * 5 % len(help_buttons_animation))
+                button = help_buttons_animation[ind]
+                button.render(self.__screen)
+                pg.display.update()
+            best_move = self.__bot.get_calculated_move()
+            self.selected_checker = best_move[0]
+            self.possible_moves = [best_move]
+            return
 
         i, j = self.__sprites.get_cell(x - self.left_offset, y, self.__game.isPlayerWhite())
         board = self.__game.getBoard()
@@ -299,6 +313,7 @@ class Gui:
                 self.__game.fromArgs(*new_args)
 
                 self.player_log.add_turn(move)
+                print('clear')
                 self.possible_moves.clear()
 
                 if is_white_flag != self.__game.isWhiteTurn():
