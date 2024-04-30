@@ -97,7 +97,7 @@ class Process:
 
     def mainloop(self):
         while True:
-            time.sleep(0.1)
+            time.sleep(0.01)
             if not self.process_request_queue.empty():
                 game, difficulty, finding_max, weights = self.process_request_queue.get()
                 if difficulty == 0:

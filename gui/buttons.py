@@ -1,15 +1,12 @@
-from game.main import GameState
+from gui.constants import BUTTONS_FONT_PATH, BC, WC, WIN_SIZE
 
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame as pg
-from gui.constants import BUTTONS_FONT_PATH, GC, BC, WC, WIN_SIZE
 
 pg.init()
-try:
-    button_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 17)
-    caption_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 5)
-except FileNotFoundError:  # If start point was bmepp_ckeckers/competition/main.py
-    button_font = pg.font.Font('../'+BUTTONS_FONT_PATH, WIN_SIZE[1] // 17)
-    caption_font = pg.font.Font('../'+BUTTONS_FONT_PATH, WIN_SIZE[1] // 5)
+button_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 17)
+caption_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 5)
 
 
 class Text:
@@ -59,6 +56,7 @@ class Button(Text):
 
     def collide_point(self, coordinates: (int, int)) -> bool:
         return self.rect.collidepoint(coordinates)
+
 
 # ВСЁ МАГИЧЕСКОЕ!
 caption_text = Text((400, 120), 'Checkers', True)

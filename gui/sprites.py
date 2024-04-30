@@ -1,13 +1,16 @@
-import pygame as pg
 import string
 from gui.constants import WIN_SIZE, BCC, WCC, BBC, BOARD_FONT_PATH, CBC, CWC, HRC, IGC
+
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame as pg
 
 pg.init()
 
 
 class Sprites:
-    def __init__(self, CELLS_NUMBER):
-        self.CELLS_NUMBER = CELLS_NUMBER
+    def __init__(self, cells_number):
+        self.CELLS_NUMBER = cells_number
         self.height = WIN_SIZE[1]
         self.offset_size = self.height // 20
         self.font_size = self.offset_size // 2
@@ -27,13 +30,10 @@ class Sprites:
         self.rotated_cords_board = self.make_coordinates_matrix(False)
 
     def make_board(self) -> pg.Surface:
-        Alph = string.ascii_lowercase
-        Nums = [str(x) for x in range(1, 27)]
+        alph = string.ascii_lowercase
+        nums = [str(x) for x in range(1, 27)]
 
-        try:
-            font = pg.font.Font(BOARD_FONT_PATH, self.font_size)
-        except FileNotFoundError:  # If start point was bmepp_ckeckers/competition/main.py
-            font = pg.font.Font('../'+BOARD_FONT_PATH, self.font_size)
+        font = pg.font.Font(BOARD_FONT_PATH, self.font_size)
         image = pg.Surface((self.height, self.height))
         image.fill(WCC)
 
@@ -54,7 +54,7 @@ class Sprites:
         text_offset2 = text_offset + self.CELLS_NUMBER * self.cell_size + self.offset_size
         for i in range(self.CELLS_NUMBER):
             # draw chars
-            char = font.render(Alph[i], True, BBC)
+            char = font.render(alph[i], True, BBC)
             x = (i + .5) * self.cell_size + self.offset_size
             x -= char.get_width() // 2
             uy = text_offset - char.get_height() // 2
@@ -63,7 +63,7 @@ class Sprites:
             char = pg.transform.rotate(char, 180)
             image.blit(char, (x, by))
             # draw numbers
-            num = font.render(Nums[self.CELLS_NUMBER - i - 1], True, BBC)
+            num = font.render(nums[self.CELLS_NUMBER - i - 1], True, BBC)
             lx = text_offset - char.get_height() // 2
             rx = text_offset2 - char.get_height() // 2
             y = (i + .5) * self.cell_size + self.offset_size
@@ -88,7 +88,8 @@ class Sprites:
 
         pg.draw.circle(image, small_circle_color, center, self.cell_size // self.checker_scale // 1.1, WIN_SIZE[0]//250)
         if not is_queen:
-            pg.draw.circle(image, small_circle_color, center, self.cell_size // self.checker_scale // 2, WIN_SIZE[0]//250)
+            pg.draw.circle(image, small_circle_color, center,
+                           self.cell_size // self.checker_scale // 2, WIN_SIZE[0]//250)
         return image
 
     def make_hint(self) -> pg.Surface:

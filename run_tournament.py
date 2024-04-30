@@ -1,4 +1,3 @@
-import competition.main
 import competition.classes
 
 if __name__ == "__main__":

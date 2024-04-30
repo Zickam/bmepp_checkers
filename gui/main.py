@@ -1,9 +1,6 @@
 import datetime
 from enum import Enum
-import os
 import numpy as np
-
-import pygame as pg
 
 from game.classes import move_to_notation
 from gui.sprites import Sprites
@@ -14,6 +11,11 @@ from gui.buttons import caption_text, play_white_button, play_black_button, diff
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
 from game.bot import Bot
 from game.minmax import game_board_to_str
+
+
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame as pg
 
 
 class Log:

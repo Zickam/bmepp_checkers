@@ -1,4 +1,3 @@
-import random
 import pickle
 import multiprocessing as mp
 import os
@@ -7,14 +6,14 @@ import time
 from game.bot import Bot
 from gui.main import Gui
 from competition.classes import Weights, Results
-from competition.constants import PARALLEL_MATCHES, PATH_TO_DATA, OPPONENTS_COUNT
+from competition.constants import PARALLEL_MATCHES, PATH_TO_DATA, OPPONENTS_COUNT, ALPHA, BETA, GAMMA
 from competition.mutations import next_gen_weights
 
 # TO DO:
 # Веса из файла ✅
 # Боты из весов ✅
 # Сохранение результатов в файл ✅
-# создание файлов для поколений❌
+# создание файлов для поколений✅
 # Проведение матчей ✅,                        потом мутации❌
 
 # IDEAS:
@@ -48,14 +47,13 @@ class Generation:
     def create_duel_pairs(self):
         already_in_pairs = []
         for i, weights in enumerate(self.weights):
-            current_results: list[int, int, int] = self.results[i]
             for j in range(OPPONENTS_COUNT):
                 opponent_ind = (i + j + 1) % len(self.weights)
                 if (i, opponent_ind) in already_in_pairs or (opponent_ind, i) in already_in_pairs:
                     continue
                 if (i, opponent_ind) in self.conducted_duels or (opponent_ind, i) in self.conducted_duels:
                     continue
-                print(i, opponent_ind)
+
                 opponent_weights = self.weights[opponent_ind]
                 duel = Duel(i, opponent_ind, weights, opponent_weights)
                 self.duel_pairs.append(duel)
@@ -64,7 +62,7 @@ class Generation:
     def mainloop(self):
         if len(self.duel_pairs) == 0:
             return
-        print('duel pairs: ', len(self.duel_pairs))
+        print('duel pairs: ', len(self.duel_pairs), [(d.id1, d.id2) for d in self.duel_pairs])
 
         for duel in self.duel_pairs:
             self.duel_pairs_queue.put(duel)
@@ -77,13 +75,16 @@ class Generation:
         while ended_duels != len(self.duel_pairs):
             if not self.duel_results_queue.empty():
                 ended_duel = self.duel_results_queue.get()
-                print(ended_duel.result)
+
+                g_n = self.generation_number
+                percent = (len(self.conducted_duels)+1)/(len(self.weights)*OPPONENTS_COUNT/2)*100
+                print(f'gen {g_n}: {str(round(percent, 2))+"%": <6}   last duel: {ended_duel.id1} {ended_duel.id2}')
+
                 self.update_results(ended_duel)
                 self.save_results()
-                for row in self.results:
-                    print(row)
                 ended_duels += 1
             time.sleep(0.1)
+        print()
         self.create_new_generation()
 
     def update_results(self, duel: Duel):
@@ -105,17 +106,21 @@ class Generation:
             pickle.dump(self.conducted_duels, file)
         Results.save_results_in_file(results_path, self.results)
 
-    def calculate_generation(self):
+    @staticmethod
+    def calculate_generation():
         file_names = os.listdir(PATH_TO_DATA)
         i = 1
         while f"weights{i + 1}.txt" in file_names:
             i += 1
         return i
-    @staticmethod
-    def fitness_function():
-        pass
 
-    def sort_weights(self):
+    @staticmethod
+    def fitness_function(_input):
+        result, weight = _input
+        value = result[0] * ALPHA + result[1] * BETA + result[2] * GAMMA
+        return value
+
+    def get_sorted_weights(self):
         list_to_sort = []
         for result, weight in zip(self.results, self.weights):
             list_to_sort.append([result, weight])
@@ -123,7 +128,7 @@ class Generation:
         return [element[1] for element in list_to_sort]
 
     def create_new_generation(self):
-        weights = next_gen_weights(self.weights)
+        weights = next_gen_weights(self.get_sorted_weights())
         new_result_file = f"{PATH_TO_DATA}results{self.generation_number + 1}.txt"
         new_weights_file = f"{PATH_TO_DATA}weights{self.generation_number + 1}.txt"
         empty_results = [[0, 0, 0] for _ in range(len(weights))]
@@ -132,7 +137,6 @@ class Generation:
         file = open(f'{PATH_TO_DATA}conducted_duels{self.generation_number + 1}.pickle', 'wb')
         pickle.dump(set(), file)
         file.close()
-
 
 
 class DuelProcess:
@@ -182,7 +186,6 @@ def run_tournament():
     while True:
         generation = Generation()
         generation.mainloop()
-        break
 
 
 if __name__ == "__main__":
