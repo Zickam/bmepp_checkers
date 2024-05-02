@@ -39,7 +39,7 @@ class Generation:
         with open(f'{PATH_TO_DATA}conducted_duels{self.generation_number}.pickle', "rb") as file:
             self.conducted_duels: set[tuple] = pickle.load(file)
 
-        self.duel_pairs: list[Duel] = []
+        self. duel_pairs: list[Duel] = []
         self.create_duel_pairs()
         self.duel_pairs_queue = mp.Queue()
         self.duel_results_queue = mp.Queue()
@@ -77,7 +77,7 @@ class Generation:
                 ended_duel = self.duel_results_queue.get()
 
                 g_n = self.generation_number
-                percent = (len(self.conducted_duels)+1)/(len(self.weights)*OPPONENTS_COUNT/2)*100
+                percent = (len(self.conducted_duels)+1)/(len(self.duel_pairs))*100
                 print(f'gen {g_n}: {str(round(percent, 2))+"%": <6}   last duel: {ended_duel.id1} {ended_duel.id2}')
 
                 self.update_results(ended_duel)
@@ -128,7 +128,7 @@ class Generation:
         return [element[1] for element in list_to_sort]
 
     def create_new_generation(self):
-        weights = next_gen_weights(self.get_sorted_weights())
+        weights = next_gen_weights(self.get_sorted_weights(), self.generation_number)
         new_result_file = f"{PATH_TO_DATA}results{self.generation_number + 1}.txt"
         new_weights_file = f"{PATH_TO_DATA}weights{self.generation_number + 1}.txt"
         empty_results = [[0, 0, 0] for _ in range(len(weights))]
