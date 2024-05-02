@@ -1,18 +1,21 @@
 import datetime
 from enum import Enum
-import os
 import numpy as np
 
-import pygame as pg
-
-from game.classes import Move, move_to_notation
+from game.classes import move_to_notation
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
-from game.main import SimpleGame, GameState
+from game.main import SimpleGame
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, \
     minus_button, plus_button, restart_button, get_difficulty_num, get_win_text
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
 from game.bot import Bot
+from game.minmax import game_board_to_str
+
+
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame as pg
 
 
 class Log:
@@ -34,14 +37,30 @@ class SceneState(Enum):
     result = 2
 
 
+class DrawHandler:
+    def __init__(self):
+        self.cache = set()
+
+    def check_draw(self, board):
+        if game_board_to_str(board) in self.cache:
+            return True
+        else:
+            self.cache.add(game_board_to_str(board))
+
+
 class Gui:
-    def __init__(self, opponent_bot: Bot, main_bot: Bot = None):
+    def __init__(self, opponent_bot: Bot,
+                 main_bot: Bot = None,
+                 caption='Checkers',
+                 with_display=True,
+                 need_to_calculate=False):
         """
         Can work in two modes: bot vs player, bot vs bot
         If main_bot param is not None, will start bot vs bot game, opponent_bot playing black, main_bot playing white
         """
         self.__game = SimpleGame()
         self.__clock = pg.time.Clock()
+        self.with_display = with_display
         self.bot_vs_bot_mode = main_bot is not None
         self.possible_moves: list[list[list[int, int]]] = []
         self.selected_checker: None | list[int, int] = None
@@ -49,14 +68,20 @@ class Gui:
         self.difficulty = 2
         self.__bot = opponent_bot
         self.__bot_instead_player = main_bot
-        if self.bot_vs_bot_mode:
+        if self.bot_vs_bot_mode and need_to_calculate:
             self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
+        self.draw_handler = DrawHandler()
         self.player_log = Log()
 
-        self.__screen = pg.display.set_mode(WIN_SIZE)
-        pg.display.set_caption('Checkers')
+        if self.with_display:
+            self.__screen = pg.display.set_mode(WIN_SIZE)
+            pg.display.set_caption(caption)
+
         self.__sprites = Sprites(self.__game.getBoardWidth())
         self.left_offset = WIN_SIZE[0] - self.__sprites.board.get_width()
+
+    def change_caption(self, caption: str):
+        pg.display.set_caption(caption)
 
     def mainloop(self):
         while True:
@@ -67,10 +92,14 @@ class Gui:
 
     def bots_duel(self) -> int:
         while True:
-            self.render()
+            self.__clock.tick(FPS)
+            if self.with_display:
+                self.render()
             pg.event.get()
             self.handle_bot_events()
             if self.state == SceneState.result:
+                if self.draw_handler.check_draw(self.__game.getBoard()):
+                    return 3
                 return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
 
     def render(self):
@@ -87,7 +116,8 @@ class Gui:
         self.render_selected_checker()
         self.render_checkers()
         self.render_hints()
-        restart_button.render(self.__screen)
+        if not self.bot_vs_bot_mode:
+            restart_button.render(self.__screen)
 
     def render_menu(self):
         self.__screen.fill(GC)
@@ -161,7 +191,7 @@ class Gui:
                         if self.state == SceneState.checkers:
                             self.handle_gameplay_click(x, y)
                             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
-                            if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
+                            if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
                         elif self.state == SceneState.menu:
                             self.handle_menu_click(x, y)
@@ -181,6 +211,10 @@ class Gui:
             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
+                return
+            if self.bot_vs_bot_mode and self.draw_handler.check_draw(self.__game.getBoard()):
+                self.state = SceneState.result
+                return
 
             if flag == self.__game.isWhiteTurn():
                 self.__bot.start_best_move_calculation(self.__game, self.difficulty, False)
@@ -198,6 +232,10 @@ class Gui:
             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
+                return
+            if self.bot_vs_bot_mode and self.draw_handler.check_draw(self.__game.getBoard()):
+                self.state = SceneState.result
+                return
 
             if flag == self.__game.isWhiteTurn():
                 self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
@@ -266,6 +304,15 @@ class Gui:
             self.__game = SimpleGame()
             self.state = SceneState.menu
 
+    def change_bots(self, bot1: Bot, bot2: Bot):
+        self.__bot = bot1
+        self.__bot_instead_player = bot2
+        self.draw_handler = DrawHandler()
+        self.state = SceneState.checkers
+        self.__game = SimpleGame()
+        self.possible_moves = []
+        self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
+
+
     def close(self):
         exit()
-

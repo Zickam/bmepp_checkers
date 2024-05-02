@@ -14,3 +14,4 @@ main.exe
 /main.onefile-build
 nuitka-crash-report.xml
 cash.pickle
+competition/data

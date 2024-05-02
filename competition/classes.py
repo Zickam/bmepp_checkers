@@ -19,10 +19,6 @@ class Weights:
         return str_weights[:-1]
 
     @staticmethod
-    def create_generation(weights: list[list[float]]):
-        pass
-
-    @staticmethod
     def load_weights_from_file(filename) -> list[list[float]]:
         strings = open(filename, 'r').readlines()
         weights = []
@@ -70,5 +66,5 @@ class Results:
     def save_results_in_file(filename: str, results: list[list[int]]):
         with open(filename, 'w') as file:
             for result in results:
-                str_results = Results.weights_to_str(result) + '\n'
+                str_results = Results.results_to_str(result) + '\n'
                 file.write(str_results)
