@@ -1,3 +1,4 @@
+import copy
 import random
 
 import numpy as np
@@ -57,20 +58,25 @@ def _getCrossbredWeights(weights: list[np.array], crossbred_weights_amount_need:
     crossbred_weights_got = []
     crossbred_weight_idx = 0
 
-    for i in range(0, len(weights) - 1, 2):
-        if len(crossbred_weights_got) >= crossbred_weights_amount_need:
+    is_enough = False
+    for i in range(0, len(weights) - 1):
+        if is_enough:
             break
+        for j in range(i, len(weights)):
+            if len(crossbred_weights_got) >= crossbred_weights_amount_need:
+                is_enough = True
+                break
 
-        crossbred_weight_idx %= crossbred_weights_amount_need
+            crossbred_weight_idx %= crossbred_weights_amount_need
 
-        parent_1 = weights[i]
-        parent_2 = weights[i + 1]
+            parent_1 = weights[i]
+            parent_2 = weights[i + 1]
 
-        parts_got = _getHalfPartsIdsFromParents(parent_1, parent_2)
+            parts_got = _getHalfPartsIdsFromParents(parent_1, parent_2)
 
-        crossbred_weights_got.append(parts_got)
+            crossbred_weights_got.append(parts_got)
 
-        crossbred_weight_idx += 1
+            crossbred_weight_idx += 1
 
     return crossbred_weights_got
 
@@ -151,11 +157,11 @@ def mutateListOfWeights(
 
 
 if __name__ == "__main__":
-    weights = [getRandomWeightsList(20) for i in range(10)]
+    weights = [getRandomWeightsList(20) for i in range(50)]
     weights[0][0] = 0.9
 
     weights = normalizeWeightsList(weights)
-
+    start_weights = copy.deepcopy(weights)
     # print("initial we ights", *initial_weights, sep="\n")
     print("initial", weights[0])
 
@@ -164,8 +170,11 @@ if __name__ == "__main__":
                                           i,
                                           0.3,
                                           0.3,
-                                          0.2)
-    print("mutated", weights[3])
+                                          0.2) #  0.3 -> 0.3 + 0.3 + 0.2 + random
+        print('len', len(weights))
+    #print("mutated", weights[3])
+    print([round(weight, 2) for weight in start_weights[25]])
+    print([round(weight, 2) for weight in weights[25]])
 
     # print("Mutated", *mutated_weights, sep="\n")
     # for i, initial, mutated in zip(enumerate(initial_weights), initial_weights, mutated_weights):
