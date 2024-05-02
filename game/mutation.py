@@ -7,6 +7,7 @@ DEFAULT_TOP_WEIGHTS_PERCENT = 0.16
 DEFAULT_MUTATED_PERCENT = 0.54
 DEFAULT_CROSSBRED_PERCENT = 0.1
 
+MAX_WEIGHT = 1000
 
 
 rng = np.random.default_rng()
@@ -31,6 +32,12 @@ def _getBiasedWeights(weights: np.array, bias_percent: float) -> np.array:
         biased_weight = weights[i] + weights[i] * bias_percent
         if abs(biased_weight) <= 1:
             biased_weight = -biased_weight
+
+        if biased_weight > 0:
+            biased_weight = min(biased_weight, MAX_WEIGHT)
+        elif biased_weight < 0:
+            biased_weight = max(biased_weight, -MAX_WEIGHT)
+
         biased_weights.append(biased_weight)
     return biased_weights
 
@@ -68,6 +75,22 @@ def _getCrossbredWeights(weights: list[np.array], crossbred_weights_amount_need:
     return crossbred_weights_got
 
 
+def normalizeWeightsList(weights_list: list[np.array]) -> list[np.array]:
+    """
+    In our case normalizing is only make weights fit into
+    bounds [-MAX_WEIGHT, MAX_WEIGHT]. Just this.
+    """
+    for i in range(len(weights_list)):
+        for j in range(len(weights_list[i])):
+            if weights_list[i][j] > MAX_WEIGHT:
+                weights_list[i][j] = MAX_WEIGHT
+            elif weights_list[i][j] < -MAX_WEIGHT:
+                weights_list[i][j] = -MAX_WEIGHT
+
+    return weights_list
+
+
+
 def mutateListOfWeights(
         weights_list: list[np.array],
         generation_num: int,
@@ -90,6 +113,8 @@ def mutateListOfWeights(
         raise Exception(
             f"top_weights_amount + biased_weights_amount + crossbred_weights_amount ({top_weights_amount, biased_weights_amount, crossbred_weights_amount}) should be less than weights_list len ({len(weights_list)}) because we have to add some completely new weights"
         )
+    if top_weights_amount == 0 or biased_weights_amount == 0 or crossbred_weights_percent == 0:
+        raise Exception("None of (top_weights_amount, biased_weights_amount, crossbred_weights_percent) must be zero!")
 
     new_weights_amount = len(
         weights_list) - top_weights_amount - biased_weights_amount - crossbred_weights_amount
@@ -103,17 +128,13 @@ def mutateListOfWeights(
     for i in range(biased_weights_amount):
         weight_to_mutate_idx = weight_to_mutate_idx % len(top_weights_list)
 
-        bias_percent = rng.integers(1, generation_num + 2) / (generation_num * 4)
-        print(generation_num * 3, bias_percent)
+        bias_percent = rng.integers(1, generation_num + 2) / (generation_num / 2)
         if random.choice([-1, 1]) == -1: # changing sign
             bias_percent = -bias_percent
+        print(generation_num, bias_percent)
 
         biased_weights = _getBiasedWeights(top_weights_list[weight_to_mutate_idx],
                                            bias_percent)
-
-        print(top_weights_list[weight_to_mutate_idx])
-        print(biased_weights)
-        print()
 
         biased_weights_list.append(biased_weights)
 
@@ -124,14 +145,27 @@ def mutateListOfWeights(
         for i in range(new_weights_amount)
     ]
 
-    return top_weights_list + crossbred_weights_list + biased_weights_list + new_weights_list
+    weights = top_weights_list + crossbred_weights_list + biased_weights_list + new_weights_list
+
+    return weights
 
 
 if __name__ == "__main__":
-    initial_weights = [getRandomWeightsList(20) for i in range(1000)]
-    # print("initial weights", *initial_weights, sep="\n")
+    weights = [getRandomWeightsList(20) for i in range(10)]
+    weights[0][0] = 0.9
 
-    mutated_weights = mutateListOfWeights(initial_weights, 50, 0.3, 0.4, 0.2)
+    weights = normalizeWeightsList(weights)
+
+    # print("initial we ights", *initial_weights, sep="\n")
+    print("initial", weights[0])
+
+    for i in range(1, 10):
+        weights = mutateListOfWeights(weights,
+                                          i,
+                                          0.3,
+                                          0.3,
+                                          0.2)
+    print("mutated", weights[3])
 
     # print("Mutated", *mutated_weights, sep="\n")
     # for i, initial, mutated in zip(enumerate(initial_weights), initial_weights, mutated_weights):
