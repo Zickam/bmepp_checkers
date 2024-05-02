@@ -2,7 +2,12 @@ import pickle
 from competition.constants import PATH_TO_DATA, WEIGHTS_COUNT
 from competition.classes import Results, Weights
 from competition.mutations import getRandomWeightsList
-file = open(f'{PATH_TO_DATA}conducted_duels1.pickle', 'wb')
+import os
+try:
+    file = open(f'{PATH_TO_DATA}conducted_duels1.pickle', 'wb')
+except FileNotFoundError:
+    os.mkdir(PATH_TO_DATA)
+    file = open(f'{PATH_TO_DATA}conducted_duels1.pickle', 'wb')
 pickle.dump(set(), file)
 file.close()
 restart_results = [[0, 0, 0] for _ in range(WEIGHTS_COUNT)]
