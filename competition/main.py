@@ -9,16 +9,6 @@ from competition.classes import Weights, Results
 from competition.constants import PARALLEL_MATCHES, PATH_TO_DATA, OPPONENTS_COUNT, ALPHA, BETA, GAMMA
 from competition.mutations import next_gen_weights
 
-# TO DO:
-# Веса из файла ✅
-# Боты из весов ✅
-# Сохранение результатов в файл ✅
-# создание файлов для поколений✅
-# Проведение матчей ✅,                        потом мутации❌
-
-# IDEAS:
-# запоминать блоки весов, которые остаются n раундов ✅
-
 
 class Duel:
     def __init__(self, id1, id2, weights1, weights2):
@@ -30,7 +20,7 @@ class Duel:
 
 
 class Generation:
-    def __init__(self):
+    def __init__(self, duel_pairs_queue, duel_results_queue):
         self.generation_number: int = self.calculate_generation()
         results_path = f"{PATH_TO_DATA}results{self.generation_number}.txt"
         self.results: list[list[int, int, int]] = Results.load_results_from_file(results_path)
@@ -41,8 +31,8 @@ class Generation:
 
         self. duel_pairs: list[Duel] = []
         self.create_duel_pairs()
-        self.duel_pairs_queue = mp.Queue()
-        self.duel_results_queue = mp.Queue()
+        self.duel_pairs_queue = duel_pairs_queue
+        self.duel_results_queue = duel_results_queue
 
     def create_duel_pairs(self):
         already_in_pairs = []
@@ -67,17 +57,13 @@ class Generation:
         for duel in self.duel_pairs:
             self.duel_pairs_queue.put(duel)
 
-        for _ in range(PARALLEL_MATCHES):
-            new_process = mp.Process(target=DuelProcess, args=(self.duel_pairs_queue, self.duel_results_queue))
-            new_process.start()
-
         ended_duels = 0
         while ended_duels != len(self.duel_pairs):
             if not self.duel_results_queue.empty():
                 ended_duel = self.duel_results_queue.get()
 
                 g_n = self.generation_number
-                percent = (len(self.conducted_duels)+1)/(len(self.duel_pairs))*100
+                percent = (ended_duels+1)/(len(self.duel_pairs))*100
                 print(f'gen {g_n}: {str(round(percent, 2))+"%": <6}   last duel: {ended_duel.id1} {ended_duel.id2}')
 
                 self.update_results(ended_duel)
@@ -128,7 +114,7 @@ class Generation:
         return [element[1] for element in list_to_sort]
 
     def create_new_generation(self):
-        weights = next_gen_weights(self.get_sorted_weights(), self.generation_number)
+        weights = next_gen_weights(self.get_sorted_weights(), 2)
         new_result_file = f"{PATH_TO_DATA}results{self.generation_number + 1}.txt"
         new_weights_file = f"{PATH_TO_DATA}weights{self.generation_number + 1}.txt"
         empty_results = [[0, 0, 0] for _ in range(len(weights))]
@@ -146,15 +132,13 @@ class DuelProcess:
         self.mainloop()
 
     def mainloop(self):
-        if self.process_request_queue.empty():
-            return
 
         bot1 = Bot(need_to_print=False)
         bot2 = Bot(need_to_print=False)
         gui = Gui(bot2, bot1, with_display=False)
 
-        while not self.process_request_queue.empty():
-            duel = self.process_request_queue.get()
+        while True:
+            duel = self.process_request_queue.get(block=True, timeout=900)
 
             bot1.change_weights(duel.weights1)
             bot2.change_weights(duel.weights2)
@@ -182,10 +166,23 @@ class DuelProcess:
             self.process_response_queue.put(duel)
 
 
-def run_tournament():
+def manager_process():
+    duel_pairs_queue = mp.Queue()
+    duel_results_queue = mp.Queue()
+    child_processes = []
+    print('numba init')
+    for _ in range(PARALLEL_MATCHES):
+        new_process = mp.Process(target=DuelProcess, args=(duel_pairs_queue, duel_results_queue))
+        new_process.start()
+        child_processes.append(new_process)
     while True:
-        generation = Generation()
+        generation = Generation(duel_pairs_queue, duel_results_queue)
         generation.mainloop()
+
+
+def run_tournament():
+    manager = mp.Process(target=manager_process)
+    manager.start()
 
 
 if __name__ == "__main__":
