@@ -4,3 +4,5 @@ OPPONENTS_COUNT = 5
 WEIGHTS_COUNT = 15  # at least OPPONENTS_COUNT * 2 + 1
 # coefficient for fitness function
 ALPHA, BETA, GAMMA = 10, 1, -100
+ADD_SIMPLE_WEIGHTS = True
+SIMPLE_WEIGHTS = [9, 100] + [0] * 8 + [1, 1] + [0] * 8

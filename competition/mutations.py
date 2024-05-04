@@ -1,5 +1,6 @@
 import copy
 import random
+from competition.constants import ADD_SIMPLE_WEIGHTS, SIMPLE_WEIGHTS
 
 import numpy as np
 
@@ -34,6 +35,7 @@ def getRandomWeightsList(amount: int) -> list[np.array]:
     weights = []
     for i in range(amount):
         weights.append(_getRandomWeight())
+    weights = round_weights([weights])[0]
     return weights
 
 
@@ -156,13 +158,26 @@ def mutateListOfWeights(
 
         weight_to_mutate_idx += 1
 
+    if ADD_SIMPLE_WEIGHTS:
+        new_weights_amount -= 1
     new_weights_list = [
         getRandomWeightsList(len(weights_list[0]))
-        for i in range(new_weights_amount)
+        for _ in range(new_weights_amount)
     ]
+    if ADD_SIMPLE_WEIGHTS:
+        new_weights_list.append(SIMPLE_WEIGHTS)
 
     weights = top_weights_list + crossbred_weights_list + biased_weights_list + new_weights_list
+    weights = round_weights(weights)
 
+    return weights
+
+
+def round_weights(weights: list[list[float]]):
+    weights = copy.deepcopy(weights)
+    for weight in weights:
+        for i, value in enumerate(weight):
+            weight[i] = round(value, 14)
     return weights
 
 
