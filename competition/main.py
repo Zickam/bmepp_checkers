@@ -5,7 +5,7 @@ import time
 
 from game.bot import Bot
 from gui.main import Gui
-from competition.classes import Weights, Results
+from competition.classes import Weights, Results, save_sorted_results_and_weights
 from competition.constants import PARALLEL_MATCHES, PATH_TO_DATA, OPPONENTS_COUNT, ALPHA, BETA, GAMMA
 from competition.mutations import next_gen_weights
 
@@ -102,7 +102,12 @@ class Generation:
 
     @staticmethod
     def fitness_function(_input):
-        result, weight = _input
+        if len(_input) == 2:
+            result, weight = _input
+        elif len(_input) == 3:
+            result = _input
+        else:
+            raise ValueError
         value = result[0] * ALPHA + result[1] * BETA + result[2] * GAMMA
         return value
 
@@ -113,8 +118,16 @@ class Generation:
         list_to_sort.sort(key=self.fitness_function, reverse=True)
         return [element[1] for element in list_to_sort]
 
+    def get_sorted_results(self):
+        return sorted(self.results, key=self.fitness_function, reverse=True)
+
     def create_new_generation(self):
-        weights = next_gen_weights(self.get_sorted_weights(), 2)
+        sorted_results = self.get_sorted_results()
+        sorted_weights = self.get_sorted_weights()
+        results_file = f"{PATH_TO_DATA}sorted_results{self.generation_number}.txt"
+        save_sorted_results_and_weights(sorted_results, sorted_weights, results_file)
+
+        weights = next_gen_weights(sorted_weights, self.generation_number)
         new_result_file = f"{PATH_TO_DATA}results{self.generation_number + 1}.txt"
         new_weights_file = f"{PATH_TO_DATA}weights{self.generation_number + 1}.txt"
         empty_results = [[0, 0, 0] for _ in range(len(weights))]
