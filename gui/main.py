@@ -68,7 +68,6 @@ class Gui:
         self.__game = SimpleGame()
         self.__clock = pg.time.Clock()
         self.with_display = with_display
-        # self.bot_vs_bot_mode = main_bot is not None
         self.possible_moves: list[list[list[int, int]]] = []
         self.selected_checker: None | list[int, int] = None
         self.state = SceneState.menu  # if not self.bot_vs_bot_mode else SceneState.checkers
@@ -76,8 +75,6 @@ class Gui:
         self.difficulty = 2
         self.__bot = opponent_bot
         self.__bot_instead_player = main_bot
-        # if self.bot_vs_bot_mode and need_to_calculate:
-        #     self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
         self.draw_handler = DrawHandler()
         self.player_log = Log()
 
@@ -96,6 +93,9 @@ class Gui:
             self.__clock.tick(FPS)
 
     def bots_duel(self) -> int:
+        self.mode_state = ModeState.bot_vs_bot
+        self.state = SceneState.checkers
+        self.__bot.start_best_move_calculation(self.__game, 2, True)
         while True:
             if self.with_display:
                 self.render()
