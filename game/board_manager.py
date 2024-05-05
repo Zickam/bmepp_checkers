@@ -37,6 +37,7 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                 if checkIfCoordsInBoundaries(tmp_coords[0], tmp_coords[1]) and not has_finished:
                     if board[tmp_coords[0], tmp_coords[1]][0]:  # obstacle
                         if board[tmp_coords[0], tmp_coords[1]][1] == board[x, y][1]:
+                            obstacle_pos = -2, -2
                             break
 
                         obstacle_pos = tmp_coords
@@ -59,13 +60,13 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
                         else:
                             break
 
-                    elif obstacle_pos[0] == -1:
-
+                    elif obstacle_pos[0] == -1: # so no obstacle found yet
                         tmp_possible_moves[tmp_possible_moves_amount][0] = tmp_coords[0]
                         tmp_possible_moves[tmp_possible_moves_amount][1] = tmp_coords[1]
                         tmp_possible_moves_amount += 1
                 else:
                     obstacle_pos = -2, -2
+
 
             if obstacle_pos[0] != -1:
                 for i in range(tmp_possible_moves_amount):
@@ -343,7 +344,7 @@ def transformNumpyMovesToList(moves: np.array) -> list:
     return _moves
 
 
-def possibleMovesForPoint(game: SimpleGame, point: list[int, int]) -> list[list[list[int, int]]]:
+def possibleMovesForPoint(game: SimpleGame, point: list[int]) -> list[list[list[int]]]:
     board = game.getBoard()
     is_white_turn = game.isWhiteTurn()
     x, y = point

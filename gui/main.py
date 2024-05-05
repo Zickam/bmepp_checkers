@@ -41,11 +41,12 @@ class DrawHandler:
     def __init__(self):
         self.cache = set()
 
-    def check_draw(self, board):
+    def check_draw(self, board) -> bool:
         if game_board_to_str(board) in self.cache:
             return True
         else:
             self.cache.add(game_board_to_str(board))
+            return False
 
 
 class Gui:
@@ -62,8 +63,8 @@ class Gui:
         self.__clock = pg.time.Clock()
         self.with_display = with_display
         self.bot_vs_bot_mode = main_bot is not None
-        self.possible_moves: list[list[list[int, int]]] = []
-        self.selected_checker: None | list[int, int] = None
+        self.possible_moves: list[list[list[int]]] = []
+        self.selected_checker: None | list[int] = None
         self.state = SceneState.menu if not self.bot_vs_bot_mode else SceneState.checkers
         self.difficulty = 2
         self.__bot = opponent_bot
@@ -133,7 +134,7 @@ class Gui:
         get_difficulty_num(self.difficulty).render(self.__screen)
 
     def render_result(self):
-        self.__screen.fill(GC)
+        # self.__screen.fill(GC)
         get_win_text(handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())).render(self.__screen)
         restart_button.render(self.__screen)
 
