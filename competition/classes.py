@@ -68,3 +68,10 @@ class Results:
             for result in results:
                 str_results = Results.results_to_str(result) + '\n'
                 file.write(str_results)
+
+
+def save_sorted_results_and_weights(results, weights, file_name):
+    with open(file_name, 'w') as file:
+        for result, weight in zip(results, weights):
+            _string = Results.results_to_str(result) + ' | ' + Weights.weights_to_str(weight) + '\n'
+            file.write(_string)
