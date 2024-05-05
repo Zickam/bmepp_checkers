@@ -72,11 +72,15 @@ class Button(Text):
 
 # ВСЁ МАГИЧЕСКОЕ!
 caption_text = Text((400, 120), 'Checkers', True)
-play_white_button = Button((220, 310), 'PLAY WHITE', (280, 70), False)
-play_black_button = Button((580, 310), 'PLAY BLACK', (280, 70), True)
-difficulty_text = Text((400, 400), 'Difficulty')
-minus_button = Button((295, 450), '-', (50, 50), True, False)
-plus_button = Button((495, 450), '+', (50, 50), False, False)
+play_white_button = Button((220, 350), 'PLAY WHITE', (280, 70), False)
+play_black_button = Button((580, 350), 'PLAY BLACK', (280, 70), True)
+
+player_player_button = Button((220, 260), 'PVP', (280, 70), True)
+bot_bot_button = Button((580, 260), 'BOTS', (280, 70), False)
+
+difficulty_text = Text((400, 420), 'Difficulty')
+minus_button = Button((295, 470), '-', (50, 50), True, False)
+plus_button = Button((495, 470), '+', (50, 50), False, False)
 training_button = Button((400, 650), 'TRAINING', (220, 70), False, True)
 restart_button = Button((20, 20), 'R', (40, 40), True, False)
 help_button = Button((781, 20), '?', (40, 40), False, False, True)
@@ -91,7 +95,7 @@ help_buttons_animation = [
 
 
 def get_difficulty_num(difficulty):
-    return Text((400, 450), f'{difficulty}')
+    return Text((400, 470), f'{difficulty}')
 
 
 def get_win_text(game_state: int):
