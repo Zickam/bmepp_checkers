@@ -452,7 +452,6 @@ def getMiddleCheckers(board: np.array, i, j) -> int:
             w += 1
         else:
             b += 1
-    print(i, j, w, b)
     return w - b
 
 

@@ -179,7 +179,7 @@ class DuelProcess:
             self.process_response_queue.put(duel)
 
 
-def manager_process():
+def run_tournament():
     duel_pairs_queue = mp.Queue()
     duel_results_queue = mp.Queue()
     child_processes = []
@@ -191,11 +191,6 @@ def manager_process():
     while True:
         generation = Generation(duel_pairs_queue, duel_results_queue)
         generation.mainloop()
-
-
-def run_tournament():
-    manager = mp.Process(target=manager_process)
-    manager.start()
 
 
 if __name__ == "__main__":
