@@ -24,34 +24,40 @@ heuristic_funcs = np.array([
     True,  # 16 alone checkers
     True,  # 17 alone queens
     True,  # 18 holes
+    True,  # 19 leading on side
 ])
 
 # 0 - 1
-heuristic_weights = np.array([
-    1,  # 0 checkers_amount
-    1,  # 1 queens amount
-    1,  # 2 safe checkers
-    1,  # 3 safe queens
-    1,  # 4 movable checkers
-    1,  # 5 movable queens
-    1,  # 6 distance to promotion line
-    1,  # 7 free cells on promotion line
-    1,  # 8 defenders amount
-    1,  # 9 attackers amount
-    1,  # 10 middle checkers
-    1,  # 11 middle queens
-    1,  # 12 checkers on main diagonal
-    1,  # 13 queens on main diagonal
-    1,  # 14 checkers on double diagonal
-    1,  # 15 queens on double diagonal
-    1,  # 16 alone checkers
-    1,  # 17 alone queens
-    1,  # 18 holes
-], dtype=float)
+heuristic_weights = np.array(
+    [
+        1,  # 0 checkers_amount
+        1,  # 1 queens amount
+        1,  # 2 safe checkers
+        1,  # 3 safe queens
+        1,  # 4 movable checkers
+        1,  # 5 movable queens
+        1,  # 6 distance to promotion line
+        1,  # 7 free cells on promotion line
+        1,  # 8 defenders amount
+        1,  # 9 attackers amount
+        1,  # 10 middle checkers
+        1,  # 11 middle queens
+        1,  # 12 checkers on main diagonal
+        1,  # 13 queens on main diagonal
+        1,  # 14 checkers on double diagonal
+        1,  # 15 queens on double diagonal
+        1,  # 16 alone checkers
+        1,  # 17 alone queens
+        1,  # 18 holes
+        1,  # 19 leading on side
+    ],
+    dtype=float
+)
 
 
 @numba.njit
-def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_funcs: np.array,
+def calculateHeuristicValue(board: np.array, board_values: np.array,
+                            heuristic_funcs: np.array,
                             heuristic_weights: np.array) -> int:
     value = 0
 
@@ -68,8 +74,40 @@ def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_f
         value += getSafeQueensAmount(board) * heuristic_weights[3]
     if heuristic_funcs[7]:
         value += getFreeCellsOnPromotionLine(board) * heuristic_weights[7]
+    if heuristic_funcs[19]:
+        value += getLeadingPositionOnSide(board) * heuristic_weights[19]
 
-    for i in range(0, len(board)):
+    for i in (0, 1, 2):
+        for j in ((i + 1) % 2, len(board) - 1, 2):
+            if i != 2:
+                if heuristic_funcs[8]:
+                    value += getDefendersAmount(board, i, j) * heuristic_weights[8]
+                    value += getDefendersAmount(board, i + 6, j) * heuristic_weights[8]
+
+                if heuristic_funcs[10]:
+                    value += getMiddleCheckers(board, i + 3,
+                                               j) * heuristic_weights[10]
+                if heuristic_funcs[11]:
+                    value += getMiddleQueens(board, i + 3,
+                                             j) * heuristic_weights[11]
+
+            if heuristic_funcs[9]:
+                value += getAttackersAmount(board, i, j) * heuristic_weights[9]
+                value += getAttackersAmount(board, i + 5, j) * heuristic_weights[9]
+
+    for i in range(len(board)):
+        if heuristic_funcs[12]:
+            value += getCheckersAmountOnMainDiagonal(board,
+                                                     i) * heuristic_weights[12]
+        if heuristic_funcs[13]:
+            value += getQueensAmountOnMainDiagonal(board,
+                                                   i) * heuristic_weights[13]
+        if heuristic_funcs[14]:
+            value += getCheckersAmountOnDoubleDiagonal(
+                board, i) * heuristic_weights[14]
+        if heuristic_funcs[15]:
+            value += getQueensAmountOnDoubleDiagonal(board,
+                                                     i) * heuristic_weights[15]
         for j in range((i + 1) % 2, len(board[i]), 2):
             if heuristic_funcs[0]:
                 value += getCountPeshka(board, i, j) * heuristic_weights[0]
@@ -80,23 +118,8 @@ def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_f
             if heuristic_funcs[5]:
                 value += getMovableQueens(board, i, j) * heuristic_weights[5]
             if heuristic_funcs[6]:
-                value += getDistanceToPromotionLine(board, i, j) * heuristic_weights[6]
-            if heuristic_funcs[8]:
-                value += getDefendersAmount(board, i, j) * heuristic_weights[8]
-            if heuristic_funcs[9]:
-                value += getAttackersAmount(board, i, j) * heuristic_weights[9]
-            if heuristic_funcs[10]:
-                value += getMiddleCheckers(board, i, j) * heuristic_weights[10]
-            if heuristic_funcs[11]:
-                value += getMiddleQueens(board, i, j) * heuristic_weights[11]
-            if heuristic_funcs[12]:
-                value += getCheckersAmountOnMainDiagonal(board, i) * heuristic_weights[12]
-            if heuristic_funcs[13]:
-                value += getQueensAmountOnMainDiagonal(board, i) * heuristic_weights[13]
-            if heuristic_funcs[14]:
-                value += getCheckersAmountOnDoubleDiagonal(board, i) * heuristic_weights[14]
-            if heuristic_funcs[15]:
-                value += getQueensAmountOnDoubleDiagonal(board, i) * heuristic_weights[15]
+                value += getDistanceToPromotionLine(board, i,
+                                                    j) * heuristic_weights[6]
             if heuristic_funcs[16]:
                 value += getAloneCheckers(board, i, j) * heuristic_weights[16]
             if heuristic_funcs[17]:
@@ -109,7 +132,21 @@ def calculateHeuristicValue(board: np.array, board_values: np.array, heuristic_f
 
 def heuristic_function(current_game, weights: list[float]) -> float:
     weights = np.array(weights)
-    return calculateHeuristicValue(current_game.getBoard(), np.array([]), heuristic_funcs, weights)
+    return calculateHeuristicValue(current_game.getBoard(), np.array([]),
+                                   heuristic_funcs, weights)
+
+
+@numba.njit
+def getLeadingPositionOnSide(board: np.array) -> int:
+    w, b = 0, 0
+    for i in (0, 1, 2, 3, 4, 5, 6, 7):
+        for j in (0, 1, 2, 5, 6, 7):
+            if board[i, j][0]:
+                if board[i, j][1]:
+                    w += 1
+                else:
+                    b += 1
+    return w - b
 
 
 @numba.njit
@@ -357,7 +394,7 @@ def getCheckersAmountOnDoubleDiagonal(board: np.array, i) -> int:
 
 
 @numba.njit
-def getQueensAmountOnDoubleDiagonal(board: np.array, i: int) -> int:
+def getQueensAmountOnDoubleDiagonal(board: np.array, i) -> int:
     w, b = 0, 0
     if board[i, len(board) - 1 - i][0] and board[i, len(board) - 1 - i][2]:
         if board[i, len(board) - 1 - i][1]:
@@ -370,8 +407,8 @@ def getQueensAmountOnDoubleDiagonal(board: np.array, i: int) -> int:
 
 @numba.njit
 def getMovableCheckers(
-        board: np.array,
-        i, j) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
+        board: np.array, i, j
+) -> int:  # Количество подвижных пешек (т.е. способных сделать ход, отличный от взятия)
     w, b = 0, 0
     if board[i, j][0] and not board[i, j, 2]:
         if board[i, j][1]:
@@ -393,11 +430,15 @@ def getMovableQueens(
     if board[i, j][0]:
         if board[i, j][1]:
             if board[i, j][2]:
-                if (not board[i + 1, j - 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and (j < 8)):
+                if (not board[i + 1, j - 1][0] and
+                    (j < 8 or i < 8)) or (not board[i - 1, j - 1][0] and
+                                          (j < 8)):
                     w += 1
         else:
             if board[i, j][2]:
-                if (not board[i + 1, j + 1][0] and (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and (j < 8)):
+                if (not board[i + 1, j + 1][0] and
+                    (j < 8 or i < 8)) or (not board[i - 1, j + 1][0] and
+                                          (j < 8)):
                     b += 1
 
     return w - b
@@ -406,13 +447,12 @@ def getMovableQueens(
 @numba.njit
 def getMiddleCheckers(board: np.array, i, j) -> int:
     w, b = 0, 0
-    if board[i, j][0]:
+    if board[i, j][0] and not board[i, j][2]:
         if board[i, j][1]:
-            if not board[i, j][2] and 5 >= i >= 2 and 4 >= j >= 3:
-                w += 1
+            w += 1
         else:
-            if not board[i, j][2] and 5 >= i >= 2 and 4 >= j >= 3:
-                b += 1
+            b += 1
+    print(i, j, w, b)
     return w - b
 
 
@@ -421,17 +461,18 @@ def getMiddleQueens(board: np.array, i, j) -> int:
     w, b = 0, 0
     if board[i, j][0]:
         if board[i, j][1]:
-            if board[i, j][2] and 5 >= i >= 2 and 4 >= j >= 3:
+            if board[i, j][2]:
                 w += 1
         else:
-            if board[i, j][2] and 5 >= i >= 2 and 4 >= j >= 3:
+            if board[i, j][2]:
                 b += 1
     return w - b
 
 
 @numba.njit
-def getAloneCheckers(board: np.array, i,
-                     j) -> int:  # k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
+def getAloneCheckers(
+        board: np.array, i, j
+) -> int:  # k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
     w, b = 0, 0
     k, l, n, m = 0, 0, 0, 0
     if board[i, j][0]:
@@ -461,8 +502,9 @@ def getAloneCheckers(board: np.array, i,
 
 
 @numba.njit
-def getAloneQueens(board: np.array, i,
-                   j) -> int:  # k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
+def getAloneQueens(
+        board: np.array, i, j
+) -> int:  # k - слева сверху, l - справа сверху, n - слева снизу, m - справа снизу
     w, b = 0, 0
     k, l, n, m = 0, 0, 0, 0
     if board[i, j][0]:
@@ -542,7 +584,9 @@ if __name__ == "__main__":
     import time
 
     board_width = 8
-    board = np.array([[np.array([False, False, False]) for i in range(board_width)] for j in range(board_width)])
+    board = np.array(
+        [[np.array([False, False, False]) for i in range(board_width)]
+         for j in range(board_width)])
 
     for i in range(3):
         for j in range(board_width):
@@ -552,16 +596,20 @@ if __name__ == "__main__":
             if is_on_white_1 or is_on_white_2:
                 board[i][j] = np.array([1, 0, 0])
 
-            is_on_black_1 = (board_width - i - 1) % 2 == 1 and (board_width - j - 1) % 2 == 0
-            is_on_black_2 = (board_width - i - 1) % 2 == 0 and (board_width - j - 1) % 2 == 1
+            is_on_black_1 = (board_width - i - 1) % 2 == 1 and (board_width -
+                                                                j - 1) % 2 == 0
+            is_on_black_2 = (board_width - i - 1) % 2 == 0 and (board_width -
+                                                                j - 1) % 2 == 1
 
             if is_on_black_1 or is_on_black_2:
-                board[board_width - i - 1][board_width - j - 1] = np.array([1, 1, 0])
+                board[board_width - i - 1][board_width - j - 1] = np.array(
+                    [1, 1, 0])
 
-    s = time.time()
-    for i in range(10 ** 5):
-        value = calculateHeuristicValue(board, [0, 0, 0], heuristic_funcs)
-    e = time.time()
+    print(calculateHeuristicValue(board, [0, 0, 0], heuristic_funcs, heuristic_weights))
+    # s = time.time()
+    # for i in range(10 ** 5):
+    #     value = calculateHeuristicValue(board, [0, 0, 0], heuristic_funcs)
+    # e = time.time()
     print(e - s)
     exit()
     for i in board:
