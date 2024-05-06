@@ -1,6 +1,8 @@
 import copy
 import pickle
 
+import numpy as np
+
 from game.constants import TOP_N_AMOUNT, DEPTH_TO_CHECK
 from game.classes import Move, move_to_notation, notation_to_move, notations_to_move, moves_to_notation
 from game.main import SimpleGame, game_board_to_str
@@ -141,7 +143,6 @@ class MinMaxClass:
         for i in range(depth, DEPTH_TO_CHECK):
             key = i, board, finding_max
             if key in self.n_cache:
-
                 variants_list = copy.deepcopy(self.n_cache.get(key))
                 variants_to_return = []
                 for variant in variants_list:

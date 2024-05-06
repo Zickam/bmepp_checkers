@@ -50,6 +50,8 @@ class SimpleGame:
         self._is_white_turn = True
         self._is_player_white = True
 
+        self._last_move = np.array([[-1, -1], [-1, -1]])
+        self._is_last_move_continuous = False
 
 
     def isWhiteTurn(self) -> bool:
@@ -71,12 +73,14 @@ class SimpleGame:
         return GameState.ongoing
 
     def toArgs(self):
-        return copy.deepcopy(self.getBoard()), self.isWhiteTurn(), self._board_values
+        return copy.deepcopy(self.getBoard()), self.isWhiteTurn(), self._board_values, self._last_move, self._is_last_move_continuous
 
-    def fromArgs(self, board: np.array, is_white_turn: bool, board_values):
+    def fromArgs(self, board: np.array, is_white_turn: bool, board_values, last_move: np.array, is_last_move_continuous: bool):
         self._board = board
         self._is_white_turn = is_white_turn
         self._board_values = board_values
+        self._last_move = last_move
+        self._is_last_move_continuous = is_last_move_continuous
 
 
     def _initBoard(self, board_width: int) -> np.array:

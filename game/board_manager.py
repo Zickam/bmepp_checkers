@@ -84,13 +84,16 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
 
 
 # @numba.njit
-def _handleQueenContinousMove(board: np.array, is_white_turn: bool, move: np.array) -> bool:
+def _handleQueenContinousMove(board: np.array, is_white_turn: bool, move: np.array, last_move: np.array, is_last_move_continuous: bool) -> bool:
     are_necessary, next_available_moves = getAllAvailableMoves(board, is_white_turn)
     if are_necessary:
         # for _move in next_available_moves:
         #     if _move[0][0] == move[0][0] and _move[0][1] == move[0][1]:
         #         return True
-        return True
+        for _move in next_available_moves:
+            if _move[1][0] == move[0][0] and _move[1][1] == move[0][1]:
+                return True
+        return False
     return False
 
 
@@ -148,14 +151,15 @@ def _handleCheckerMovingMove(board: np.array, move: np.array) -> np.array:
 
 # @numba.njit
 def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_values: np.array,
-                                move: np.array) -> tuple[bool, np.array]:
+                                move: np.array, last_move: np.array, is_last_move_continuous: bool) -> tuple[bool, np.array]:
     are_necessary, all_available_moves_for_checkers = getAllAvailableMoves(board, is_white_turn)
-    print(all_available_moves_for_checkers, move)
+    # print(all_available_moves_for_checkers, move)
+
     if not are_necessary:
         return False, board_values
-    # for _move in all_available_moves_for_checkers:
-    #     if _move[0][0] == move[1][0] and _move[0][1] == move[1][1]:
-    #         return True, board_values
+    if last_move[1][0] == move[0][0] and last_move[1][1] == move[0][1]:
+        print(1234)
+        return True, board_values
     return False, board_values
 
 # @numba.njit
@@ -179,13 +183,15 @@ def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_value
 
 
 # @numba.njit
-def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, move: np.array) -> tuple[np.array, bool, np.array]:
+def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, last_move: np.array, is_last_move_continuous: bool, move: np.array) -> tuple[np.array, bool, np.array, np.array, bool]:
+    is_continuous = False
     if board[move[0, 0], move[0, 1]][2]:
         is_kill_move = _isQueenKillMove(board, is_white_turn, move)
         if is_kill_move:
-            is_continuous = _handleQueenContinousMove(board, is_white_turn, move)
+            is_continuous = _handleQueenContinousMove(board, is_white_turn, move, last_move, is_last_move_continuous)
             if not is_continuous:
-              is_white_turn = not is_white_turn
+                is_white_turn = not is_white_turn
+
         else:
             _handleQueenMovingMove(board, move)
             is_white_turn = not is_white_turn
@@ -195,9 +201,9 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
             board_values = _handleCheckerKillMove(board, is_white_turn, board_values, move)
             has_transformed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
             if has_transformed:
-                is_continuous = _handleQueenContinousMove(board, is_white_turn, move)
+                is_continuous = _handleQueenContinousMove(board, is_white_turn, move, last_move, is_last_move_continuous)
             else:
-                is_continuous, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move)
+                is_continuous, board_values = _handleCheckerContinousMove(board, is_white_turn, board_values, move, last_move, is_last_move_continuous)
             if not is_continuous:
                 is_white_turn = not is_white_turn
 
@@ -206,13 +212,13 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
             has_transformed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
 
             is_white_turn = not is_white_turn
+    print(is_continuous, is_last_move_continuous)
+    return board, is_white_turn, board_values, move, is_continuous
 
-    return board, is_white_turn, board_values
 
-
-def handle_move_pr(board: np.array, is_white_turn: bool, board_values: np.array, move: tuple) -> np.array:
+def handle_move_pr(board: np.array, is_white_turn: bool, board_values: np.array, last_move: np.array, is_last_move_continuous: bool, move: tuple) -> np.array:
     move = np.array(move)
-    return handleMove(board, is_white_turn, board_values, move)
+    return handleMove(board, is_white_turn, board_values, last_move, is_last_move_continuous, move)
 
 
 # @numba.njit

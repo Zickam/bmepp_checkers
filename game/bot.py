@@ -7,6 +7,7 @@ from game.constants import MINMAX_DIFFICULTY_MEDIUM, MINMAX_DIFFICULTY_HARD
 from game.board_manager import handleMove, getAllAvailableMoves
 from game.minmax import MinMaxClass, heuristic_function
 
+import numpy as np
 
 class Process:
     def __init__(self, process_request_queue: mp.Queue, process_response_queue: mp.Queue, need_to_print: bool):
@@ -14,6 +15,7 @@ class Process:
         self.process_response_queue = process_response_queue
         self.need_to_print = need_to_print
         self.MinMax = MinMaxClass(need_to_print=self.need_to_print)
+        self.last_move: np.array = None
         self.mainloop()
 
     def console_log(self, start=None):
