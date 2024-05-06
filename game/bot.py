@@ -75,6 +75,8 @@ class Process:
         start = time.time()
         if self.need_to_print:
             print('\n😀NEW CALCULATIONS😀\n')
+            if finding_max != game.isWhiteTurn():
+                raise Exception("finding_max != game.isWhiteTurn()")
 
             print('First stage')
         variants = self.MinMax.top_n_minmax(game, top_n_depth, finding_max, weights)

@@ -87,10 +87,10 @@ def _getAvailableMovesForQueen(board: np.array, is_white_turn: bool, x: int,
 def _handleQueenContinousMove(board: np.array, is_white_turn: bool, move: np.array) -> bool:
     are_necessary, next_available_moves = getAllAvailableMoves(board, is_white_turn)
     if are_necessary:
-        for _move in next_available_moves:
-            if _move[0][0] == move[0][0] and _move[0][1] == move[0][1]:
-                return True
-        return False
+        # for _move in next_available_moves:
+        #     if _move[0][0] == move[0][0] and _move[0][1] == move[0][1]:
+        #         return True
+        return True
     return False
 
 
@@ -153,10 +153,7 @@ def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_valu
     # are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
     if not are_necessary:
         return False, board_values
-    for _move in all_available_moves_for_checkers:
-        if _move[0][0] == move[0][0] and _move[0][1] == move[0][1]:
-            return True, board_values
-    return False, board_values
+    return True, board_values
 
 # @numba.njit
 def _isCheckerMoveKilling(move: np.array) -> bool:
