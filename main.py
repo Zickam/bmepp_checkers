@@ -4,10 +4,10 @@ import gui
 def main():
     _bot = game.bot.Bot()
     _bot2 = game.bot.Bot()
-    _gui = gui.main.Gui(_bot) # _bot2, need_to_calculate=True
+    _gui = gui.main.Gui(_bot, _bot2, need_to_calculate=True)
 
-    _gui.mainloop()
-    # print('result:', _gui.bots_duel())
+    # _gui.mainloop()
+    print('result:', _gui.bots_duel())
 
 
 

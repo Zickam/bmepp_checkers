@@ -118,7 +118,7 @@ class Bot:
     def __init__(self, weights=None, need_to_print=True):
         if weights is None:
             #  Simple weights just for fun
-            weights = [0] * 19
+            weights = [0] * 20
             weights[0] = 9
             weights[1] = 100
             weights[10] = 1
