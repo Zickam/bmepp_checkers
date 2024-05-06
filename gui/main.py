@@ -304,7 +304,7 @@ class Gui:
             self.state = SceneState.checkers
             self.__game.setIsPlayerWhite(True)
             self.mode_state = ModeState.bot_vs_bot
-            self.__bot.start_best_move_calculation(self.__game, self.difficulty, False)
+            self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
 
         if plus_button.collide_point((x, y)) and self.difficulty < MAX_DIFFICULTY:
             self.difficulty += 1

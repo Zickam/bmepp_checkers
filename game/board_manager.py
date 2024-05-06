@@ -148,12 +148,15 @@ def _handleCheckerMovingMove(board: np.array, move: np.array) -> np.array:
 
 # @numba.njit
 def _handleCheckerContinousMove(board: np.array, is_white_turn: bool, board_values: np.array,
-                                move: np.array) -> np.array:
+                                move: np.array) -> tuple[bool, np.array]:
     are_necessary, all_available_moves_for_checkers = getAllAvailableMoves(board, is_white_turn)
-    # are_necessary, available_moves = _getAvailableMovesForChecker(board, is_white_turn, move[1, 0], move[1, 1])
+    print(all_available_moves_for_checkers, move)
     if not are_necessary:
         return False, board_values
-    return True, board_values
+    # for _move in all_available_moves_for_checkers:
+    #     if _move[0][0] == move[1][0] and _move[0][1] == move[1][1]:
+    #         return True, board_values
+    return False, board_values
 
 # @numba.njit
 def _isCheckerMoveKilling(move: np.array) -> bool:
@@ -203,7 +206,6 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, mov
             has_transformed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
 
             is_white_turn = not is_white_turn
-
 
     return board, is_white_turn, board_values
 

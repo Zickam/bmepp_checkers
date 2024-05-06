@@ -135,6 +135,8 @@ class Bot:
         self.process.start()
 
     def start_best_move_calculation(self, game, difficulty: int, finding_max: bool):
+        if finding_max != game.isWhiteTurn():
+            raise Exception("finding_max != game.isWhiteTurn()")
         self.process_request_queue.put((game, difficulty, finding_max, self.weights))
 
     def change_weights(self, weights: list[float]):
