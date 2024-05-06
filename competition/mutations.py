@@ -1,6 +1,5 @@
 import copy
 import random
-from competition.constants import ADD_SIMPLE_WEIGHTS, SIMPLE_WEIGHTS
 
 import numpy as np
 
@@ -35,7 +34,6 @@ def getRandomWeightsList(amount: int) -> list[np.array]:
     weights = []
     for i in range(amount):
         weights.append(_getRandomWeight())
-    weights = round_weights([weights])[0]
     return weights
 
 
@@ -67,28 +65,31 @@ def _getHalfPartsIdsFromParents(parent_1: np.array, parent_2: np.array) -> np.ar
 
 
 def _getCrossbredWeights(weights: list[np.array], crossbred_weights_amount_need: int) -> list[np.array]:
+    if len(weights) < 2:
+        raise Exception(f"Its not possible to make crossbred out of < 2 weights! ({len(weights)} top weights got!)")
     crossbred_weights_got = []
     crossbred_weight_idx = 0
 
     is_enough = False
-    for i in range(0, len(weights) - 1):
-        if is_enough:
-            break
-        for j in range(i, len(weights)):
-            if len(crossbred_weights_got) >= crossbred_weights_amount_need:
-                is_enough = True
+    while len(crossbred_weights_got) < crossbred_weights_amount_need:
+        for i in range(0, len(weights) - 1):
+            if is_enough:
                 break
+            for j in range(i, len(weights)):
+                if len(crossbred_weights_got) >= crossbred_weights_amount_need:
+                    is_enough = True
+                    break
 
-            crossbred_weight_idx %= crossbred_weights_amount_need
+                crossbred_weight_idx %= crossbred_weights_amount_need
 
-            parent_1 = weights[i]
-            parent_2 = weights[i + 1]
+                parent_1 = weights[i]
+                parent_2 = weights[j]
 
-            parts_got = _getHalfPartsIdsFromParents(parent_1, parent_2)
+                parts_got = _getHalfPartsIdsFromParents(parent_1, parent_2)
 
-            crossbred_weights_got.append(parts_got)
+                crossbred_weights_got.append(parts_got)
 
-            crossbred_weight_idx += 1
+                crossbred_weight_idx += 1
 
     return crossbred_weights_got
 
@@ -149,7 +150,7 @@ def mutateListOfWeights(
         bias_percent = rng.integers(1, generation_num + 2) / (generation_num / 2)
         if random.choice([-1, 1]) == -1: # changing sign
             bias_percent = -bias_percent
-        print(generation_num, bias_percent)
+        # print(generation_num, bias_percent)
 
         biased_weights = _getBiasedWeights(top_weights_list[weight_to_mutate_idx],
                                            bias_percent)
@@ -158,31 +159,21 @@ def mutateListOfWeights(
 
         weight_to_mutate_idx += 1
 
-    if ADD_SIMPLE_WEIGHTS:
-        new_weights_amount -= 1
     new_weights_list = [
         getRandomWeightsList(len(weights_list[0]))
-        for _ in range(new_weights_amount)
+        for i in range(new_weights_amount)
     ]
-    if ADD_SIMPLE_WEIGHTS:
-        new_weights_list.append(SIMPLE_WEIGHTS)
+
+
 
     weights = top_weights_list + crossbred_weights_list + biased_weights_list + new_weights_list
-    weights = round_weights(weights)
-
-    return weights
-
-
-def round_weights(weights: list[list[float]]):
-    weights = copy.deepcopy(weights)
-    for weight in weights:
-        for i, value in enumerate(weight):
-            weight[i] = round(value, 14)
+    print(top_weights_amount, crossbred_weights_amount, biased_weights_amount, new_weights_amount)
+    print(len(top_weights_list), len(crossbred_weights_list), len(biased_weights_list), len(new_weights_list))
     return weights
 
 
 if __name__ == "__main__":
-    weights = [getRandomWeightsList(20) for i in range(50)]
+    weights = [getRandomWeightsList(20) for i in range(20)]
     weights[0][0] = 0.9
 
     weights = normalizeWeightsList(weights)
@@ -193,13 +184,13 @@ if __name__ == "__main__":
     for i in range(1, 10):
         weights = mutateListOfWeights(weights,
                                           i,
+                                          0.1,
                                           0.3,
-                                          0.3,
-                                          0.2) #  0.3 -> 0.3 + 0.3 + 0.2 + random
+                                          0.1) #  0.3 -> 0.3 + 0.3 + 0.2 + random
         print('len', len(weights))
     #print("mutated", weights[3])
-    print([round(weight, 2) for weight in start_weights[25]])
-    print([round(weight, 2) for weight in weights[25]])
+    # print([round(weight, 2) for weight in start_weights[25]])
+    # print([round(weight, 2) for weight in weights[25]])
 
     # print("Mutated", *mutated_weights, sep="\n")
     # for i, initial, mutated in zip(enumerate(initial_weights), initial_weights, mutated_weights):
