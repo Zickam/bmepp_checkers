@@ -96,13 +96,13 @@ class Gui:
             self.render()
             self.handle_events()
 
-
             self.__clock.tick(FPS)
 
     def bots_duel(self) -> int:
         self.mode_state = ModeState.bot_vs_bot
         self.state = SceneState.checkers
-        self.__bot.start_best_move_calculation(self.__game, 2, True)
+        self.__bot_instead_player.start_best_move_calculation(self.__game, 2, True)
+
         while True:
             self.__clock.tick(FPS)
             if self.with_display:
