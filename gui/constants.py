@@ -1,6 +1,7 @@
 WIN_SIZE = (600, 600)
 FPS = 60
 
+
 IGC = (0, 220, 0)
 HRC = (243, 97, 97)  # hint red color
 CBC = (20, 21, 20)  # checker's black color

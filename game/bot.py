@@ -5,6 +5,7 @@ import time
 from game.classes import moves_to_notation
 from game.constants import MINMAX_DIFFICULTY_MEDIUM, MINMAX_DIFFICULTY_HARD
 from game.board_manager import handleMove, getAllAvailableMoves
+from game.main import SimpleGame
 from game.minmax import MinMaxClass, heuristic_function
 
 
@@ -98,12 +99,13 @@ class Process:
         self.process_response_queue.put(best_move)
 
     def mainloop(self):
+        game: SimpleGame
         while True:
             time.sleep(0.01)
             if not self.process_request_queue.empty():
                 game, difficulty, finding_max, weights = self.process_request_queue.get()
                 if difficulty == 0:
-                    are_necessary, moves = getAllAvailableMoves(game.getBoard(), game.isWhiteTurn())
+                    are_necessary, moves = getAllAvailableMoves(game.getBoard(), game.isWhiteTurn(), game.getPreviousTurnWhite(), game.getLastMove())
                     if len(moves) == 0:
                         continue
                     random_move = random.choice(moves)

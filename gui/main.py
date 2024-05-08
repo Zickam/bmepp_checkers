@@ -71,8 +71,8 @@ class Gui:
         self.__game = SimpleGame()
         self.__clock = pg.time.Clock()
         self.with_display = with_display
-        self.possible_moves: list[list[list[int, int]]] = []
-        self.selected_checker: None | list[int, int] = None
+        self.possible_moves: list[list[list[int]]] = []
+        self.selected_checker: None | list[int] = None
         self.state = SceneState.menu  # if not self.bot_vs_bot_mode else SceneState.checkers
         self.mode_state = ModeState.bot_vs_player
         self.difficulty = 2
@@ -96,6 +96,7 @@ class Gui:
             self.render()
             self.handle_events()
 
+
             self.__clock.tick(FPS)
 
     def bots_duel(self) -> int:
@@ -111,7 +112,7 @@ class Gui:
             if self.state == SceneState.result:
                 if self.draw_handler.check_draw(self.__game.getBoard()):
                     return 3
-                return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
+                return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
 
     def render(self):
         if self.state == SceneState.checkers:
@@ -151,7 +152,14 @@ class Gui:
 
     def render_result(self):
         # self.__screen.fill(GC)
-        get_win_text(handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())).render(self.__screen)
+        get_win_text(
+            handleWin(
+                self.__game.getBoard(),
+                self.__game.isWhiteTurn(),
+                self.__game.getPreviousTurnWhite(),
+                self.__game.getLastMove())
+        ).render(self.__screen)
+
         restart_button.render(self.__screen)
 
     def render_board(self):
@@ -208,14 +216,14 @@ class Gui:
 
                         if self.state == SceneState.checkers:
                             self.handle_gameplay_click(x, y)
-                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
+                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
                             return
 
                         elif self.state == SceneState.checkers_with_help:
                             self.handle_gameplay_click(x, y)
-                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
+                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
                             return
@@ -245,7 +253,7 @@ class Gui:
             new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
 
-            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
+            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),  self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
                 return
@@ -266,7 +274,7 @@ class Gui:
             new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
 
-            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn())
+            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),  self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
                 return
