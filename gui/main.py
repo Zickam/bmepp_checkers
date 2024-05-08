@@ -5,7 +5,7 @@ import numpy as np
 
 from game.classes import move_to_notation
 from gui.sprites import Sprites
-from gui.constants import WIN_SIZE, FPS, GC, MAX_DIFFICULTY, MIN_DIFFICULTY
+from gui.constants import WIN_SIZE, FPS, GC
 from game.main import SimpleGame
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, minus_button, \
     plus_button, restart_button, get_difficulty_num, get_win_text, training_button, help_button, \
@@ -13,6 +13,7 @@ from gui.buttons import caption_text, play_white_button, play_black_button, diff
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
 from game.bot import Bot
 from game.minmax import game_board_to_str
+from game.constants import DEFAULT_DIFFICULTY, DIFFICULTIES
 
 
 import os
@@ -75,7 +76,7 @@ class Gui:
         self.selected_checker: None | list[int] = None
         self.state = SceneState.menu  # if not self.bot_vs_bot_mode else SceneState.checkers
         self.mode_state = ModeState.bot_vs_player
-        self.difficulty = 2
+        self.difficulty = DEFAULT_DIFFICULTY
         self.__bot = opponent_bot
         self.__bot_instead_player = main_bot
         self.draw_handler = DrawHandler()
@@ -98,10 +99,11 @@ class Gui:
 
             self.__clock.tick(FPS)
 
-    def bots_duel(self) -> int:
+    def bots_duel(self, difficulty: int) -> int:
+        self.difficulty = difficulty
         self.mode_state = ModeState.bot_vs_bot
         self.state = SceneState.checkers
-        self.__bot_instead_player.start_best_move_calculation(self.__game, 2, True)
+        self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
 
         while True:
             self.__clock.tick(FPS)
@@ -246,6 +248,7 @@ class Gui:
 
     def handle_bot_events(self):
         if self.__bot.is_best_move_ready():
+
             flag = self.__game.isWhiteTurn()
             move = self.__bot.get_calculated_move()
 
@@ -262,11 +265,14 @@ class Gui:
                 return
 
             if flag == self.__game.isWhiteTurn():
+                # print(3)
                 self.__bot.start_best_move_calculation(self.__game, self.difficulty, False)
             elif self.mode_state == ModeState.bot_vs_bot:
+                # print(4)
                 self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
 
         if self.__bot_instead_player and self.__bot_instead_player.is_best_move_ready():
+
             flag = self.__game.isWhiteTurn()
             move = self.__bot_instead_player.get_calculated_move()
 
@@ -283,8 +289,10 @@ class Gui:
                 return
 
             if flag == self.__game.isWhiteTurn():
+                # print(2)
                 self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
             elif self.mode_state == ModeState.bot_vs_bot:
+                # print(1, self.__game.isWhiteTurn())
                 self.__bot.start_best_move_calculation(self.__game, self.difficulty, False)
 
     @property
@@ -314,10 +322,10 @@ class Gui:
             self.mode_state = ModeState.bot_vs_bot
             self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
 
-        if plus_button.collide_point((x, y)) and self.difficulty < MAX_DIFFICULTY:
+        if plus_button.collide_point((x, y)) and self.difficulty < len(DIFFICULTIES):
             self.difficulty += 1
 
-        if minus_button.collide_point((x, y)) and self.difficulty > MIN_DIFFICULTY:
+        if minus_button.collide_point((x, y)) and self.difficulty > 0:
             self.difficulty -= 1
 
         if training_button.collide_point((x, y)):
@@ -396,7 +404,7 @@ class Gui:
         self.state = SceneState.checkers
         self.__game = SimpleGame()
         self.possible_moves = []
-        self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
+        # self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
 
 
     def close(self):

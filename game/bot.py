@@ -3,10 +3,10 @@ import multiprocessing as mp
 import random
 import time
 from game.classes import moves_to_notation
-from game.constants import MINMAX_DIFFICULTY_MEDIUM, MINMAX_DIFFICULTY_HARD
 from game.board_manager import handleMove, getAllAvailableMoves
 from game.main import SimpleGame
 from game.minmax import MinMaxClass, heuristic_function
+from game.constants import DIFFICULTIES, DEV_DIFFICULTY
 
 
 class Process:
@@ -101,20 +101,20 @@ class Process:
     def mainloop(self):
         game: SimpleGame
         while True:
-            time.sleep(0.01)
+            time.sleep(0.001)
             if not self.process_request_queue.empty():
                 game, difficulty, finding_max, weights = self.process_request_queue.get()
-                if difficulty == 0:
+                if difficulty == -1:
+                    top_n_depth, depth = DEV_DIFFICULTY
+                    self.bot_game(game, top_n_depth, depth, finding_max, weights)
+                elif difficulty == 0:
                     are_necessary, moves = getAllAvailableMoves(game.getBoard(), game.isWhiteTurn(), game.getPreviousTurnWhite(), game.getLastMove())
                     if len(moves) == 0:
                         continue
                     random_move = random.choice(moves)
                     self.process_response_queue.put(random_move)
-                elif difficulty == 1:
-                    top_n_depth, depth = MINMAX_DIFFICULTY_MEDIUM[0], MINMAX_DIFFICULTY_MEDIUM[1]
-                    self.bot_game(game, top_n_depth, depth, finding_max, weights)
-                elif difficulty == 2:
-                    top_n_depth, depth = MINMAX_DIFFICULTY_HARD[0], MINMAX_DIFFICULTY_HARD[1]
+                else:
+                    top_n_depth, depth = DIFFICULTIES[difficulty - 1][0], DIFFICULTIES[difficulty - 1][1]
                     self.bot_game(game, top_n_depth, depth, finding_max, weights)
 
 

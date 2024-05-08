@@ -17,5 +17,5 @@ BBC = (20, 20, 20)  # board border color
 BOARD_FONT_PATH = 'gui/data/board_font.ttf'
 BUTTONS_FONT_PATH = 'gui/data/buttons_font.ttf'
 
-MAX_DIFFICULTY = 2
+MAX_DIFFICULTY = 4
 MIN_DIFFICULTY = 0

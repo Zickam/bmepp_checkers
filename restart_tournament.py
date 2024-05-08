@@ -3,6 +3,7 @@ from competition.constants import PATH_TO_DATA, WEIGHTS_COUNT, SIMPLE_WEIGHTS, A
 from competition.classes import Results, Weights
 from competition.mutations import getRandomWeightsList
 import os
+
 try:
     file = open(f'{PATH_TO_DATA}conducted_duels1.pickle', 'wb')
 except FileNotFoundError:

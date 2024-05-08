@@ -1,6 +1,8 @@
 import copy
 import random
 
+from competition.constants import ADD_SIMPLE_WEIGHTS, SIMPLE_WEIGHTS
+
 import numpy as np
 
 
@@ -14,7 +16,7 @@ def next_gen_weights(weights: list[list[float]], gen_num: int):
     return weights
 
 
-DEFAULT_TOP_WEIGHTS_PERCENT = 0.16
+DEFAULT_TOP_WEIGHTS_PERCENT = 0.3
 DEFAULT_MUTATED_PERCENT = 0.54
 DEFAULT_CROSSBRED_PERCENT = 0.1
 
@@ -34,6 +36,7 @@ def getRandomWeightsList(amount: int) -> list[np.array]:
     weights = []
     for i in range(amount):
         weights.append(_getRandomWeight())
+    weights = round_weights([weights])[0]
     return weights
 
 
@@ -109,7 +112,6 @@ def normalizeWeightsList(weights_list: list[np.array]) -> list[np.array]:
     return weights_list
 
 
-
 def mutateListOfWeights(
         weights_list: list[np.array],
         generation_num: int,
@@ -127,6 +129,8 @@ def mutateListOfWeights(
     top_weights_amount = int(len(weights_list) * top_weights_percent)
     biased_weights_amount = int(len(weights_list) * biased_weights_percent)
     crossbred_weights_amount = int(len(weights_list) * crossbred_weights_percent)
+
+    # print("MUTATION INFO", top_weights_amount, biased_weights_amount, crossbred_weights_amount)
 
     if top_weights_amount + biased_weights_amount + crossbred_weights_amount >= len(weights_list):
         raise Exception(
@@ -159,18 +163,26 @@ def mutateListOfWeights(
 
         weight_to_mutate_idx += 1
 
+    if ADD_SIMPLE_WEIGHTS:
+        new_weights_amount -= 1
     new_weights_list = [
         getRandomWeightsList(len(weights_list[0]))
-        for i in range(new_weights_amount)
+        for _ in range(new_weights_amount)
     ]
-
-
+    if ADD_SIMPLE_WEIGHTS:
+        new_weights_list.append(SIMPLE_WEIGHTS)
 
     weights = top_weights_list + crossbred_weights_list + biased_weights_list + new_weights_list
-    print(top_weights_amount, crossbred_weights_amount, biased_weights_amount, new_weights_amount)
-    print(len(top_weights_list), len(crossbred_weights_list), len(biased_weights_list), len(new_weights_list))
+
+    weights = round_weights(weights)
     return weights
 
+def round_weights(weights: list[list[float]]):
+    weights = copy.deepcopy(weights)
+    for weight in weights:
+        for i, value in enumerate(weight):
+            weight[i] = round(value, 14)
+    return weights
 
 if __name__ == "__main__":
     weights = [getRandomWeightsList(20) for i in range(20)]

@@ -7,7 +7,8 @@ def main():
     _bot2 = game.bot.Bot()
     _gui = gui.main.Gui(_bot, _bot2)
     _gui.mainloop()
-    # print('result:', _gui.bots_duel())
+    # _gui.change_bots(_bot, _bot2)
+    # print('result:', _gui.bots_duel(-1))
 
 
 if __name__ == "__main__":

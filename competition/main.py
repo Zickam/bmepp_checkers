@@ -157,10 +157,10 @@ class DuelProcess:
             bot2.change_weights(duel.weights2)
             gui.change_bots(bot2, bot1)
             gui.change_caption(f"bot{duel.id1} vs bot{duel.id2}")
-            result1 = gui.bots_duel()
+            result1 = gui.bots_duel(-1)
 
             gui.change_bots(bot1, bot2)
-            result2 = gui.bots_duel()
+            result2 = gui.bots_duel(-1)
 
             if result1 == 1:  # bot1 win as white
                 duel.result[0] += 1
