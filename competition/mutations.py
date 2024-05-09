@@ -5,13 +5,12 @@ from competition.constants import ADD_SIMPLE_WEIGHTS, SIMPLE_WEIGHTS
 
 import numpy as np
 
-
 def next_gen_weights(weights: list[list[float]], gen_num: int):
     weights = mutateListOfWeights(weights,
                                   gen_num,
                                   0.3,
-                                  0.3,
-                                  0.2)
+                                  0.1,
+                                  0.3)
     random.shuffle(weights)
     return weights
 
@@ -112,6 +111,30 @@ def normalizeWeightsList(weights_list: list[np.array]) -> list[np.array]:
     return weights_list
 
 
+def removeDuplicateWeights(weights_list: list[np.array]) -> tuple[int, list[np.array]]:
+    # returns amount of duplicates
+    dup_amount = 0
+
+    i, j = 0, 1
+
+    while i < len(weights_list) - 1:
+        j = i + 1
+        while j < len(weights_list):
+            is_duplicate = True
+            for k in range(len(weights_list[i])):
+                if weights_list[i][k] != weights_list[j][k]:
+                    is_duplicate = False
+                    break
+            if is_duplicate:
+                weights_list.pop(i)
+                dup_amount += 1
+            else:
+                j += 1
+        i += 1
+
+    return dup_amount, weights_list
+
+
 def mutateListOfWeights(
         weights_list: list[np.array],
         generation_num: int,
@@ -139,8 +162,10 @@ def mutateListOfWeights(
     if top_weights_amount == 0 or biased_weights_amount == 0 or crossbred_weights_percent == 0:
         raise Exception("None of (top_weights_amount, biased_weights_amount, crossbred_weights_percent) must be zero!")
 
+    dup_amount, weights_list = removeDuplicateWeights(weights_list)
+
     new_weights_amount = len(
-        weights_list) - top_weights_amount - biased_weights_amount - crossbred_weights_amount
+        weights_list) - top_weights_amount - biased_weights_amount - crossbred_weights_amount + dup_amount
 
     top_weights_list = weights_list[:top_weights_amount]
 
@@ -152,8 +177,10 @@ def mutateListOfWeights(
         weight_to_mutate_idx = weight_to_mutate_idx % len(top_weights_list)
 
         bias_percent = rng.integers(1, generation_num + 2) / (generation_num / 2)
+
         if random.choice([-1, 1]) == -1: # changing sign
             bias_percent = -bias_percent
+        # print("bias_percent", bias_percent)
         # print(generation_num, bias_percent)
 
         biased_weights = _getBiasedWeights(top_weights_list[weight_to_mutate_idx],
@@ -165,6 +192,7 @@ def mutateListOfWeights(
 
     if ADD_SIMPLE_WEIGHTS:
         new_weights_amount -= 1
+
     new_weights_list = [
         getRandomWeightsList(len(weights_list[0]))
         for _ in range(new_weights_amount)
@@ -185,22 +213,27 @@ def round_weights(weights: list[list[float]]):
     return weights
 
 if __name__ == "__main__":
-    weights = [getRandomWeightsList(20) for i in range(20)]
+    weights = [getRandomWeightsList(20) for i in range(30)]
     weights[0][0] = 0.9
 
     weights = normalizeWeightsList(weights)
     start_weights = copy.deepcopy(weights)
     # print("initial we ights", *initial_weights, sep="\n")
     print("initial", weights[0])
+    # print(removeDuplicateWeights([
+    #     [1, 1, 1],
+    #     [1, 1, 1],
+    #     [1, 1, 2]
+    # ]))
 
     for i in range(1, 10):
         weights = mutateListOfWeights(weights,
                                           i,
-                                          0.1,
                                           0.3,
-                                          0.1) #  0.3 -> 0.3 + 0.3 + 0.2 + random
+                                          0.2,
+                                          0.2) #  0.3 -> 0.3 + 0.3 + 0.2 + random
         print('len', len(weights))
-    #print("mutated", weights[3])
+    print("mutated", weights[3])
     # print([round(weight, 2) for weight in start_weights[25]])
     # print([round(weight, 2) for weight in weights[25]])
 
