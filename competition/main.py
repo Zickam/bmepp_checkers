@@ -183,14 +183,23 @@ def run_tournament():
     duel_pairs_queue = mp.Queue()
     duel_results_queue = mp.Queue()
     child_processes = []
+
     print('numba init')
+
     for _ in range(PARALLEL_MATCHES):
         new_process = mp.Process(target=DuelProcess, args=(duel_pairs_queue, duel_results_queue))
         new_process.start()
         child_processes.append(new_process)
+
     while True:
+        generation_start_time = time.time()
+
         generation = Generation(duel_pairs_queue, duel_results_queue)
         generation.mainloop()
+
+        generation_end_time = time.time()
+        elapsed_seconds = int(generation_end_time - generation_start_time)
+        print(f"gen {generation.generation_number} took {elapsed_seconds} seconds or {round(elapsed_seconds / 60, 1)} minutes")
 
 
 if __name__ == "__main__":

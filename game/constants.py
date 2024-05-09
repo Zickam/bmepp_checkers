@@ -10,5 +10,5 @@ DIFFICULTIES = [
     [6, 6],
     [7, 7]
 ]
-DEV_DIFFICULTY = [7, 5]
+DEV_DIFFICULTY = [4, 1]
 DEPTH_TO_CHECK = 16
