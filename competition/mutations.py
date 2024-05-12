@@ -1,22 +1,22 @@
 import copy
 import random
 
-# from competition.constants import *
+from competition.constants import *
 
 import numpy as np
 
 MAX_WEIGHT = 1000
 
-TOP_WEIGHTS_AMOUNT = 9
-MUTATED_WEIGHTS_AMOUNT = 18
-NEW_WEIGHTS_AMOUNT = 3
-PERCENT_OF_BIASING_WEIGHTS = 50
-
-if TOP_WEIGHTS_AMOUNT + MUTATED_WEIGHTS_AMOUNT + NEW_WEIGHTS_AMOUNT != 30:
-    raise Exception("TOP_WEIGHTS_AMOUNT + MUTATED_WEIGHTS_AMOUNT + NEW_WEIGHTS_AMOUNT != WEIGHTS_COUNT")
-
-ADD_SIMPLE_WEIGHTS = True
-SIMPLE_WEIGHTS = [9, 100] + [0] * 8 + [1, 1] + [0] * 8
+# TOP_WEIGHTS_AMOUNT = 9
+# MUTATED_WEIGHTS_AMOUNT = 18
+# NEW_WEIGHTS_AMOUNT = 3
+# PERCENT_OF_BIASING_WEIGHTS = 50
+#
+# if TOP_WEIGHTS_AMOUNT + MUTATED_WEIGHTS_AMOUNT + NEW_WEIGHTS_AMOUNT != 30:
+#     raise Exception("TOP_WEIGHTS_AMOUNT + MUTATED_WEIGHTS_AMOUNT + NEW_WEIGHTS_AMOUNT != WEIGHTS_COUNT")
+#
+# ADD_SIMPLE_WEIGHTS = True
+# SIMPLE_WEIGHTS = [9, 100] + [0] * 8 + [1, 1] + [0] * 8
 
 def next_gen_weights(weights: list[list[float]], gen_num: int):
     weights = mutateListOfWeights(weights, gen_num, TOP_WEIGHTS_AMOUNT, MUTATED_WEIGHTS_AMOUNT, PERCENT_OF_BIASING_WEIGHTS, NEW_WEIGHTS_AMOUNT)
