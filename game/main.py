@@ -50,6 +50,8 @@ class SimpleGame:
         self._is_white_turn = True
         self._is_player_white = True
 
+        self._count_draw_moves = 0
+
         self._is_previous_turn_white = False
         self._last_move = np.array([[-1, -1], [-1, -1]])
 
@@ -65,6 +67,9 @@ class SimpleGame:
     def getBoard(self) -> np.array:
         return self._board
 
+    def getCountDrawMoves(self) -> int:
+        return self._count_draw_moves
+
     def setIsPlayerWhite(self, is_player_white: bool):
         self._is_player_white = is_player_white
 
@@ -78,14 +83,15 @@ class SimpleGame:
         return GameState.ongoing
 
     def toArgs(self):
-        return copy.deepcopy(self.getBoard()), self.isWhiteTurn(), self._board_values, self._is_previous_turn_white, self._last_move
+        return copy.deepcopy(self.getBoard()), self.isWhiteTurn(), self._board_values, self._is_previous_turn_white, self._last_move, self._count_draw_moves
 
-    def fromArgs(self, board: np.array, is_white_turn: bool, board_values, is_previous_turn_white: bool, last_move: np.array):
+    def fromArgs(self, board: np.array, is_white_turn: bool, board_values, is_previous_turn_white: bool, last_move: np.array, count_draw_moves:int):
         self._board = board
         self._is_white_turn = is_white_turn
         self._board_values = board_values
         self._is_previous_turn_white = is_previous_turn_white
         self._last_move = last_move
+        self._count_draw_moves = count_draw_moves
 
 
     def _initBoard(self, board_width: int) -> np.array:

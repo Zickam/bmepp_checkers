@@ -182,7 +182,7 @@ def _handleQueenTransformation(board: np.array, is_white_turn: bool, board_value
 
 @numba.njit
 def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, is_previous_turn_white: bool,
-               last_move: np.array, move: np.array) -> tuple[np.array, bool, np.array, bool, np.array]:
+               last_move: np.array, count_draw_moves: int, move: np.array) -> tuple[np.array, bool, np.array, bool, np.array,int]:
     is_previous_turn_white = is_white_turn
     last_move = move
 
@@ -191,14 +191,18 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, is_
     if board[move[0, 0], move[0, 1]][2]:
         is_kill_move = _isQueenKillMove(board, is_white_turn, move)
         if is_kill_move:
+            count_draw_moves = 0
             is_continuous = _handleQueenContinousMove(board, is_white_turn, move, is_previous_turn_white, last_move)
             if not is_continuous:
                 is_white_turn = not is_white_turn
         else:
+            count_draw_moves += 1
             _handleQueenMovingMove(board, move)
             is_white_turn = not is_white_turn
 
+
     else:
+        count_draw_moves = 0
         if abs(move[0, 0] - move[1, 0]) > 1:  # kill move
             board_values = _handleCheckerKillMove(board, is_white_turn, board_values, move)
             has_transformed, board, board_values = _handleQueenTransformation(board, is_white_turn, board_values, move)
@@ -216,12 +220,12 @@ def handleMove(board: np.array, is_white_turn: bool, board_values: np.array, is_
 
             is_white_turn = not is_white_turn
     # print(5432, is_white_turn, is_continuous)
-    return board, is_white_turn, board_values, is_previous_turn_white, last_move
+    return board, is_white_turn, board_values, is_previous_turn_white, last_move, count_draw_moves
 
 
-def handle_move_pr(board: np.array, is_white_turn: bool, board_values: np.array, is_previous_turn_white: bool, last_move: np.array, move: tuple) -> np.array:
+def handle_move_pr(board: np.array, is_white_turn: bool, board_values: np.array, is_previous_turn_white: bool, last_move: np.array, count_draw_moves: int, move: tuple) -> np.array:
     move = np.array(move)
-    return handleMove(board, is_white_turn, board_values, is_previous_turn_white, last_move, move)
+    return handleMove(board, is_white_turn, board_values, is_previous_turn_white, last_move, count_draw_moves, move)
 
 
 @numba.njit
@@ -388,7 +392,7 @@ def possibleMovesForPoint(game: SimpleGame, point: list[int]) -> list[list[list[
 
 # 0 - ongoing, 1 - white win, 2 - black win
 @numba.njit
-def handleWin(board: np.array, is_white_turn: bool, is_previous_turn_white: bool, last_move: np.array) -> int:
+def handleWin(board: np.array, is_white_turn: bool, is_previous_turn_white: bool, last_move: np.array, count_draw_moves) -> int:
     current_side_has_moves = False
     _, all_moves = getAllAvailableMoves(board, is_white_turn, is_previous_turn_white, last_move)
     for move in all_moves:
@@ -399,7 +403,8 @@ def handleWin(board: np.array, is_white_turn: bool, is_previous_turn_white: bool
             current_side_has_moves = True
         elif not is_white_turn and not color:
             current_side_has_moves = True
-
+    if count_draw_moves > 14:
+        return 3
     if not current_side_has_moves:
         if is_white_turn:
             game_state = 2

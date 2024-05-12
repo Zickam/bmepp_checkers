@@ -218,14 +218,14 @@ class Gui:
 
                         if self.state == SceneState.checkers:
                             self.handle_gameplay_click(x, y)
-                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
+                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
                             return
 
                         elif self.state == SceneState.checkers_with_help:
                             self.handle_gameplay_click(x, y)
-                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
+                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
                             return
