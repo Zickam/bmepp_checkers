@@ -114,7 +114,7 @@ class Gui:
             if self.state == SceneState.result:
                 if self.draw_handler.check_draw(self.__game.getBoard()):
                     return 3
-                return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
+                return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
 
     def render(self):
         if self.state == SceneState.checkers:
@@ -159,7 +159,7 @@ class Gui:
                 self.__game.getBoard(),
                 self.__game.isWhiteTurn(),
                 self.__game.getPreviousTurnWhite(),
-                self.__game.getLastMove())
+                self.__game.getLastMove(), self.__game.getCountDrawMoves())
         ).render(self.__screen)
 
         restart_button.render(self.__screen)
@@ -256,7 +256,7 @@ class Gui:
             new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
 
-            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),  self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
+            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),  self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
                 return
@@ -280,7 +280,7 @@ class Gui:
             new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
 
-            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),  self.__game.getPreviousTurnWhite(), self.__game.getLastMove())
+            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),  self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
                 return
