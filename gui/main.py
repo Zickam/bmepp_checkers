@@ -31,6 +31,7 @@ class Log:
         move = move_to_notation(move)
         with open(self.file_name, 'a+', encoding='utf-8') as file:
             file.write(move+'\n')
+            print('add')
             file.close()
 
 
@@ -265,10 +266,10 @@ class Gui:
                 return
 
             if flag == self.__game.isWhiteTurn():
-                # print(3)
-                self.__bot.start_best_move_calculation(self.__game, self.difficulty, False)
+
+                self.__bot.start_best_move_calculation(self.__game, self.difficulty, not self.__game.isPlayerWhite())
             elif self.mode_state == ModeState.bot_vs_bot:
-                # print(4)
+
                 self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
 
         if self.__bot_instead_player and self.__bot_instead_player.is_best_move_ready():
@@ -289,10 +290,10 @@ class Gui:
                 return
 
             if flag == self.__game.isWhiteTurn():
-                # print(2)
+
                 self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
             elif self.mode_state == ModeState.bot_vs_bot:
-                # print(1, self.__game.isWhiteTurn())
+
                 self.__bot.start_best_move_calculation(self.__game, self.difficulty, False)
 
     @property
@@ -308,7 +309,7 @@ class Gui:
         if play_black_button.collide_point((x, y)):
             self.state = SceneState.checkers
             self.__game.setIsPlayerWhite(False)
-            self.__bot.start_best_move_calculation(self.__game, self.difficulty, False)
+            self.__bot.start_best_move_calculation(self.__game, self.difficulty, True)
             self.mode_state = ModeState.bot_vs_player
 
         if player_player_button.collide_point((x, y)):
