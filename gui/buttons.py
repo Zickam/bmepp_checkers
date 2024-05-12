@@ -6,7 +6,7 @@ import pygame as pg
 from gui.constants import BUTTONS_FONT_PATH, GC, BC, WC, WIN_SIZE, RC
 
 pg.init()
-button_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 17)
+button_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 18)
 caption_font = pg.font.Font(BUTTONS_FONT_PATH, WIN_SIZE[1] // 5)
 
 
@@ -68,38 +68,39 @@ class Button(Text):
     def collide_point(self, coordinates: (int, int)) -> bool:
         return self.rect.collidepoint(coordinates)
 
+width, height = WIN_SIZE
 # ВСЁ МАГИЧЕСКОЕ!
-caption_text = Text((400, 120), 'Checkers', True)
-play_white_button = Button((220, 350), 'PLAY WHITE', (280, 70), False)
-play_black_button = Button((580, 350), 'PLAY BLACK', (280, 70), True)
+caption_text = Text((width // 2, height // 6), 'Checkers', True)
+play_white_button = Button((width // 3.6, height // 2.28), 'PLAY WHITE', (width // 2.857, height // 11.42), False)
+play_black_button = Button((width // 1.37, height // 2.28), 'PLAY BLACK', (width // 2.857, height // 11.42), True)
 
-player_player_button = Button((220, 260), 'PVP', (280, 70), True)
-bot_bot_button = Button((580, 260), 'BOTS', (280, 70), False)
+player_player_button = Button((width // 3.6, height // 3.07), 'PVP', (width // 2.857, height // 11.42), True)
+bot_bot_button = Button((width // 1.37, height // 3), 'BOTS', (width // 2.857, height // 11.42), False)
 
-difficulty_text = Text((400, 420), 'Difficulty')
-minus_button = Button((295, 470), '-', (50, 50), True, False)
-plus_button = Button((495, 470), '+', (50, 50), False, False)
-training_button = Button((400, 650), 'TRAINING', (220, 70), False, True)
-restart_button = Button((20, 20), 'R', (40, 40), True, False)
-help_button = Button((781, 20), '?', (40, 40), False, False, True)
+difficulty_text = Text((width // 2, height // 1.9), 'Difficulty')
+minus_button = Button((width // 2.711, height // 1.7), '-', (width // 16, height // 16), True, False)
+plus_button = Button((width // 1.61, height // 1.7), '+', (width // 16, height // 16), False, False)
+training_button = Button((width // 2, height // 1.23), 'TRAINING', (width // 3.63, height // 11.4), False, True)
+restart_button = Button((width // 40, height // 40), 'R', (width // 20, height // 20), True, False)
+help_button = Button((width // 1.024, height // 40), '?', (width // 20, height // 20), False, False, True)
 help_buttons_animation = [
-    Button((781, 20), '!', (40, 40), False, False, True),
-    Button((781, 20), '@', (40, 40), False, False, True),
-    Button((781, 20), '#', (40, 40), False, False, True),
-    Button((781, 20), '$', (40, 40), False, False, True),
-    Button((781, 20), '%', (40, 40), False, False, True),
-    Button((781, 20), '&', (40, 40), False, False, True),
+    Button((width // 1.024, height // 40), '!', (width // 20, height // 20), False, False, True),
+    Button((width // 1.024, height // 40), '@', (width // 20, height // 20), False, False, True),
+    Button((width // 1.024, height // 40), '#', (width // 20, height // 20), False, False, True),
+    Button((width // 1.024, height // 40), '$', (width // 20, height // 20), False, False, True),
+    Button((width // 1.024, height // 40), '%', (width // 20, height // 20), False, False, True),
+    Button((width // 1.024, height // 40), '&', (width // 20, height // 20), False, False, True),
 ]
-
+# 47 800
 
 def get_difficulty_num(difficulty):
-    return Text((400, 470), f'{difficulty}')
+    return Text((width // 2, height // 1.7), f'{difficulty}')
 
 
 def get_win_text(game_state: int):
     if game_state == 2:
-        return Text((400, 400), 'BLACK WIN!')
+        return Text((width // 2, height // 2), 'BLACK WIN!')
     elif game_state == 1:
-        return Text((400, 400), 'WHITE WIN!')
+        return Text((width // 2, height // 2), 'WHITE WIN!')
     else:
-        return Text((400, 400), 'DRAW! HAHA')
+        return Text((width // 2, height // 2), 'DRAW! HAHA')
