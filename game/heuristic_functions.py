@@ -129,6 +129,13 @@ def calculateHeuristicValue(board: np.array, board_values: np.array,
 
     return value
 
+def weightsFromStr(weights: str) -> np.array:
+    # excpected this: 691.8767507002802 235.23809523809524 70.57142857142857 -0.0 -21.94211017740431 904.7619047619048 -0.0 -0.0 197.3076923076923 -0.0 1.90266106442577 2.48809523809524 -0.0 -184.09172932330836 -0.0 -86.0 -0.0 87.79915966386561 0.0 0.0
+    weights = weights.split()
+    new_weights = np.full(len(weights), 0)
+    for i in range(len(weights)):
+        new_weights[i] = float(weights[i])
+    return new_weights
 
 def heuristic_function(current_game, weights: list[float]) -> float:
     # weights = [
@@ -137,6 +144,7 @@ def heuristic_function(current_game, weights: list[float]) -> float:
     #                                 0.0, - 0.0, - 0.0, - 0.0, 0.0
     # ]
     weights = np.array(weights)
+    # weights = weightsFromStr("691.8767507002802 235.23809523809524 70.57142857142857 -0.0 -21.94211017740431 904.7619047619048 -0.0 -0.0 197.3076923076923 -0.0 1.90266106442577 2.48809523809524 -0.0 -184.09172932330836 -0.0 -86.0 -0.0 87.79915966386561 0.0 0.0")
     return calculateHeuristicValue(current_game.getBoard(), np.array([]),
                                    heuristic_funcs, weights)
 

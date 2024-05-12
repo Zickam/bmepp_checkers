@@ -10,6 +10,7 @@ MAX_WEIGHT = 1000
 TOP_WEIGHTS_AMOUNT = 9
 MUTATED_WEIGHTS_AMOUNT = 18
 NEW_WEIGHTS_AMOUNT = 3
+PERCENT_OF_BIASING_WEIGHTS = 50
 
 if TOP_WEIGHTS_AMOUNT + MUTATED_WEIGHTS_AMOUNT + NEW_WEIGHTS_AMOUNT != 30:
     raise Exception("TOP_WEIGHTS_AMOUNT + MUTATED_WEIGHTS_AMOUNT + NEW_WEIGHTS_AMOUNT != WEIGHTS_COUNT")
@@ -18,7 +19,7 @@ ADD_SIMPLE_WEIGHTS = True
 SIMPLE_WEIGHTS = [9, 100] + [0] * 8 + [1, 1] + [0] * 8
 
 def next_gen_weights(weights: list[list[float]], gen_num: int):
-    weights = mutateListOfWeights(weights, gen_num, TOP_WEIGHTS_AMOUNT, MUTATED_WEIGHTS_AMOUNT, NEW_WEIGHTS_AMOUNT)
+    weights = mutateListOfWeights(weights, gen_num, TOP_WEIGHTS_AMOUNT, MUTATED_WEIGHTS_AMOUNT, PERCENT_OF_BIASING_WEIGHTS, NEW_WEIGHTS_AMOUNT)
     random.shuffle(weights)
     return weights
 
@@ -38,19 +39,27 @@ def getRandomWeightsList(amount: int) -> list[np.array]:
     return weights
 
 
-def _getBiasedWeights(weights: np.array, bias_percent: float) -> np.array:
+def _getBiasedWeights(weights: np.array, bias_percent: float, percent_of_biasing_weights: int) -> np.array:
     biased_weights = []
     for i in range(len(weights)):
-        biased_weight = weights[i] + weights[i] * bias_percent
-        if abs(biased_weight) <= 1:
-            biased_weight = -biased_weight
+        should_be_biased = True if percent_of_biasing_weights > random.randint(1, 99) else False
+        print(should_be_biased)
+        if should_be_biased:
+            biased_weight = weights[i] + weights[i] * bias_percent
+            if abs(biased_weight) <= 1:
+                biased_weight = -biased_weight
 
-        if biased_weight > 0:
-            biased_weight = min(biased_weight, MAX_WEIGHT)
-        elif biased_weight < 0:
-            biased_weight = max(biased_weight, -MAX_WEIGHT)
+            if biased_weight > 0:
+                biased_weight = min(biased_weight, MAX_WEIGHT)
+            elif biased_weight < 0:
+                biased_weight = max(biased_weight, -MAX_WEIGHT)
 
-        biased_weights.append(biased_weight)
+            biased_weights.append(biased_weight)
+
+        else:
+            not_biased_weight = weights[i]
+            biased_weights.append(not_biased_weight)
+
     return biased_weights
 
 
@@ -143,6 +152,7 @@ def mutateListOfWeights(weights_list: list[np.array],
                         generation_num: int,
                         top_weights_amount: int,
                         mutated_weights_amount: int,
+                        percent_of_biasing_weights: int,
                         new_weights_amount: int) -> list[np.array]:
 
     if generation_num <= 0:
@@ -177,7 +187,7 @@ def mutateListOfWeights(weights_list: list[np.array],
             bias_percent = -bias_percent
 
         biased_weights = _getBiasedWeights(
-            weights_to_mutate, bias_percent)
+            weights_to_mutate, bias_percent, percent_of_biasing_weights)
 
         crossbred_weights = _getHalfPartsIdsFromParents(biased_weights, top_weights_list[crossbred_parent_2_idx])
         crossbred_parent_2_idx += 1
