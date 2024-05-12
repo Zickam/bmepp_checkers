@@ -1,34 +1,33 @@
 import copy
 import random
 
-from competition.constants import ADD_SIMPLE_WEIGHTS, SIMPLE_WEIGHTS
+# from competition.constants import *
 
 import numpy as np
 
+MAX_WEIGHT = 1000
+
+TOP_WEIGHTS_AMOUNT = 9
+MUTATED_WEIGHTS_AMOUNT = 18
+NEW_WEIGHTS_AMOUNT = 3
+
+if TOP_WEIGHTS_AMOUNT + MUTATED_WEIGHTS_AMOUNT + NEW_WEIGHTS_AMOUNT != 30:
+    raise Exception("TOP_WEIGHTS_AMOUNT + MUTATED_WEIGHTS_AMOUNT + NEW_WEIGHTS_AMOUNT != WEIGHTS_COUNT")
+
+ADD_SIMPLE_WEIGHTS = True
+SIMPLE_WEIGHTS = [9, 100] + [0] * 8 + [1, 1] + [0] * 8
+
 def next_gen_weights(weights: list[list[float]], gen_num: int):
-    weights = mutateListOfWeights(weights,
-                                  gen_num,
-                                  0.3,
-                                  0.1,
-                                  0.3)
+    weights = mutateListOfWeights(weights, gen_num, TOP_WEIGHTS_AMOUNT, MUTATED_WEIGHTS_AMOUNT, NEW_WEIGHTS_AMOUNT)
     random.shuffle(weights)
     return weights
 
-
-DEFAULT_TOP_WEIGHTS_PERCENT = 0.3
-DEFAULT_MUTATED_PERCENT = 0.54
-DEFAULT_CROSSBRED_PERCENT = 0.1
-
-MAX_WEIGHT = 1000
-
-
 rng = np.random.default_rng()
-
 
 def _getRandomWeight() -> float:
     random_order_of_magnitude = np.random.randint(-2, 2)
     random_change_num = np.random.randint(-100, 100)
-    return 10 ** random_order_of_magnitude * random_change_num
+    return 10**random_order_of_magnitude * random_change_num
 
 
 def getRandomWeightsList(amount: int) -> list[np.array]:
@@ -55,7 +54,8 @@ def _getBiasedWeights(weights: np.array, bias_percent: float) -> np.array:
     return biased_weights
 
 
-def _getHalfPartsIdsFromParents(parent_1: np.array, parent_2: np.array) -> np.array:
+def _getHalfPartsIdsFromParents(parent_1: np.array,
+                                parent_2: np.array) -> np.array:
     _parts_got = np.full(len(parent_1), 0, dtype=float)
     for i in range(len(parent_1)):
         random_parent_num = random.randint(1, 2)
@@ -66,9 +66,12 @@ def _getHalfPartsIdsFromParents(parent_1: np.array, parent_2: np.array) -> np.ar
     return _parts_got
 
 
-def _getCrossbredWeights(weights: list[np.array], crossbred_weights_amount_need: int) -> list[np.array]:
+def _getCrossbredWeights(weights: list[np.array],
+                         crossbred_weights_amount_need: int) -> list[np.array]:
     if len(weights) < 2:
-        raise Exception(f"Its not possible to make crossbred out of < 2 weights! ({len(weights)} top weights got!)")
+        raise Exception(
+            f"Its not possible to make crossbred out of < 2 weights! ({len(weights)} top weights got!)"
+        )
     crossbred_weights_got = []
     crossbred_weight_idx = 0
 
@@ -111,7 +114,8 @@ def normalizeWeightsList(weights_list: list[np.array]) -> list[np.array]:
     return weights_list
 
 
-def removeDuplicateWeights(weights_list: list[np.array]) -> tuple[int, list[np.array]]:
+def removeDuplicateWeights(
+        weights_list: list[np.array]) -> tuple[int, list[np.array]]:
     # returns amount of duplicates
     dup_amount = 0
 
@@ -135,64 +139,73 @@ def removeDuplicateWeights(weights_list: list[np.array]) -> tuple[int, list[np.a
     return dup_amount, weights_list
 
 
-def mutateListOfWeights(
-        weights_list: list[np.array],
-        generation_num: int,
-        top_weights_percent: float = DEFAULT_TOP_WEIGHTS_PERCENT,
-        biased_weights_percent: float = DEFAULT_MUTATED_PERCENT,
-        crossbred_weights_percent: float = DEFAULT_CROSSBRED_PERCENT
-) -> list[np.array]:
+def mutateListOfWeights(weights_list: list[np.array],
+                        generation_num: int,
+                        top_weights_amount: int,
+                        mutated_weights_amount: int,
+                        new_weights_amount: int) -> list[np.array]:
 
     if generation_num <= 0:
         raise Exception("generation num must not be less than 1")
 
-    if top_weights_percent < 0 or biased_weights_percent < 0 or crossbred_weights_percent < 0:
-        raise Exception("None of weights percentage must be less than zero!")
-
-    top_weights_amount = int(len(weights_list) * top_weights_percent)
-    biased_weights_amount = int(len(weights_list) * biased_weights_percent)
-    crossbred_weights_amount = int(len(weights_list) * crossbred_weights_percent)
-
-    # print("MUTATION INFO", top_weights_amount, biased_weights_amount, crossbred_weights_amount)
-
-    if top_weights_amount + biased_weights_amount + crossbred_weights_amount >= len(weights_list):
+    if top_weights_amount + mutated_weights_amount + new_weights_amount != len(
+            weights_list):
         raise Exception(
-            f"top_weights_amount + biased_weights_amount + crossbred_weights_amount ({top_weights_amount, biased_weights_amount, crossbred_weights_amount}) should be less than weights_list len ({len(weights_list)}) because we have to add some completely new weights"
+            f"top_weights_amount + mutated_weights_amount + new_weights_amount ({top_weights_amount, mutated_weights_amount}) amount should be the same as weights_list len ({len(weights_list)})))"
         )
-    if top_weights_amount == 0 or biased_weights_amount == 0 or crossbred_weights_percent == 0:
-        raise Exception("None of (top_weights_amount, biased_weights_amount, crossbred_weights_percent) must be zero!")
+    if top_weights_amount == 0:
+        raise Exception("top_weights_amount must not be 0")
 
     dup_amount, weights_list = removeDuplicateWeights(weights_list)
 
-    new_weights_amount = len(
-        weights_list) - top_weights_amount - biased_weights_amount - crossbred_weights_amount + dup_amount
-
     top_weights_list = weights_list[:top_weights_amount]
 
-    crossbred_weights_list = _getCrossbredWeights(top_weights_list, crossbred_weights_amount)
-
-    biased_weights_list = []
+    mutated_weights_list = []
     weight_to_mutate_idx = 0
-    for i in range(biased_weights_amount):
+
+    crossbred_parent_1_idx = 0
+    crossbred_parent_2_idx = 1
+
+    for i in range(mutated_weights_amount):
         weight_to_mutate_idx = weight_to_mutate_idx % len(top_weights_list)
+        weights_to_mutate = top_weights_list[weight_to_mutate_idx]
 
-        bias_percent = rng.integers(1, generation_num + 2) / (generation_num / 2)
+        bias_percent = rng.integers(1,
+                                    generation_num + 2) / (generation_num / 2)
 
-        if random.choice([-1, 1]) == -1: # changing sign
+        if random.choice([-1, 1]) == -1:  # changing sign
             bias_percent = -bias_percent
-        # print("bias_percent", bias_percent)
-        # print(generation_num, bias_percent)
 
-        biased_weights = _getBiasedWeights(top_weights_list[weight_to_mutate_idx],
-                                           bias_percent)
+        biased_weights = _getBiasedWeights(
+            weights_to_mutate, bias_percent)
 
-        biased_weights_list.append(biased_weights)
+        crossbred_weights = _getHalfPartsIdsFromParents(biased_weights, top_weights_list[crossbred_parent_2_idx])
+        crossbred_parent_2_idx += 1
+        if crossbred_parent_2_idx == top_weights_amount:
+            crossbred_parent_2_idx = crossbred_parent_1_idx
+            crossbred_parent_1_idx += 1
+            if crossbred_parent_2_idx == top_weights_amount:
+                break
+
+        random_position_to_replace = random.randint(0, len(weights_list[0]) - 1)
+        random_num_to_place = random.randint(50, 200)
+
+        mutated_weights_1 = copy.deepcopy(crossbred_weights)
+        mutated_weights_1[random_position_to_replace] = random_num_to_place
+        mutated_weights_2 = copy.deepcopy(crossbred_weights)
+        mutated_weights_2[random_position_to_replace] = -random_num_to_place
+
+        if len(mutated_weights_list) + 1 > mutated_weights_amount:
+            break
+        mutated_weights_list.append(mutated_weights_1)
+        if len(mutated_weights_list) + 1 > mutated_weights_amount:
+            break
+        mutated_weights_list.append(mutated_weights_2)
 
         weight_to_mutate_idx += 1
 
     if ADD_SIMPLE_WEIGHTS:
         new_weights_amount -= 1
-
     new_weights_list = [
         getRandomWeightsList(len(weights_list[0]))
         for _ in range(new_weights_amount)
@@ -200,10 +213,11 @@ def mutateListOfWeights(
     if ADD_SIMPLE_WEIGHTS:
         new_weights_list.append(SIMPLE_WEIGHTS)
 
-    weights = top_weights_list + crossbred_weights_list + biased_weights_list + new_weights_list
+    weights = top_weights_list + mutated_weights_list + new_weights_list
 
     weights = round_weights(weights)
     return weights
+
 
 def round_weights(weights: list[list[float]]):
     weights = copy.deepcopy(weights)
@@ -212,28 +226,24 @@ def round_weights(weights: list[list[float]]):
             weight[i] = round(value, 14)
     return weights
 
+
 if __name__ == "__main__":
     weights = [getRandomWeightsList(20) for i in range(30)]
-    weights[0][0] = 0.9
 
     weights = normalizeWeightsList(weights)
     start_weights = copy.deepcopy(weights)
     # print("initial we ights", *initial_weights, sep="\n")
-    print("initial", weights[0])
+    print("initial", *weights, sep="\n")
     # print(removeDuplicateWeights([
     #     [1, 1, 1],
     #     [1, 1, 1],
     #     [1, 1, 2]
     # ]))
 
-    for i in range(1, 10):
-        weights = mutateListOfWeights(weights,
-                                          i,
-                                          0.3,
-                                          0.2,
-                                          0.2) #  0.3 -> 0.3 + 0.3 + 0.2 + random
+    for i in range(1, 2):
+        weights = next_gen_weights(weights, i)  #  0.3 -> 0.3 + 0.3 + 0.2 + random
         print('len', len(weights))
-    print("mutated", weights[3])
+    print("mutated", *weights, sep="\n")
     # print([round(weight, 2) for weight in start_weights[25]])
     # print([round(weight, 2) for weight in weights[25]])
 

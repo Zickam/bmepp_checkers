@@ -35,11 +35,11 @@ class SimpleGame:
         # self._board = np.array([
         #     [[0, 0, 0] for j in range(8)] for i in range(8)
         # ])
-        # self._board[4, 3] = np.array([1, 1, 1])
-        # self._board[5, 2] = np.array([1, 1, 0])
-        # self._board[4, 1] = np.array([1, 0, 0])
-        # self._board[5, 4] = np.array([1, 0, 0])
-        # self._board[5, 6] = np.array([1, 0, 0])
+        # self._board[0, 1] = np.array([1, 0, 1])
+        # self._board[7, 6] = np.array([1, 1, 1])
+        # # self._board[4, 1] = np.array([1, 0, 0])
+        # # self._board[5, 4] = np.array([1, 0, 0])
+        # # self._board[5, 6] = np.array([1, 0, 0])
 
         # _board_values contains these values:
         # 0 - checkers amount
