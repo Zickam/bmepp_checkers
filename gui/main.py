@@ -5,11 +5,14 @@ import numpy as np
 
 from game.classes import move_to_notation
 from gui.sprites import Sprites
-from gui.constants import WIN_SIZE, FPS, GC
-from game.main import SimpleGame
+from gui.constants import WIN_SIZE, FPS, GC, CBBC
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, minus_button, \
     plus_button, restart_button, get_difficulty_num, get_win_text, training_button, help_button, \
-    help_buttons_animation, player_player_button, bot_bot_button
+    help_buttons_animation, player_player_button, bot_bot_button, choosing_a_bot_button, choosing_main_text, \
+    white_side_text, black_side_text, get_current_bots_name_texts, get_bots_variants_buttons, \
+    creating_new_bot_button, turn_on_deleting_mode_button, turn_off_deleting_mode_button
+from gui.bot import Bot1
+from game.main import SimpleGame
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
 from game.bot import Bot
 from game.minmax import game_board_to_str
@@ -31,7 +34,6 @@ class Log:
         move = move_to_notation(move)
         with open(self.file_name, 'a+', encoding='utf-8') as file:
             file.write(move+'\n')
-            print('add')
             file.close()
 
 
@@ -40,6 +42,8 @@ class SceneState(Enum):
     checkers = 1
     result = 2
     checkers_with_help = 3
+    choosing_a_bot = 4
+    creating_a_bot = 5
 
 
 class ModeState(Enum):
@@ -61,11 +65,10 @@ class DrawHandler:
 
 
 class Gui:
-    def __init__(self, opponent_bot: Bot,
+    def __init__(self, opponent_bot: Bot = None,
                  main_bot: Bot = None,
                  caption='Checkers',
-                 with_display=True,
-                 need_to_calculate=False):
+                 with_display=True):
         """
         Can work in two modes: bot vs player, bot vs bot
         If main_bot param is not None, will start bot vs bot game, opponent_bot playing black, main_bot playing white
@@ -78,17 +81,28 @@ class Gui:
         self.state = SceneState.menu  # if not self.bot_vs_bot_mode else SceneState.checkers
         self.mode_state = ModeState.bot_vs_player
         self.difficulty = DEFAULT_DIFFICULTY
-        self.__bot = opponent_bot
-        self.__bot_instead_player = main_bot
         self.draw_handler = DrawHandler()
         self.player_log = Log()
+
+        self.bots = Bot1.get_all_bots()
+        self.chosen_bot = 0
+        self.chosen_instead_player = 0
+        if opponent_bot is None:
+            self.__bot = Bot(self.bots[self.chosen_bot].weights)
+        else:
+            self.__bot = opponent_bot
+        if main_bot is None:
+            self.__bot_instead_player = Bot(self.bots[self.chosen_instead_player].weights)
+        else:
+            self.__bot_instead_player = main_bot
 
         if self.with_display:
             self.__screen = pg.display.set_mode(WIN_SIZE)
             pg.display.set_caption(caption)
 
         self.__sprites = Sprites(self.__game.getBoardWidth())
-        self.left_offset = WIN_SIZE[0] - self.__sprites.board.get_width()
+        self.left_offset = 0
+        self.deleting_mode = False
 
     def change_caption(self, caption: str):
         pg.display.set_caption(caption)
@@ -118,6 +132,7 @@ class Gui:
                 return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
 
     def render(self):
+        self.__screen.fill(CBBC)
         if self.state == SceneState.checkers:
             self.render_gameplay()
         elif self.state == SceneState.menu:
@@ -126,6 +141,10 @@ class Gui:
             self.render_result()
         elif self.state == SceneState.checkers_with_help:
             self.render_gameplay()
+        elif self.state == SceneState.choosing_a_bot:
+            self.render_choosing_a_bot()
+        elif self.state == SceneState.creating_a_bot:
+            self.render_creating_a_bot()
         pg.display.update()
 
     def render_gameplay(self):
@@ -152,9 +171,9 @@ class Gui:
         player_player_button.render(self.__screen)
         bot_bot_button.render(self.__screen)
         get_difficulty_num(self.difficulty).render(self.__screen)
+        choosing_a_bot_button.render(self.__screen)
 
     def render_result(self):
-        # self.__screen.fill(GC)
         get_win_text(
             handleWin(
                 self.__game.getBoard(),
@@ -207,6 +226,25 @@ class Gui:
             coordinate = coordinate.move(self.left_offset, 0)
             self.__screen.blit(self.__sprites.hint, coordinate)
 
+    def render_choosing_a_bot(self):
+        self.__screen.fill(CBBC)
+        choosing_main_text.render(self.__screen)
+        white_side_text.render(self.__screen)
+        black_side_text.render(self.__screen)
+        restart_button.render(self.__screen)
+        chosen_bots_texts = get_current_bots_name_texts(self.chosen_instead_player, self.chosen_bot, self.bots)
+        bots_variants = get_bots_variants_buttons(self.bots)
+        for el in chosen_bots_texts + bots_variants:
+            el.render(self.__screen)
+        creating_new_bot_button.render(self.__screen)
+        if self.deleting_mode:
+            turn_off_deleting_mode_button.render(self.__screen)
+        else:
+            turn_on_deleting_mode_button.render(self.__screen)
+
+    def render_creating_a_bot(self):
+        restart_button.render(self.__screen)
+
     def handle_events(self):
         events = pg.event.get()
         for event in events:
@@ -235,6 +273,11 @@ class Gui:
                             self.handle_menu_click(x, y)
                         elif self.state == SceneState.result:
                             self.handle_result_click(x, y)
+                        elif self.state == SceneState.choosing_a_bot:
+                            self.handle_choosing_click(x, y)
+                        elif self.state == SceneState.creating_a_bot:
+                            self.handle_creating_bot_click(x, y)
+
             elif self.state != SceneState.menu:
                 if restart_button.collide_point(pg.mouse.get_pos()) and any(pg.mouse.get_pressed()[:2][::1]):
                     self.__game = SimpleGame()
@@ -333,6 +376,9 @@ class Gui:
             self.state = SceneState.checkers_with_help
             self.__game.setIsPlayerWhite(True)
 
+        if choosing_a_bot_button.collide_point((x, y)):
+            self.state = SceneState.choosing_a_bot
+
     def handle_gameplay_click(self, x: int, y: int):
         if restart_button.collide_point((x, y)):
             self.__game = SimpleGame()
@@ -369,7 +415,6 @@ class Gui:
                 self.__game.fromArgs(*new_args)
 
                 self.player_log.add_turn(move)
-                print('clear')
                 self.possible_moves.clear()
 
                 if is_white_flag != self.__game.isWhiteTurn():
@@ -398,6 +443,38 @@ class Gui:
             self.__game = SimpleGame()
             self.state = SceneState.menu
 
+    def handle_choosing_click(self, x, y):
+        if restart_button.collide_point((x, y)):
+            self.state = SceneState.menu
+            self.__bot = Bot(self.bots[self.chosen_bot].weights)
+            self.__bot_instead_player = Bot(self.bots[self.chosen_instead_player].weights)
+
+        all_buttons = get_bots_variants_buttons(self.bots)
+        for i, button in enumerate(all_buttons):
+            if button.collide_point((x, y)):
+                if not self.deleting_mode:
+                    if i % 2 == 1:
+                        self.chosen_bot = i // 2
+                    else:
+                        self.chosen_instead_player = i // 2
+                else:
+                    if len(self.bots) == 1:
+                        self.deleting_mode = False
+                        break
+                    self.bots = self.bots[:i//2] + self.bots[i//2+1:]
+                    self.chosen_bot = 0
+                    self.chosen_instead_player = 0
+                    Bot1.delete(i//2)
+        if creating_new_bot_button.collide_point((x, y)):
+            self.state = SceneState.creating_a_bot
+        if turn_on_deleting_mode_button.collide_point((x, y)):
+            self.deleting_mode = not self.deleting_mode
+
+    def handle_creating_bot_click(self, x, y):
+        if restart_button.collide_point((x, y)):
+            self.state = SceneState.choosing_a_bot
+            self.bots = Bot1.get_all_bots()
+
     def change_bots(self, bot1: Bot, bot2: Bot):
         self.__bot = bot1
         self.__bot_instead_player = bot2
@@ -406,7 +483,6 @@ class Gui:
         self.__game = SimpleGame()
         self.possible_moves = []
         # self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
-
 
     def close(self):
         exit()

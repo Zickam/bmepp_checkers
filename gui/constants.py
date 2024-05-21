@@ -13,9 +13,7 @@ RC = (220, 0, 0)  # red color
 BCC = (108, 152, 76)  # black cells color
 WCC = (245, 245, 226)  # white cells color
 BBC = (20, 20, 20)  # board border color
+CBBC = (150, 150, 150)  # choosing a bot back color
 
 BOARD_FONT_PATH = 'gui/data/board_font.ttf'
 BUTTONS_FONT_PATH = 'gui/data/buttons_font.ttf'
-
-MAX_DIFFICULTY = 4
-MIN_DIFFICULTY = 0
