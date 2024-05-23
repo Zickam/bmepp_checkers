@@ -10,7 +10,7 @@ from gui.buttons import caption_text, play_white_button, play_black_button, diff
     plus_button, restart_button, get_difficulty_num, get_win_text, training_button, help_button, \
     help_buttons_animation, player_player_button, bot_bot_button, choosing_a_bot_button, choosing_main_text, \
     white_side_text, black_side_text, get_current_bots_name_texts, get_bots_variants_buttons, \
-    creating_new_bot_button, turn_on_deleting_mode_button, turn_off_deleting_mode_button
+    creating_new_bot_button, turn_on_deleting_mode_button, turn_off_deleting_mode_button, Text, Button, TextInput
 from gui.bot import Bot1
 from game.main import SimpleGame
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
@@ -22,6 +22,15 @@ from game.constants import DEFAULT_DIFFICULTY, DIFFICULTIES
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame as pg
+
+WIDTH = WIN_SIZE[0]
+HEIGHT = WIN_SIZE[1]
+
+information_text1 = Text((WIDTH // 2, HEIGHT // 20), 'Enter 20 weights for the checkerboard characteristics.', False, HEIGHT // 40)
+information_text2 = Text((WIDTH // 2, HEIGHT // 12.5), 'These weights are used to determine the quality of the position.',False,  HEIGHT // 40)
+information_text3 = Text((WIDTH // 2, HEIGHT // 9.09), 'This influences the selection of the best move.', False, HEIGHT // 40)
+text_input = TextInput((400, 400), (370, 50), True, 50)
+
 
 
 class Log:
@@ -244,6 +253,10 @@ class Gui:
 
     def render_creating_a_bot(self):
         restart_button.render(self.__screen)
+        information_text1.render(self.__screen)
+        information_text2.render(self.__screen)
+        information_text3.render(self.__screen)
+        text_input.render(self.__screen)
 
     def handle_events(self):
         events = pg.event.get()
@@ -276,7 +289,11 @@ class Gui:
                         elif self.state == SceneState.choosing_a_bot:
                             self.handle_choosing_click(x, y)
                         elif self.state == SceneState.creating_a_bot:
-                            self.handle_creating_bot_click(x, y)
+                            self.handle_creating_bot_click(x, y, events)
+
+                if event.type == pg.KEYDOWN:
+                    self.handle_creating_bot_click(-1, -1, events)
+
 
             elif self.state != SceneState.menu:
                 if restart_button.collide_point(pg.mouse.get_pos()) and any(pg.mouse.get_pressed()[:2][::1]):
@@ -470,10 +487,14 @@ class Gui:
         if turn_on_deleting_mode_button.collide_point((x, y)):
             self.deleting_mode = not self.deleting_mode
 
-    def handle_creating_bot_click(self, x, y):
+    def handle_creating_bot_click(self, x, y, events):
+        text_input.handle_events(events, x, y)
+        print(1)
         if restart_button.collide_point((x, y)):
             self.state = SceneState.choosing_a_bot
             self.bots = Bot1.get_all_bots()
+            print(2)
+
 
     def change_bots(self, bot1: Bot, bot2: Bot):
         self.__bot = bot1
