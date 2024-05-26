@@ -7,29 +7,84 @@ from game.classes import move_to_notation
 from gui.sprites import Sprites
 from gui.constants import WIN_SIZE, FPS, GC, CBBC
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, minus_button, \
-    plus_button, restart_button, get_difficulty_num, get_win_text, training_button, help_button, \
+    plus_button, return_button, get_difficulty_num, get_win_text, training_button, help_button, \
     help_buttons_animation, player_player_button, bot_bot_button, choosing_a_bot_button, choosing_main_text, \
     white_side_text, black_side_text, get_current_bots_name_texts, get_bots_variants_buttons, \
     creating_new_bot_button, turn_on_deleting_mode_button, turn_off_deleting_mode_button, Text, Button, TextInput
 from gui.bot import Bot1
+from gui.decoder import file_decoded
 from game.main import SimpleGame
 from game.board_manager import handle_move_pr, possibleMovesForPoint, handleWin
 from game.bot import Bot
 from game.minmax import game_board_to_str
 from game.constants import DEFAULT_DIFFICULTY, DIFFICULTIES
 
-
 import os
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame as pg
 
 WIDTH = WIN_SIZE[0]
 HEIGHT = WIN_SIZE[1]
 
-information_text1 = Text((WIDTH // 2, HEIGHT // 20), 'Enter 20 weights for the checkerboard characteristics.', False, HEIGHT // 40)
-information_text2 = Text((WIDTH // 2, HEIGHT // 12.5), 'These weights are used to determine the quality of the position.',False,  HEIGHT // 40)
-information_text3 = Text((WIDTH // 2, HEIGHT // 9.09), 'This influences the selection of the best move.', False, HEIGHT // 40)
-text_input = TextInput((400, 400), (370, 50), True, 50)
+information_text1 = Text((WIDTH // 2, HEIGHT // 20), 'Enter 20 weights for the checkerboard characteristics.', False,
+                         HEIGHT // 40)
+information_text2 = Text((WIDTH // 2, HEIGHT // 12.5),
+                         'These weights are used to determine the quality of the position.', False, HEIGHT // 40)
+information_text3 = Text((WIDTH // 2, HEIGHT // 9.09), 'This influences the selection of the best move.', False,
+                         HEIGHT // 40)
+text_input = TextInput((WIDTH // 3, HEIGHT // 4.1162213), (WIDTH // 2.702, HEIGHT // 20), True, HEIGHT // 20)
+text_name = Text((WIDTH // 4.9, HEIGHT // 5), 'Name', False, HEIGHT // 20)
+text_checkers = Text((WIDTH // 4.9, HEIGHT // 2.2), 'Checkers count', False, HEIGHT // 20)
+
+spisok_s_textom = []
+spisok_s_inputami = []
+offset = 0
+name_width = text_name.rect.left
+spisok_s_textom_dlya_texta = ['Checkers amount',
+                              'Queens amount',
+                              'Safe checkers',
+                              'Safe queens',
+                              'Movable checkers',
+                              'Movable queens',
+                              'Distance to promotion line',
+                              'Free cells on promotion line',
+                              'Defenders amount',
+                              'Attackers amount',
+                              'Middle checkers',
+                              'Middle queens',
+                              'Checkers on main diagonal',
+                              'Queens on main diagonal',
+                              'Checkers on double diagonal',
+                              'Queens on double diagonal',
+                              'Alone checkers',
+                              'Alone queens',
+                              'Holes',
+                              'Leading on side']
+
+for i in range(20):
+    text = Text((0, 0), spisok_s_textom_dlya_texta[i], False, HEIGHT // 20)
+    width = text.rect.width
+    cord = (width // 2 + name_width, HEIGHT // 10 * (i + 3))
+    text = Text(cord, spisok_s_textom_dlya_texta[i], False, HEIGHT // 20)
+    spisok_s_textom.append(text)
+
+for i in range(20):
+    cords = (WIDTH // 3, HEIGHT // 4.1162213 + (HEIGHT // 10 * (i + 1)))
+    textbox = TextInput(cords, (WIDTH // 2.702, HEIGHT // 20), False, HEIGHT // 20)
+    spisok_s_inputami.append(textbox)
+
+
+save_button = Button((WIDTH // 1.1, HEIGHT // 1.05), 'SAVE', (WIDTH // 7, HEIGHT // 18), True)
+
+
+def save_bot(name_input, lst_input):
+    with open(f'bots/{name_input.get_value()}.txt', 'w') as file:
+        for text in lst_input:
+            value = text.get_value()
+            if value == '':
+                value = 0
+            file.write(f'{value}\n')
 
 
 
@@ -42,7 +97,7 @@ class Log:
     def add_turn(self, move: np.array):
         move = move_to_notation(move)
         with open(self.file_name, 'a+', encoding='utf-8') as file:
-            file.write(move+'\n')
+            file.write(move + '\n')
             file.close()
 
 
@@ -87,7 +142,7 @@ class Gui:
         self.with_display = with_display
         self.possible_moves: list[list[list[int]]] = []
         self.selected_checker: None | list[int] = None
-        self.state = SceneState.menu  # if not self.bot_vs_bot_mode else SceneState.checkers
+        self.state = SceneState.creating_a_bot  # if not self.bot_vs_bot_mode else SceneState.checkers
         self.mode_state = ModeState.bot_vs_player
         self.difficulty = DEFAULT_DIFFICULTY
         self.draw_handler = DrawHandler()
@@ -112,6 +167,7 @@ class Gui:
         self.__sprites = Sprites(self.__game.getBoardWidth())
         self.left_offset = 0
         self.deleting_mode = False
+        self.promotka = 0
 
     def change_caption(self, caption: str):
         pg.display.set_caption(caption)
@@ -138,7 +194,8 @@ class Gui:
             if self.state == SceneState.result:
                 if self.draw_handler.check_draw(self.__game.getBoard()):
                     return 3
-                return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
+                return handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(),
+                                 self.__game.getLastMove(), self.__game.getCountDrawMoves())
 
     def render(self):
         self.__screen.fill(CBBC)
@@ -161,7 +218,7 @@ class Gui:
         self.render_selected_checker()
         self.render_checkers()
         self.render_hints()
-        restart_button.render(self.__screen)
+        return_button.render(self.__screen)
         if self.state == SceneState.checkers_with_help:
             help_button.render(self.__screen)
 
@@ -191,7 +248,7 @@ class Gui:
                 self.__game.getLastMove(), self.__game.getCountDrawMoves())
         ).render(self.__screen)
 
-        restart_button.render(self.__screen)
+        return_button.render(self.__screen)
 
     def render_board(self):
         if self.__game.isPlayerWhite():
@@ -240,7 +297,7 @@ class Gui:
         choosing_main_text.render(self.__screen)
         white_side_text.render(self.__screen)
         black_side_text.render(self.__screen)
-        restart_button.render(self.__screen)
+        return_button.render(self.__screen)
         chosen_bots_texts = get_current_bots_name_texts(self.chosen_instead_player, self.chosen_bot, self.bots)
         bots_variants = get_bots_variants_buttons(self.bots)
         for el in chosen_bots_texts + bots_variants:
@@ -252,11 +309,23 @@ class Gui:
             turn_on_deleting_mode_button.render(self.__screen)
 
     def render_creating_a_bot(self):
-        restart_button.render(self.__screen)
-        information_text1.render(self.__screen)
-        information_text2.render(self.__screen)
-        information_text3.render(self.__screen)
-        text_input.render(self.__screen)
+        fake_screen = pg.Surface((WIDTH, HEIGHT * 10))
+        fake_screen.fill(GC)
+        return_button.render(fake_screen)
+        information_text1.render(fake_screen)
+        information_text2.render(fake_screen)
+        information_text3.render(fake_screen)
+        text_input.render(fake_screen)
+        text_name.render(fake_screen)
+        for text in spisok_s_textom:
+            text.render(fake_screen)
+        for textbox in spisok_s_inputami:
+            textbox.render(fake_screen)
+        fake_screen.blit(file_decoded, (0, HEIGHT * 5))
+        self.__screen.blit(fake_screen, (0, -self.promotka))
+        if self.promotka <= HEIGHT * 3:
+            save_button.render(self.__screen)
+
 
     def handle_events(self):
         events = pg.event.get()
@@ -270,14 +339,18 @@ class Gui:
 
                         if self.state == SceneState.checkers:
                             self.handle_gameplay_click(x, y)
-                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
+                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),
+                                              self.__game.getPreviousTurnWhite(), self.__game.getLastMove(),
+                                              self.__game.getCountDrawMoves())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
                             return
 
                         elif self.state == SceneState.checkers_with_help:
                             self.handle_gameplay_click(x, y)
-                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
+                            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),
+                                              self.__game.getPreviousTurnWhite(), self.__game.getLastMove(),
+                                              self.__game.getCountDrawMoves())
                             if state in [1, 2]:  # game is ended (w win, b win)
                                 self.state = SceneState.result
                             return
@@ -293,10 +366,12 @@ class Gui:
 
                 if event.type == pg.KEYDOWN:
                     self.handle_creating_bot_click(-1, -1, events)
+                if event.type == pg.MOUSEWHEEL:
+                    self.handle_creating_bot_click(-2, -2, events)
 
 
             elif self.state != SceneState.menu:
-                if restart_button.collide_point(pg.mouse.get_pos()) and any(pg.mouse.get_pressed()[:2][::1]):
+                if return_button.collide_point(pg.mouse.get_pos()) and any(pg.mouse.get_pressed()[:2][::1]):
                     self.__game = SimpleGame()
                     self.state = SceneState.menu
                     self.mode_state = ModeState.player_vs_player
@@ -317,7 +392,8 @@ class Gui:
             new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
 
-            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),  self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
+            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(),
+                              self.__game.getLastMove(), self.__game.getCountDrawMoves())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
                 return
@@ -341,7 +417,8 @@ class Gui:
             new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
 
-            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(),  self.__game.getPreviousTurnWhite(), self.__game.getLastMove(), self.__game.getCountDrawMoves())
+            state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(),
+                              self.__game.getLastMove(), self.__game.getCountDrawMoves())
             if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
                 self.state = SceneState.result
                 return
@@ -397,7 +474,7 @@ class Gui:
             self.state = SceneState.choosing_a_bot
 
     def handle_gameplay_click(self, x: int, y: int):
-        if restart_button.collide_point((x, y)):
+        if return_button.collide_point((x, y)):
             self.__game = SimpleGame()
             self.state = SceneState.menu
             self.selected_checker = None
@@ -445,8 +522,8 @@ class Gui:
                     self.possible_moves = possibleMovesForPoint(self.__game, move_end)
                     return
 
-        if self.mode_state == ModeState.player_vs_player or\
-            (self.mode_state == ModeState.bot_vs_player and self.is_bot_move is False):
+        if self.mode_state == ModeState.player_vs_player or \
+                (self.mode_state == ModeState.bot_vs_player and self.is_bot_move is False):
             # click on checker
             if board[i][j][0] and board[i][j][1] == self.__game.isWhiteTurn():
                 self.selected_checker = [i, j]
@@ -456,12 +533,12 @@ class Gui:
                 self.possible_moves = []
 
     def handle_result_click(self, x, y):
-        if restart_button.collide_point((x, y)):
+        if return_button.collide_point((x, y)):
             self.__game = SimpleGame()
             self.state = SceneState.menu
 
     def handle_choosing_click(self, x, y):
-        if restart_button.collide_point((x, y)):
+        if return_button.collide_point((x, y)):
             self.state = SceneState.menu
             self.__bot = Bot(self.bots[self.chosen_bot].weights)
             self.__bot_instead_player = Bot(self.bots[self.chosen_instead_player].weights)
@@ -478,22 +555,37 @@ class Gui:
                     if len(self.bots) == 1:
                         self.deleting_mode = False
                         break
-                    self.bots = self.bots[:i//2] + self.bots[i//2+1:]
+                    self.bots = self.bots[:i // 2] + self.bots[i // 2 + 1:]
                     self.chosen_bot = 0
                     self.chosen_instead_player = 0
-                    Bot1.delete(i//2)
+                    Bot1.delete(i // 2)
         if creating_new_bot_button.collide_point((x, y)):
             self.state = SceneState.creating_a_bot
+            self.promotka = 0
         if turn_on_deleting_mode_button.collide_point((x, y)):
             self.deleting_mode = not self.deleting_mode
 
     def handle_creating_bot_click(self, x, y, events):
+        y = y + self.promotka
         text_input.handle_events(events, x, y)
-        print(1)
-        if restart_button.collide_point((x, y)):
+        for event in events:
+            if event.type == pg.MOUSEBUTTONUP:
+                if event.button == 5 and self.promotka < HEIGHT * 5:
+                    self.promotka += 150
+
+                if event.button == 4 and self.promotka - 10 >= 0:
+                    self.promotka -= 150
+
+        for text in spisok_s_inputami:
+            text.handle_events(events, x, y)
+
+        if return_button.collide_point((x, y)):
             self.state = SceneState.choosing_a_bot
             self.bots = Bot1.get_all_bots()
-            print(2)
+        if save_button.collide_point((x, y - self.promotka)):
+            save_bot(text_input, spisok_s_inputami)
+            self.state = SceneState.choosing_a_bot
+            self.bots = Bot1.get_all_bots()
 
 
     def change_bots(self, bot1: Bot, bot2: Bot):

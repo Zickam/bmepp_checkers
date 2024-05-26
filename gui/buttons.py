@@ -38,7 +38,7 @@ class Text:
 class Button(Text):
     def __init__(self, coordinates: (int, int),
                  text: str,
-                 size: (int, int),
+                 size: tuple[int, int],
                  is_black: bool,
                  stroke=True,
                  is_red=False):
@@ -98,7 +98,6 @@ class TextInput:
         self.font = pg.font.Font(BUTTONS_FONT_PATH, font_size)
         self.alphabet = {x + 97: string.ascii_lowercase[x] for x in range(26)}
         pg.draw.rect(self.image, WC, (2, 2, self.size[0] - 4, self.size[1] - 4))
-        print(self.alphabet)
 
     def handle_events(self, event_lst: list[pg.event], x, y):
         if x != -1:
@@ -110,8 +109,20 @@ class TextInput:
         if self.is_active:
             for event in event_lst:
                 if event.type == pg.KEYDOWN:
-                    if event.key in self.alphabet and len(self.text) <= 11:
-                        self.text.append(self.alphabet[event.key])
+                    if self.is_str:
+                        if event.key in self.alphabet and len(self.text) <= 11:
+                            keys = pg.key.get_mods()
+                            if keys & pg.KMOD_SHIFT:
+                                self.text.append(self.alphabet[event.key].upper())
+                            else:
+                                self.text.append(self.alphabet[event.key])
+                        if event.key == pg.K_SPACE and len(self.text) <= 11:
+                            self.text.append(' ')
+                    else:
+                        if pg.K_0 <= event.key <= pg.K_9 and len(self.text) <= 11:
+                            self.text.append(str(event.key - pg.K_0))
+                        if len(self.text) == 0 and event.key == pg.K_MINUS:
+                            self.text.append('-')
                     if event.key == pg.K_BACKSPACE and len(self.text) != 0:
                         self.text.pop()
 
@@ -131,9 +142,6 @@ class TextInput:
         screen.blit(text, text_rect)
 
 
-
-
-
 width, height = WIN_SIZE
 caption_text = Text((width // 2, height // 6), 'Checkers', True)
 play_white_button = Button((width // 3.6, height // 2.28), 'PLAY WHITE', (width // 2.857, height // 11.42), False)
@@ -149,7 +157,7 @@ plus_button = Button((width // 1.61, height // 1.7), '+', (width // 16, height /
 training_button = Button((width // 2, height // 1.3), 'TRAINING', (width // 3.63, height // 11.4), False, True)
 choosing_a_bot_button = Button((width // 2, height // 1.14), 'CHANGE BOT', (width // 3, height // 11.4), False, True)
 
-restart_button = Button((width // 40, height // 40), 'R', (width // 20, height // 20), True, False)
+return_button = Button((width // 40, height // 40), 'R', (width // 20, height // 20), True, False)
 help_button = Button((width // 1.024, height // 40), '?', (width // 20, height // 20), False, False, True)
 help_buttons_animation = [
     Button((width // 1.024, height // 40), '!', (width // 20, height // 20), False, False, True),
@@ -172,7 +180,7 @@ def get_bots_variants_buttons(bots) -> list[Button]:
     buttons = []
     offset = height//12.5
     if len(bots) > 7:
-        offset = height//(5.5+len(bots))
+        offset = height//(6+len(bots)**1.1)
     y = height//3.5
     for i, b in enumerate(bots):
         if True:
@@ -182,8 +190,6 @@ def get_bots_variants_buttons(bots) -> list[Button]:
             new_button = Button((width//1.315, y), b.name, (width//3, height//14), False)
             buttons.append(new_button)
         y += offset
-        if y > height // 1.25:
-            break
     return buttons
 
 
