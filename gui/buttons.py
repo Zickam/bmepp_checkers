@@ -180,7 +180,7 @@ def get_bots_variants_buttons(bots) -> list[Button]:
     buttons = []
     offset = height//12.5
     if len(bots) > 7:
-        offset = height//(6+len(bots)**1.1)
+        offset = (height*6/12.5) / (len(bots))
     y = height//3.5
     for i, b in enumerate(bots):
         if True:

@@ -20,8 +20,6 @@ from game.minmax import game_board_to_str
 from game.constants import DEFAULT_DIFFICULTY, DIFFICULTIES
 
 import os
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame as pg
 
 WIDTH = WIN_SIZE[0]
@@ -33,46 +31,55 @@ information_text2 = Text((WIDTH // 2, HEIGHT // 12.5),
                          'These weights are used to determine the quality of the position.', False, HEIGHT // 40)
 information_text3 = Text((WIDTH // 2, HEIGHT // 9.09), 'This influences the selection of the best move.', False,
                          HEIGHT // 40)
-text_input = TextInput((WIDTH // 3, HEIGHT // 4.1162213), (WIDTH // 2.702, HEIGHT // 20), True, HEIGHT // 20)
+
 text_name = Text((WIDTH // 4.9, HEIGHT // 5), 'Name', False, HEIGHT // 20)
 text_checkers = Text((WIDTH // 4.9, HEIGHT // 2.2), 'Checkers count', False, HEIGHT // 20)
 
-spisok_s_textom = []
-spisok_s_inputami = []
-offset = 0
-name_width = text_name.rect.left
-spisok_s_textom_dlya_texta = ['Checkers amount',
-                              'Queens amount',
-                              'Safe checkers',
-                              'Safe queens',
-                              'Movable checkers',
-                              'Movable queens',
-                              'Distance to promotion line',
-                              'Free cells on promotion line',
-                              'Defenders amount',
-                              'Attackers amount',
-                              'Middle checkers',
-                              'Middle queens',
-                              'Checkers on main diagonal',
-                              'Queens on main diagonal',
-                              'Checkers on double diagonal',
-                              'Queens on double diagonal',
-                              'Alone checkers',
-                              'Alone queens',
-                              'Holes',
-                              'Leading on side']
 
-for i in range(20):
-    text = Text((0, 0), spisok_s_textom_dlya_texta[i], False, HEIGHT // 20)
+def create_empty_spiski_for_creating_a_bot():
+    text_input = TextInput((WIDTH // 3, HEIGHT // 4.1162213), (WIDTH // 2.702, HEIGHT // 20), True, HEIGHT // 20)
+    spisok_s_textom = []
+    spisok_s_inputami = []
+    name_width = text_name.rect.left
+    spisok_s_textom_dlya_texta = ['Checkers amount',
+                                  'Queens amount',
+                                  'Safe checkers',
+                                  'Safe queens',
+                                  'Movable checkers',
+                                  'Movable queens',
+                                  'Distance to promotion line',
+                                  'Free cells on promotion line',
+                                  'Defenders amount',
+                                  'Attackers amount',
+                                  'Middle checkers',
+                                  'Middle queens',
+                                  'Checkers on main diagonal',
+                                  'Queens on main diagonal',
+                                  'Checkers on double diagonal',
+                                  'Queens on double diagonal',
+                                  'Alone checkers',
+                                  'Alone queens',
+                                  'Holes',
+                                  'Leading on side']
+
+    for i in range(20):
+        text = Text((0, 0), spisok_s_textom_dlya_texta[i], False, HEIGHT // 20)
+        width = text.rect.width
+        cord = (width // 2 + name_width, HEIGHT // 10 * (i + 3.5))
+        text = Text(cord, spisok_s_textom_dlya_texta[i], False, HEIGHT // 20)
+        spisok_s_textom.append(text)
+
+    text = Text((0, 0), 'Weights:', False, HEIGHT // 20)
     width = text.rect.width
-    cord = (width // 2 + name_width, HEIGHT // 10 * (i + 3))
-    text = Text(cord, spisok_s_textom_dlya_texta[i], False, HEIGHT // 20)
+    cord = (width // 2 + name_width, HEIGHT // 10 * 3)
+    text = Text(cord, 'Weights:', False, HEIGHT // 20)
     spisok_s_textom.append(text)
 
-for i in range(20):
-    cords = (WIDTH // 3, HEIGHT // 4.1162213 + (HEIGHT // 10 * (i + 1)))
-    textbox = TextInput(cords, (WIDTH // 2.702, HEIGHT // 20), False, HEIGHT // 20)
-    spisok_s_inputami.append(textbox)
+    for i in range(20):
+        cords = (WIDTH // 3, HEIGHT // 4.1162213 + (HEIGHT // 10 * (i + 1.5)))
+        textbox = TextInput(cords, (WIDTH // 2.702, HEIGHT // 20), False, HEIGHT // 20)
+        spisok_s_inputami.append(textbox)
+    return spisok_s_inputami, spisok_s_textom, text_input
 
 
 save_button = Button((WIDTH // 1.1, HEIGHT // 1.05), 'SAVE', (WIDTH // 7, HEIGHT // 18), True)
@@ -85,7 +92,6 @@ def save_bot(name_input, lst_input):
             if value == '':
                 value = 0
             file.write(f'{value}\n')
-
 
 
 class Log:
@@ -142,7 +148,7 @@ class Gui:
         self.with_display = with_display
         self.possible_moves: list[list[list[int]]] = []
         self.selected_checker: None | list[int] = None
-        self.state = SceneState.creating_a_bot  # if not self.bot_vs_bot_mode else SceneState.checkers
+        self.state = SceneState.menu
         self.mode_state = ModeState.bot_vs_player
         self.difficulty = DEFAULT_DIFFICULTY
         self.draw_handler = DrawHandler()
@@ -169,7 +175,10 @@ class Gui:
         self.deleting_mode = False
         self.promotka = 0
 
-    def change_caption(self, caption: str):
+        self.spisok_s_inputami, self.spisok_s_textom, self.text_input = create_empty_spiski_for_creating_a_bot()
+
+    @staticmethod
+    def change_caption(caption: str):
         pg.display.set_caption(caption)
 
     def mainloop(self):
@@ -257,7 +266,7 @@ class Gui:
             board_sprite = self.__sprites.rotated_board
         self.__screen.blit(board_sprite, (self.left_offset, 0))
 
-    def render_selected_checker(self, checker=None):
+    def render_selected_checker(self):
         if self.selected_checker is not None:
             x_cord = self.selected_checker[0]
             y_cord = self.selected_checker[1]
@@ -284,7 +293,7 @@ class Gui:
                     else:
                         self.__screen.blit(self.__sprites.black_checker, coordinate)
 
-    def render_hints(self, hint=None):
+    def render_hints(self):
         for move in self.possible_moves:
             move_x = move[1][0]
             move_y = move[1][1]
@@ -315,17 +324,16 @@ class Gui:
         information_text1.render(fake_screen)
         information_text2.render(fake_screen)
         information_text3.render(fake_screen)
-        text_input.render(fake_screen)
+        self.text_input.render(fake_screen)
         text_name.render(fake_screen)
-        for text in spisok_s_textom:
+        for text in self.spisok_s_textom:
             text.render(fake_screen)
-        for textbox in spisok_s_inputami:
+        for textbox in self.spisok_s_inputami:
             textbox.render(fake_screen)
         fake_screen.blit(file_decoded, (0, HEIGHT * 5))
         self.__screen.blit(fake_screen, (0, -self.promotka))
-        if self.promotka <= HEIGHT * 3:
+        if self.promotka <= HEIGHT * 3 and self.text_input.get_value() != '':
             save_button.render(self.__screen)
-
 
     def handle_events(self):
         events = pg.event.get()
@@ -368,7 +376,6 @@ class Gui:
                     self.handle_creating_bot_click(-1, -1, events)
                 if event.type == pg.MOUSEWHEEL:
                     self.handle_creating_bot_click(-2, -2, events)
-
 
             elif self.state != SceneState.menu:
                 if return_button.collide_point(pg.mouse.get_pos()) and any(pg.mouse.get_pressed()[:2][::1]):
@@ -559,34 +566,41 @@ class Gui:
                     self.chosen_bot = 0
                     self.chosen_instead_player = 0
                     Bot1.delete(i // 2)
+                    break
         if creating_new_bot_button.collide_point((x, y)):
             self.state = SceneState.creating_a_bot
             self.promotka = 0
+            self.spisok_s_inputami, self.spisok_s_textom, self.text_input = create_empty_spiski_for_creating_a_bot()
         if turn_on_deleting_mode_button.collide_point((x, y)):
             self.deleting_mode = not self.deleting_mode
 
     def handle_creating_bot_click(self, x, y, events):
         y = y + self.promotka
-        text_input.handle_events(events, x, y)
+        self.text_input.handle_events(events, x, y)
         for event in events:
             if event.type == pg.MOUSEBUTTONUP:
                 if event.button == 5 and self.promotka < HEIGHT * 5:
-                    self.promotka += 150
+                    self.promotka += HEIGHT//5
 
                 if event.button == 4 and self.promotka - 10 >= 0:
-                    self.promotka -= 150
+                    self.promotka -= HEIGHT//5
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_DOWN and self.promotka < HEIGHT * 5:
+                    self.promotka += HEIGHT//5
 
-        for text in spisok_s_inputami:
+                if event.key == pg.K_UP and self.promotka - 10 >= 0:
+                    self.promotka -= HEIGHT//5
+
+        for text in self.spisok_s_inputami:
             text.handle_events(events, x, y)
 
         if return_button.collide_point((x, y)):
             self.state = SceneState.choosing_a_bot
             self.bots = Bot1.get_all_bots()
-        if save_button.collide_point((x, y - self.promotka)):
-            save_bot(text_input, spisok_s_inputami)
+        if save_button.collide_point((x, y - self.promotka)) and self.text_input.get_value() != '':
+            save_bot(self.text_input, self.spisok_s_inputami)
             self.state = SceneState.choosing_a_bot
             self.bots = Bot1.get_all_bots()
-
 
     def change_bots(self, bot1: Bot, bot2: Bot):
         self.__bot = bot1
@@ -595,7 +609,7 @@ class Gui:
         self.state = SceneState.checkers
         self.__game = SimpleGame()
         self.possible_moves = []
-        # self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
 
-    def close(self):
+    @staticmethod
+    def close():
         exit()
