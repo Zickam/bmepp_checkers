@@ -2,10 +2,11 @@ import datetime
 import time
 from enum import Enum
 import numpy as np
+import math
 
 from game.classes import move_to_notation
 from gui.sprites import Sprites
-from gui.constants import WIN_SIZE, FPS, GC, CBBC
+from gui.constants import WIN_SIZE, FPS, GC, CBBC, MOVING_TIME
 from gui.buttons import caption_text, play_white_button, play_black_button, difficulty_text, minus_button, \
     plus_button, return_button, get_difficulty_num, get_win_text, training_button, help_button, \
     help_buttons_animation, player_player_button, bot_bot_button, choosing_a_bot_button, choosing_main_text, \
@@ -177,6 +178,11 @@ class Gui:
 
         self.spisok_s_inputami, self.spisok_s_textom, self.text_input = create_empty_spiski_for_creating_a_bot()
 
+        self.moving_checker: None | list[int] = None
+        self.moving_checker_start: list[int] = [-1, -1]
+        self.blocking_bots_during_moving = True
+        self.moving_start: float = 0
+
     @staticmethod
     def change_caption(caption: str):
         pg.display.set_caption(caption)
@@ -249,6 +255,13 @@ class Gui:
         choosing_a_bot_button.render(self.__screen)
 
     def render_result(self):
+        self.render_board()
+        self.render_checkers()
+        gray = pg.Surface(WIN_SIZE)
+        gray.fill(GC)
+        gray.set_alpha(160)
+        self.__screen.blit(gray, (0, 0))
+
         get_win_text(
             handleWin(
                 self.__game.getBoard(),
@@ -280,18 +293,36 @@ class Gui:
             for j, figure in enumerate(row):
                 if not figure[0]:  # figure.is_checker
                     continue
-                coordinate = self.__sprites.get_coordinates(i, j, self.__game.isPlayerWhite())
-                coordinate = coordinate.move(self.left_offset, 0)
                 if figure[1]:  # figure.is_white
                     if figure[2]:  # figure.is_queen
-                        self.__screen.blit(self.__sprites.queen_white_checker, coordinate)
+                        sprite = self.__sprites.queen_white_checker
                     else:
-                        self.__screen.blit(self.__sprites.white_checker, coordinate)
+                        sprite = self.__sprites.white_checker
                 else:
                     if figure[2]:  # figure.is_queen
-                        self.__screen.blit(self.__sprites.queen_black_checker, coordinate)
+                        sprite = self.__sprites.queen_black_checker
                     else:
-                        self.__screen.blit(self.__sprites.black_checker, coordinate)
+                        sprite = self.__sprites.black_checker
+
+                if self.moving_checker is None or tuple(self.moving_checker) != (i, j):
+                    coordinate = self.__sprites.get_coordinates(i, j, self.__game.isPlayerWhite())
+                else:
+                    part0 = (time.time()-self.moving_start) / MOVING_TIME
+                    part = math.sin(math.pi / 2 * part0)
+
+                    if part0 > 1:
+                        self.moving_checker = None
+                        coordinate = self.__sprites.get_coordinates(i, j, self.__game.isPlayerWhite())
+                        coordinate = coordinate.move(self.left_offset, 0)
+                    else:
+                        i1, j1 = self.moving_checker_start
+                        start_coordinate = self.__sprites.get_coordinates(i1, j1, self.__game.isPlayerWhite())
+                        end_coordinate = self.__sprites.get_coordinates(i, j, self.__game.isPlayerWhite())
+                        x = start_coordinate[0] + (end_coordinate[0]-start_coordinate[0])*part
+                        y = start_coordinate[1] + (end_coordinate[1]-start_coordinate[1])*part
+                        coordinate = (x, y)
+
+                self.__screen.blit(sprite, coordinate)
 
     def render_hints(self):
         for move in self.possible_moves:
@@ -387,7 +418,8 @@ class Gui:
                     self.__bot.end_bot_thinking()
                     self.__bot_instead_player.end_bot_thinking()
 
-        self.handle_bot_events()
+        if not self.blocking_bots_during_moving or self.moving_checker is None:
+            self.handle_bot_events()
 
     def handle_bot_events(self):
         if self.__bot.is_best_move_ready():
@@ -398,15 +430,17 @@ class Gui:
             args = self.__game.toArgs()
             new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
+            self.start_moving_animation(move)
 
             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(),
                               self.__game.getLastMove(), self.__game.getCountDrawMoves())
-            if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
-                self.state = SceneState.result
-                return
-            if self.mode_state == ModeState.bot_vs_bot and self.draw_handler.check_draw(self.__game.getBoard()):
-                self.state = SceneState.result
-                return
+            if not self.blocking_bots_during_moving or self.moving_checker is None:
+                if state in [1, 2, 3]:  # game is ended (w win, b win, draw)
+                    self.state = SceneState.result
+                    return
+                if self.mode_state == ModeState.bot_vs_bot and self.draw_handler.check_draw(self.__game.getBoard()):
+                    self.state = SceneState.result
+                    return
 
             if flag == self.__game.isWhiteTurn():
 
@@ -423,6 +457,7 @@ class Gui:
             args = self.__game.toArgs()
             new_args = handle_move_pr(*args, move)
             self.__game.fromArgs(*new_args)
+            self.start_moving_animation(move)
 
             state = handleWin(self.__game.getBoard(), self.__game.isWhiteTurn(), self.__game.getPreviousTurnWhite(),
                               self.__game.getLastMove(), self.__game.getCountDrawMoves())
@@ -514,6 +549,7 @@ class Gui:
                 args = self.__game.toArgs()
                 new_args = handle_move_pr(*args, move)
                 self.__game.fromArgs(*new_args)
+                self.start_moving_animation(move)
 
                 self.player_log.add_turn(move)
                 self.possible_moves.clear()
@@ -613,3 +649,8 @@ class Gui:
     @staticmethod
     def close():
         exit()
+
+    def start_moving_animation(self, move: list[int] | list[list[int]]):
+        self.moving_checker_start = move[0]
+        self.moving_checker = move[1]
+        self.moving_start = time.time()

@@ -1,5 +1,6 @@
 WIN_SIZE = (1000, 1000)
 FPS = 144
+MOVING_TIME = 0.4
 
 
 IGC = (0, 220, 0)
