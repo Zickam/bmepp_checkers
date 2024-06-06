@@ -198,6 +198,7 @@ class Gui:
         self.difficulty = difficulty
         self.mode_state = ModeState.bot_vs_bot
         self.state = SceneState.checkers
+        self.draw_handler = DrawHandler()
         self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
 
         while True:
@@ -482,22 +483,26 @@ class Gui:
     def handle_menu_click(self, x: int, y: int):
         if play_white_button.collide_point((x, y)):
             self.state = SceneState.checkers
+            self.draw_handler = DrawHandler()
             self.__game.setIsPlayerWhite(True)
             self.mode_state = ModeState.bot_vs_player
 
         if play_black_button.collide_point((x, y)):
             self.state = SceneState.checkers
+            self.draw_handler = DrawHandler()
             self.__game.setIsPlayerWhite(False)
             self.__bot.start_best_move_calculation(self.__game, self.difficulty, True)
             self.mode_state = ModeState.bot_vs_player
 
         if player_player_button.collide_point((x, y)):
             self.state = SceneState.checkers
+            self.draw_handler = DrawHandler()
             self.__game.setIsPlayerWhite(True)
             self.mode_state = ModeState.player_vs_player
 
         if bot_bot_button.collide_point((x, y)):
             self.state = SceneState.checkers
+            self.draw_handler = DrawHandler()
             self.__game.setIsPlayerWhite(True)
             self.mode_state = ModeState.bot_vs_bot
             self.__bot_instead_player.start_best_move_calculation(self.__game, self.difficulty, True)
@@ -510,6 +515,7 @@ class Gui:
 
         if training_button.collide_point((x, y)):
             self.state = SceneState.checkers_with_help
+            self.draw_handler = DrawHandler()
             self.__game.setIsPlayerWhite(True)
 
         if choosing_a_bot_button.collide_point((x, y)):
@@ -643,6 +649,7 @@ class Gui:
         self.__bot_instead_player = bot2
         self.draw_handler = DrawHandler()
         self.state = SceneState.checkers
+        self.draw_handler = DrawHandler()
         self.__game = SimpleGame()
         self.possible_moves = []
 
